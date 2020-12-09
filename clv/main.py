@@ -66,22 +66,22 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-J", "--job", type=str,
                         help="""
-
+                                train, prediction
                         """,
                         )
     parser.add_argument("-OC", "--order_count", type=str,
                         help="""
-          
+                                number of previous order count. It has been using for prediction next order frequency
                         """,
                         )
     parser.add_argument("-CI", "--customer_indicator", type=str,
-                        help="""
-
+                        help="""identifier of the customer (id)
+                                
                         """,
                         )
     parser.add_argument("-AI", "--amount_indicator", type=str,
                         help="""
-
+                                data column n-amount (preferred numeric)
                         """,
                         )
     parser.add_argument("-DS", "--data_source", type=str,
@@ -107,17 +107,17 @@ if __name__ == '__main__':
                         )
     parser.add_argument("-TP", "--time_period", type=str,
                         help="""
-                        This shows us to the time period if AB Test is running sequentially
+                        This shows us to the time period 
                         """,
                         )
     parser.add_argument("-EP", "--export_path", type=str,
                         help="""
-                        This shows us to the time period if AB Test is running sequentially
+                        Exporting path of the results set. Csv file of exporting.
                         """,
                         )
 
     arguments = parser.parse_args()
-    args = {'order_count': arguments.order_count,
+    args = {'job': arguments.job, 'order_count': arguments.order_count,
             'customer_indicator': arguments.customer_indicator,
             'amount_indicator': arguments.amount_indicator,
             'data_source': arguments.data_source,

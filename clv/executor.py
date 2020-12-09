@@ -25,7 +25,7 @@ class CLV:
 
     amount_indicator:
 
-    job:
+    job:                train, prediction
 
 
     date:
@@ -86,14 +86,16 @@ class CLV:
                           "data_query_path": data_query_path,
                           "time_indicator": time_indicator,
                           "export_path": export_path}
-        self.arg_terminal = {"job": "J",
-                             "order_count": "OC",
-                             "customer_indicator": "CI",
-                             "amount_indicator": "AI",
-                             "data_source":  "DS",
-                             "data_query_path": "DQP",
-                             "time_indicator": "TI",
-                             "export_path": "EP"}
+        self.arg_terminal ={"job": "J",
+                            "time_period": "TP",
+                            "order_count": "OC",
+                            "date": "D",
+                            "customer_indicator": "CI",
+                            "amount_indicator": "AI",
+                            "data_source": "DS",
+                            "data_query_path": "DQP",
+                            "time_indicator": "TI",
+                            "export_path": "EP"}
         self.schedule_arg = "TS"
         self.args_str = ""
         self.mandetory_arguments = ["data_source", "data_query_path", "customer_indicator",

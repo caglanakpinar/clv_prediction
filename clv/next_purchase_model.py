@@ -1,6 +1,7 @@
 from pandas import DataFrame, concat
 import os
 import random
+import shutil
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '4'
 import traceback
 from tensorflow.keras.layers import Dense, LSTM, Input, BatchNormalization, Conv1D, MaxPooling1D, Dropout, Flatten
@@ -68,7 +69,7 @@ def get_tuning_params(parameter_tuning, params):
             if "*" in parameter_tuning[p]:
                 # e.g. 0.1*0.5 return [0.1, 0.2, ..., 0.5] or 0.1*0.5*0.05 return [0.1, 0.15, ..., 0.5]
                 _splits = parameter_tuning[p].split("*")
-                print(_splits)
+
                 if len(_splits) == 2:
                     hyper_params[p] = np.arange(float(_splits[0]), float(_splits[1]), float(_splits[0])).tolist()
                 if len(_splits) == 3:
@@ -102,7 +103,6 @@ class TrainLSTM:
                  customer_indicator=None,
                  amount_indicator=None):
         self.params = hyper_conf('next_purchase')
-        print(self.params)
         ## TODO: hyper parameters of ranges must be updated related to data
         self.hyper_params = get_tuning_params(hyper_conf('next_purchase_hyper'), self.params)
         self.optimized_parameters = {}
@@ -140,7 +140,6 @@ class TrainLSTM:
         data = arrange__data_for_model(df=_data, f=[self.features], parameters=self.params)
         if data['x_train'].shape[0] != 0:
             model_data[customer] = {}
-            print(data)
             model_data[customer] = arrange__data_for_model(df=_data, f=[self.features], parameters=self.params)
 
         # except Exception as e:
@@ -150,7 +149,6 @@ class TrainLSTM:
         global model_data
         model_data = {}
         execute_parallel_run(self.customers, self.get_model_data, arguments=None)
-        print(model_data)
         for c in model_data:
             if self.model_data['x_train'] is not None:
                 self.model_data['x_train'] = np.concatenate([self.model_data['x_train'], model_data[c]['x_train']])
@@ -221,10 +219,9 @@ class TrainLSTM:
         _max_date = end - datetime.timedelta(days=1)
         _pred_data = DataFrame()
         counter = 0
-        print("yessss")
+
         while start < _max_date < end:
             # try:
-            print("yessss")
             x, _data, to_drop = data_for_customer_prediction(
                 self.data[self.data[self.customer_indicator] == customer], self.params)
             if len(reshape_3(x[to_drop:].values)) != 0:
@@ -238,7 +235,7 @@ class TrainLSTM:
                 if start < _predicted_date < end:
                     print("predicted date :", _predicted_date,
                           "|| predicted frequency :", int(_pred_actual * 3600))
-                _pred_data = concat([_pred_data, DataFrame([{'created_date': _predicted_date,
+                    _pred_data = concat([_pred_data, DataFrame([{'created_date': _predicted_date,
                                                              'user_id': self.customer_indicator,
                                                              'time_diff': _pred_actual,
                                                              'time_diff_norm': _pred}])])
@@ -279,9 +276,7 @@ class TrainLSTM:
             for p in tuner.get_best_hyperparameters()[0].values:
                 if p in list(self.params.keys()):
                     self.params[p] = tuner.get_best_hyperparameters()[0].values[p]
-            # self.params = tuner.get_best_hyperparameters()[0].values
-            # self.params['epochs'] = hyper_conf('next_purchase')['epochs']
-            # self.params['split_ratio'] = hyper_conf('next_purchase')['split_ratio']
+            shutil.rmtree(join(abspath(__file__).split("next_purchase_model.py")[0], "untitled_project"))
             write_yaml(self.directory, "test_parameters.yaml", self.params, ignoring_aliases=True)
         else:
             self.params = check_for_existing_parameters(self.directory, 'purchase_amount')
