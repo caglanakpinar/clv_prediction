@@ -50,8 +50,8 @@ def data_manipulation(date, time_indicator, order_count, data_source, data_query
     data = data.sort_values(by=[customer_indicator, time_indicator])
     data = pd.merge(data,
                     data.groupby(customer_indicator)['order_seq_num'].max().reset_index().rename(
-                                 columns={"order_seq_num": "max_order"}),
-                             on=customer_indicator, how='left')
+                        columns={"order_seq_num": "max_order"}),
+                    on=customer_indicator, how='left')
     data['prev_orders'] = data['max_order'] - order_count
     data = data.query("order_seq_num > prev_orders")
     data['order_seq_num'] = data.sort_values(by=[customer_indicator, time_indicator]).groupby(
@@ -100,7 +100,8 @@ def get_customer_min_max_data(data, feature, customer_indicator):
 def pivoting_orders_sequence(data, customer_indicator, feature):
     data = pd.DataFrame(np.array(data.pivot_table(index=customer_indicator,
                                                   columns="order_seq_num",
-                                                  aggfunc={feature + "_norm": "first"}).reset_index()))
+                                                  aggfunc={feature + "_norm": "first"}
+                                                  ).reset_index())).rename(columns={0: customer_indicator})
     data = data.fillna(0)
     return data
 
