@@ -57,12 +57,11 @@ def data_manipulation(date, time_indicator, order_count, data_source, data_query
     data['order_seq_num'] = data.sort_values(by=[customer_indicator, time_indicator]).groupby(
         [customer_indicator]).cumcount() + 1
     data['order_seq_num'] = data.apply(
-        lambda row: row['order_seq_num'] + abs(row['prev_orders']) if row['prev_orders'] != 0 else row['order_seq_num'],
         lambda row: row['order_seq_num'] + abs(row['prev_orders']) if row['prev_orders'] < 0 else row['order_seq_num'],
         axis=1)
     data, customer_min_max = get_customer_min_max_data(data, feature, customer_indicator)
     data = pivoting_orders_sequence(data, customer_indicator, feature)
-    features = list(range(order_count))
+    features = list(range(1, order_count))
     return data, features, order_count, customer_min_max
 
 
@@ -127,8 +126,8 @@ def random_data_split(data, ratio):
     index = range(len(data))
     train_index = random.sample(index, int(len(data) * ratio))
     test_index = list(set(index) - set(train_index))
-    train = data[list(data.columns)[1:-1]].iloc[train_index]
-    test = data[list(data.columns)[1:-1]].iloc[test_index]
+    train = data.iloc[train_index]
+    test = data.iloc[test_index]
     return train, test
 
 
