@@ -58,6 +58,7 @@ def data_manipulation(date, time_indicator, order_count, data_source, data_query
         [customer_indicator]).cumcount() + 1
     data['order_seq_num'] = data.apply(
         lambda row: row['order_seq_num'] + abs(row['prev_orders']) if row['prev_orders'] != 0 else row['order_seq_num'],
+        lambda row: row['order_seq_num'] + abs(row['prev_orders']) if row['prev_orders'] < 0 else row['order_seq_num'],
         axis=1)
     data, customer_min_max = get_customer_min_max_data(data, feature, customer_indicator)
     data = pivoting_orders_sequence(data, customer_indicator, feature)
