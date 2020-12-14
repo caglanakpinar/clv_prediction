@@ -389,7 +389,7 @@ def execute_parallel_run(values, executor, parallel=2, arguments=None):
                 process = threading.Thread(target=executor, args=(v,))
             process.deamon = True
             process.start()
-    process.join()
+        process.join()
     return "done !!!"
 
 
