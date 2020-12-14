@@ -196,6 +196,14 @@ def convert_date(date):
     return date
 
 
+def get_current_day(replace=True):
+    return str(datetime.datetime.now())[0:10].replace("-", "") if replace else str(datetime.datetime.now())[0:10]
+
+
+def get_result_data_path(directory, time_period):
+    return join(directory, "results_" + time_period + "_" + get_current_day())
+
+
 def convert_date_v2(x):
     return datetime.datetime.strptime(str(x), "%Y-%m-%d %H:%M:%S")
 
