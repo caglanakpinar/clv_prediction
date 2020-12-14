@@ -269,3 +269,55 @@ def model_path(directory, model_name, time_period):
     return join(directory, model_name + "_" + get_current_day() + "_" + time_period.replace(" ", "") + ".json")
 
 
+def get_tuning_params(parameter_tuning, params):
+    """
+      activation: relu_tanh
+      batch_size:
+        - 5120
+        - 10240
+        - 20480
+      epochs:  1000*40000
+      units:
+        - 8
+        - 16
+        - 32
+        - 64
+
+      drop_out_ratio': 0.1*0.5
+
+    :param parameter_tuning:
+    :param params:
+    :param job:
+    :return:
+    """
+    arrays = []
+    hyper_params = {}
+    for p in parameter_tuning:
+        if type(parameter_tuning[p]) in [dict, list]:
+            hyper_params[p] = parameter_tuning[p]
+        if type(parameter_tuning[p]) == str:
+            if "*" in parameter_tuning[p]:
+                # e.g. 0.1*0.5 return [0.1, 0.2, ..., 0.5] or 0.1*0.5*0.05 return [0.1, 0.15, ..., 0.5]
+                _splits = parameter_tuning[p].split("*")
+                if len(_splits) == 2:
+                    hyper_params[p] = np.arange(float(_splits[0]), float(_splits[1]), float(_splits[0])).tolist()
+                if len(_splits) == 3:
+                    hyper_params[p] = np.arange(float(_splits[0]), float(_splits[1]), float(_splits[2])).tolist()
+                hyper_params[p] = [str(c) for c in hyper_params[p]]
+            else:  # e.g. relu_tanh or relu
+                hyper_params[p] = parameter_tuning[p].split("_")
+    for p in hyper_params:
+        if p not in ['activation', 'loss']:
+            if p not in ['kernel_size', 'pool_size', 'max_pooling_unit', 'lstm_units',
+                         'num_layers', 'units', 'batch_size']:
+                hyper_params[p] = [float(c) for c in hyper_params[p]]
+            else:
+                if p != 'num_layers':
+                    hyper_params[p] = [int(c) for c in hyper_params[p]]
+                else:
+                    hyper_params[p] = {c: int(hyper_params[p][c]) for c in hyper_params[p]}
+
+    for p in params:
+        if p not in list(hyper_params.keys()):
+             hyper_params[p] = params[p]
+    return hyper_params
