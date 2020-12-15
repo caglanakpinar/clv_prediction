@@ -201,7 +201,7 @@ def get_current_day(replace=True):
 
 
 def get_result_data_path(directory, time_period):
-    return join(directory, "results_" + time_period + "_" + get_current_day())
+    return join(directory, "results_" + time_period + "_" + get_current_day() + ".csv")
 
 
 def convert_date_v2(x):
