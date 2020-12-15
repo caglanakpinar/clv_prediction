@@ -3,6 +3,7 @@ import os
 import random
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '4'
 import traceback
+import shutil
 from tensorflow.keras.layers import Dense, LSTM, Input, BatchNormalization, Conv1D, MaxPooling1D, Dropout, Flatten
 from keras.regularizers import l1, l2, l1_l2
 from tensorflow.keras.optimizers import RMSprop, Adam
@@ -20,6 +21,7 @@ except Exception as e:
     from .functions import *
     from .configs import conf, boostrap_ratio, iteration, hyper_conf
     from .data_access import *
+    from .utils import get_current_day
 
 
 def model_from_to_json(path=None, model=None, is_writing=False):
@@ -34,24 +36,6 @@ def model_from_to_json(path=None, model=None, is_writing=False):
         return model_from_json(loaded_model_json)
 
 
-def get_tuning_params(parameter_tuning, params, job):
-    arrays = []
-    for p in params:
-        if p not in list(parameter_tuning.keys()):
-            arrays.append([params[p]])
-        else:
-            arrays.append(
-                          np.arange(float(parameter_tuning[p].split("*")[0]),
-                                    float(parameter_tuning[p].split("*")[1]),
-                                    float(parameter_tuning[p].split("*")[0])).tolist()
-            )
-    comb_arrays = list(product(*arrays))
-    if job != 'parameter_tuning':
-        return random.sample(comb_arrays, int(len(comb_arrays)*0.5))
-    else:
-        return comb_arrays
-
-
 def get_params(params, comb):
     count = 0
     for p in params:
@@ -59,6 +43,12 @@ def get_params(params, comb):
         params[p] = _p
         count += 1
     return params
+
+
+def get_order_freq(predicted_orders, customer_indicator, time_indicator):
+    predicted_orders['order_seq_num'] = predicted_orders.sort_values(
+        by=[customer_indicator, time_indicator]).groupby([customer_indicator]).cumcount() + 1
+    return predicted_orders
 
 
 class TrainConv1Dimension:
@@ -71,15 +61,19 @@ class TrainConv1Dimension:
                  time_period=None,
                  directory=None,
                  customer_indicator=None,
-                 num_of_future_orders=None,
+                 predicted_orders=None,
                  amount_indicator=None):
-        self.params = hyper_conf('purchase_amount')
-        ## TODO: hyper parametrs of ranges must be updated related to data
-        self.hyper_params = hyper_conf('purchase_amount_hyper')
-        self.optimized_parameters = {}
-        self._p = None
+        self.directory = directory
+        self.time_indicator = time_indicator
+        self.customer_indicator = customer_indicator
         self.order_count = order_count
         self.time_period = time_period
+        self.amount_indicator = amount_indicator
+        self.params = hyper_conf('purchase_amount')
+        ## TODO: hyper parametrs of ranges must be updated related to data
+        self.hyper_params = get_tuning_params(hyper_conf('purchase_amount_hyper'), self.params)
+        self.optimized_parameters = {}
+        self._p = None
         self.data, self.features, self.y, self.c_min_max = data_manipulation(
                                                                              date=date,
                                                                              feature=amount_indicator,
@@ -88,24 +82,21 @@ class TrainConv1Dimension:
                                                                              data_source=data_source,
                                                                              data_query_path=data_query_path,
                                                                              customer_indicator=customer_indicator)
-        self.time_indicator = time_indicator
-        self.customer_indicator = customer_indicator
-        self.data_count = 0
         self.hp = HyperParameters()
+        self.model = check_model_exists(self.directory, "trained_purchase_amount_model", self.time_period)
+        self.input = None
         self.model_data = {}
-        self.input, self.model = None, None
-        self.model = None
-        self.result = None, None
+        self.result = None
         self.residuals, self.anomaly = [], []
-        self.directory = directory
         self.customers = list(self.data[customer_indicator].unique())
-        self.num_of_future_orders = num_of_future_orders
+        self.predicted_orders = get_order_freq(predicted_orders, customer_indicator, time_indicator)
+        self.num_of_future_orders = self.predicted_orders.groupby(customer_indicator).agg({"order_seq_num": "max"}).reset_index()
         self.results = DataFrame()
 
     def train_test_split(self):
-        self.model_data['train'], self.model_data['test'] = random_data_split(self.data, self.params['split_ratio'])
+        self.model_data['train'], self.model_data['test'] = random_data_split(self.data, float(self.params['split_ratio']))
 
-    def data_preparation(self, is_prediction):
+    def data_preparation(self, is_prediction=False):
         if not is_prediction:
             self.train_test_split()
         else:
@@ -113,7 +104,7 @@ class TrainConv1Dimension:
         self.model_data = reshape_data(self.model_data, self.features, self.y, is_prediction)
 
     def build_parameter_tuning_model(self, hp):
-        self.input = Input(shape=(self.model_data['train_x'].shape[1], 1,))
+        self.input = Input(shape=(self.model_data['x_train'].shape[1], 1,))
         ### conv 1D layer
         conv = Conv1D(filters=hp.Choice('filters', self.hyper_params['filters']),
                       kernel_size=hp.Choice('kernel_size', self.hyper_params['kernel_size']),
@@ -122,10 +113,10 @@ class TrainConv1Dimension:
                       kernel_regularizer=l1_l2(l1=hp.Choice('l1', self.hyper_params['l1']),
                                                l2=hp.Choice('l2', self.hyper_params['l2'])),
                       bias_regularizer=l2(hp.Choice('l2', self.hyper_params['l2'])),
-                      activity_regularizer=l2(hp.Choice('l', self.hyper_params['l2']))
+                      activity_regularizer=l2(hp.Choice('l2', self.hyper_params['l2']))
                       )(self.input)
         conv = BatchNormalization()(conv)
-        ### LSTM layer
+        # LSTM layer
         conv = MaxPooling1D(hp.Choice('max_pooling_unit', self.hyper_params['max_pooling_unit']))(conv)
         conv = Dropout(hp.Choice('drop_out_ratio', self.hyper_params['drop_out_ratio']))(conv)
         conv = LSTM(hp.Choice('lstm_units', self.hyper_params['lstm_units']),
@@ -134,11 +125,11 @@ class TrainConv1Dimension:
                     kernel_regularizer=l1_l2(l1=hp.Choice('l1', self.hyper_params['l1']),
                                              l2=hp.Choice('l2', self.hyper_params['l2'])),
                     bias_regularizer=l2(hp.Choice('l2', self.hyper_params['l2'])),
-                    activity_regularizer=l2(hp.Choice('l', self.hyper_params['l2']))
+                    activity_regularizer=l2(hp.Choice('l2', self.hyper_params['l2']))
                     )(conv)
         conv = BatchNormalization()(conv)
         conv = Flatten()(conv)
-        ### layers after flattened layers
+        # layers after flattened layers
         for i in range(hp.Int('num_layers',
                               self.hyper_params['num_layers']['min'],
                               self.hyper_params['num_layers']['max'])):
@@ -147,7 +138,7 @@ class TrainConv1Dimension:
                          kernel_regularizer=l1_l2(l1=hp.Choice('l1', self.hyper_params['l1']),
                                                   l2=hp.Choice('l2', self.hyper_params['l2'])),
                          bias_regularizer=l2(hp.Choice('l2', self.hyper_params['l2'])),
-                         activity_regularizer=l2(hp.Choice('l', self.hyper_params['l2']))
+                         activity_regularizer=l2(hp.Choice('l2', self.hyper_params['l2']))
                          )(conv)
             conv = BatchNormalization()(conv)
         output = Dense(1,
@@ -155,16 +146,17 @@ class TrainConv1Dimension:
                        kernel_regularizer=l1_l2(l1=hp.Choice('l1', self.hyper_params['l1']),
                                                 l2=hp.Choice('l2', self.hyper_params['l2'])),
                        bias_regularizer=l2(hp.Choice('l2', self.hyper_params['l2'])),
-                       activity_regularizer=l2(hp.Choice('l', self.hyper_params['l2']))
+                       activity_regularizer=l2(hp.Choice('l2', self.hyper_params['l2']))
                        )(conv)
         model = Model(inputs=self.input, outputs=output)
         model.compile(loss=self.params['loss'],
                       optimizer=Adam(lr=hp.Choice('lr', self.hyper_params['lr'])),
-                      metrics=[self.params['loss']])
+                      metrics=[hp.Choice('loss', self.hyper_params['loss'])])
         return model
 
     def build_model(self):
-        self.input = Input(shape=(self.model_data['train_x'].shape[1], 1,))
+        print(self.params)
+        self.input = Input(shape=(self.model_data['x_train'].shape[1], 1,))
         # conv 1D layer
         conv = Conv1D(filters=self.params['filters'],
                       kernel_size=self.params['kernel_size'],
@@ -212,22 +204,36 @@ class TrainConv1Dimension:
                            metrics=[self.params['loss']])
 
     def learning_process(self, save_model=True):
+        print(self.model_data['x_train'].shape)
+        print(self.model_data['y_train'].shape)
+        print(self.model_data['x_test'].shape)
+        print(self.model_data['y_test'].shape)
         self.model.fit(self.model_data['x_train'],
                        self.model_data['y_train'],
-                       batch_size=self.params['batch_size'],
-                       epochs=self.params['epochs'],
-                       verbose=0,
+                       batch_size=int(self.params['batch_size']),
+                       epochs=int(self.params['epochs']),
+                       verbose=1,
                        validation_data=(self.model_data['x_test'], self.model_data['y_test']),
-                       shuffle=False)
+                       shuffle=True)
         if save_model:
-            model_from_to_json(path=join(self.directory, "trained_purchase_amount_model"),
+            model_from_to_json(path=model_path(self.directory,
+                                               "trained_purchase_amount_model", self.time_period),
                                model=self.model,
                                is_writing=True)
 
     def train_execute(self):
-        self.data_preparation()
-        self.parameter_tuning()
-        self.learning_process()
+        print("*" * 5, " Purchase Amount train model process ", "*" * 5)
+        print(self.model)
+        if self.model is None:
+            print(self.num_of_future_orders.head())
+            self.data_preparation()
+            self.parameter_tuning()
+            self.build_model()
+            self.learning_process()
+        else:
+            self.model = model_from_to_json(path=join(self.directory, self.model))
+            print("Previous model already exits in the given directory  '" + self.directory + "'.")
+        self.prediction_execute()
 
     def prediction_execute(self):
         print("number of users :", len(self.customers))
@@ -243,8 +249,14 @@ class TrainConv1Dimension:
                                                           _prediction,
                                                           self.model.input.shape[1] + 1,
                                                           self.c_min_max.query("user_id == @_user"))
-            print("lifetime value :")
-            print(self.results.head())
+            self.results = pd.concat([self.results, prediction])
+        self.results = merging_predicted_date_to_result_date(self.results, self.data, self.predicted_orders,
+                                                             self.customer_indicator,
+                                                             self.time_indicator,
+                                                             self.amount_indicator)
+        self.results.to_csv(get_result_data_path(self.directory, self.time_period), index=False)
+        print("lifetime value :")
+        print(self.results.head())
 
     def parameter_tuning(self):
         if check_for_existing_parameters(self.directory, 'purchase_amount') is None:
@@ -259,12 +271,26 @@ class TrainConv1Dimension:
                          epochs=5,
                          verbose=1,
                          validation_data=(self.model_data['x_test'], self.model_data['y_test']))
-            self.model = tuner.get_best_models(num_models=10)[0]
-            self.params = tuner.get_best_hyperparameters()[0].values
-            write_yaml(self.directory, "test_parameters.yaml", self.params, ignoring_aliases=True)
+
+            for p in tuner.get_best_hyperparameters()[0].values:
+                if p in list(self.params.keys()):
+                    self.params[p] = tuner.get_best_hyperparameters()[0].values[p]
+            try:
+                shutil.rmtree(
+                    join(abspath(__file__).split("next_purchase_model.py")[0].split("clv")[0][:-1], "clv_prediction",
+                         "untitled_project"))
+            except Exception as e:
+                print(" Parameter Tuning Keras Turner dummy files have already removed!!")
+
+            try:
+                _params = read_yaml(self.directory, "test_parameters.yaml")
+                _params['purchase_amount'] = self.params
+                write_yaml(self.directory, "test_parameters.yaml", _params, ignoring_aliases=True)
+            except Exception as e:
+                print(e)
+                print("None of parameter tuning for both Model has been observed.")
+                write_yaml(self.directory, "test_parameters.yaml", {'purchase_amount': self.params},
+                           ignoring_aliases=True)
         else:
             self.params = check_for_existing_parameters(self.directory, 'purchase_amount')
-
-
-
 

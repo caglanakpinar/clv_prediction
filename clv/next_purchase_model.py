@@ -1,3 +1,4 @@
+import warnings
 from pandas import DataFrame, concat
 import os
 import random
@@ -39,49 +40,6 @@ def updating_hyper_parameters_related_to_data():
     return None
 
 
-def get_tuning_params(parameter_tuning, params):
-    """
-      activation: relu_tanh
-      batch_size:
-        - 5120
-        - 10240
-        - 20480
-      epochs:  1000*40000
-      units:
-        - 8
-        - 16
-        - 32
-        - 64
-
-      drop_out_ratio': 0.1*0.5
-
-    :param parameter_tuning:
-    :param params:
-    :param job:
-    :return:
-    """
-    arrays = []
-    hyper_params = {}
-    for p in parameter_tuning:
-        if type(parameter_tuning[p]) == list:
-            hyper_params[p] = parameter_tuning[p]
-        if type(parameter_tuning[p]) == str:
-            if "*" in parameter_tuning[p]:
-                # e.g. 0.1*0.5 return [0.1, 0.2, ..., 0.5] or 0.1*0.5*0.05 return [0.1, 0.15, ..., 0.5]
-                _splits = parameter_tuning[p].split("*")
-
-                if len(_splits) == 2:
-                    hyper_params[p] = np.arange(float(_splits[0]), float(_splits[1]), float(_splits[0])).tolist()
-                if len(_splits) == 3:
-                    hyper_params[p] = np.arange(float(_splits[0]), float(_splits[1]), float(_splits[2])).tolist()
-            else:  # e.g. relu_tanh or relu
-                hyper_params[p] = parameter_tuning[p].split("_")
-    for p in params:
-        if p not in list(hyper_params.keys()):
-            hyper_params[p] = params[p]
-    return hyper_params
-
-
 def get_params(params, comb):
     count = 0
     for p in params:
@@ -102,6 +60,9 @@ class TrainLSTM:
                  directory=None,
                  customer_indicator=None,
                  amount_indicator=None):
+        self.directory = directory
+        self.customer_indicator = customer_indicator
+        self.time_indicator = time_indicator
         self.params = hyper_conf('next_purchase')
         ## TODO: hyper parameters of ranges must be updated related to data
         self.hyper_params = get_tuning_params(hyper_conf('next_purchase_hyper'), self.params)
@@ -117,16 +78,13 @@ class TrainLSTM:
                                                                         data_source=data_source,
                                                                         data_query_path=data_query_path,
                                                                         customer_indicator=customer_indicator)
-        self.customer_indicator = customer_indicator
-        self.time_indicator = time_indicator
-        self.data_count = 0
+
         self.hp = HyperParameters()
         self.model_data = {}
         self.input, self.model = None, None
-        self.model = None
+        self.model = check_model_exists(self.directory, "trained_next_purchase_model", self.time_period)
         self.result = None, None
         self.residuals, self.anomaly = [], []
-        self.directory = directory
         self.customers = list(self.data[customer_indicator].unique())
         self.results = DataFrame()
         self.get_actual_value = lambda _min, _max, _value: ((_max - _min) * _value) + _min
@@ -149,25 +107,32 @@ class TrainLSTM:
         global model_data
         model_data = {}
         execute_parallel_run(self.customers, self.get_model_data, arguments=None)
-        for c in model_data:
-            if self.model_data['x_train'] is not None:
-                self.model_data['x_train'] = np.concatenate([self.model_data['x_train'], model_data[c]['x_train']])
-                self.model_data['y_train'] = np.concatenate([self.model_data['y_train'], model_data[c]['y_train']])
-                self.model_data['x_test'] = np.concatenate([self.model_data['x_test'], model_data[c]['x_test']])
-                self.model_data['y_test'] = np.concatenate([self.model_data['y_test'], model_data[c]['y_test']])
-            else:
-                self.model_data = model_data[c]
+        try_count = 0
+        while try_count < 20:
+            try:
+                for c in model_data:
+                    if self.model_data['x_train'] is not None:
+                        self.model_data['x_train'] = np.concatenate([self.model_data['x_train'], model_data[c]['x_train']])
+                        self.model_data['y_train'] = np.concatenate([self.model_data['y_train'], model_data[c]['y_train']])
+                        self.model_data['x_test'] = np.concatenate([self.model_data['x_test'], model_data[c]['x_test']])
+                        self.model_data['y_test'] = np.concatenate([self.model_data['y_test'], model_data[c]['y_test']])
+                    else:
+                        self.model_data = model_data[c]
+                try_count = 20
+            except Exception as e:
+                print(e)
+                try_count += 1
 
     def build_parameter_tuning_model(self, hp):
         self.input = Input(shape=(self.model_data['x_train'].shape[1], 1))
-        lstm = LSTM(hp.Choice('units', self.hyper_params['units']),
+        lstm = LSTM(int(hp.Choice('units', self.hyper_params['units'])),
                     use_bias=False,
                     activation=hp.Choice('activation', self.hyper_params['activation']),
-                    batch_size=hp.Choice('batch_size', self.hyper_params['batch_size']),
+                    batch_size=int(hp.Choice('batch_size', self.hyper_params['batch_size'])),
                     kernel_regularizer=l1_l2(l1=hp.Choice('l1', self.hyper_params['l1']),
                                              l2=hp.Choice('l2', self.hyper_params['l2'])),
                     bias_regularizer=l2(hp.Choice('l2', self.hyper_params['l2'])),
-                    activity_regularizer=l2(hp.Choice('l', self.hyper_params['l2']))
+                    activity_regularizer=l2(hp.Choice('l2', self.hyper_params['l2']))
                     )(self.input)
         lstm = BatchNormalization()(lstm)
         lstm = Dense(1)(lstm)
@@ -178,7 +143,7 @@ class TrainLSTM:
         return model
 
     def build_model(self):
-        self.input = Input(shape=(self.model_data['train_x']['x_train'].shape[1], 1))
+        self.input = Input(shape=(self.model_data['x_train'].shape[1], 1))
         # LSTM layer
         lstm = LSTM(self.params['units'],
                     batch_size=self.params['batch_size'],
@@ -202,65 +167,81 @@ class TrainLSTM:
                        validation_split=1 - self.params['split_ratio'],
                        shuffle=True)
         if save_model:
-            model_from_to_json(path=join(self.directory, "trained_next_purchase_model"),
+            model_from_to_json(path=model_path(self.directory,
+                                               "trained_next_purchase_model", self.time_period),
                                model=self.model,
                                is_writing=True)
 
     def train_execute(self):
-        print("*"*5, " train model process ", "*"*5)
-        self.data_preparation()
-        self.parameter_tuning()
-        self.learning_process()
+        print("*"*5, "Next purchase train model process ", "*"*5)
+        if self.model is None:
+            self.data_preparation()
+            self.parameter_tuning()
+            self.build_model()
+            self.learning_process()
+        else:
+            self.model = model_from_to_json(path=join(self.directory, self.model))
+            print(self.model)
+            print("Previous model already exits in the given directory  '" + self.directory + "'.")
+        self.prediction_execute()
 
-    def prediction_per_customer(self, customer):
+    def prediction_per_customer(self,  customer):
+        warnings.simplefilter("ignore")
         _norm_data = self.c_min_max[self.c_min_max[self.customer_indicator] == customer].iloc[0:1]
         start = self.max_date
         end = self.future_date
         _max_date = end - datetime.timedelta(days=1)
         _pred_data = DataFrame()
         counter = 0
-
+        prediction_data[customer] = _pred_data
         while start < _max_date < end:
-            # try:
             x, _data, to_drop = data_for_customer_prediction(
                 self.data[self.data[self.customer_indicator] == customer], self.params)
             if len(reshape_3(x[to_drop:].values)) != 0:
                 _pred = self.model.predict(reshape_3(x[to_drop:].values))[0][-1]
-                _pred_actual = self.get_actual_value(_min=list(_norm_data['user_min'])[0],
-                                                     _max=list(_norm_data['user_max'])[0],
-                                                     _value=_pred)
-                _predicted_date = max(_data[self.time_indicator]) + datetime.timedelta(minutes=int(_pred_actual * 3600))
-                if counter > 2:
-                    _max_date = _predicted_date
-                if start < _predicted_date < end:
-                    print("predicted date :", _predicted_date,
-                          "|| predicted frequency :", int(_pred_actual * 3600))
-                    _pred_data = concat([_pred_data, DataFrame([{'created_date': _predicted_date,
-                                                             'user_id': self.customer_indicator,
-                                                             'time_diff': _pred_actual,
-                                                             'time_diff_norm': _pred}])])
-                counter += 1
+                if _pred != 0:  # don`t waste time if prediction is O
+                    _pred_actual = self.get_actual_value(_min=list(_norm_data['user_min'])[0],
+                                                         _max=list(_norm_data['user_max'])[0],
+                                                         _value=_pred)
+                    if self.time_period != 'hour':
+                        _predicted_date = max(_data[self.time_indicator]) + datetime.timedelta(days=min(int(max(_pred_actual, 0)), 365 * 10))
+                    else:
+                        _predicted_date = max(_data[self.time_indicator]) + \
+                                          datetime.timedelta(minutes=min(int(max(_pred_actual, 0) * 3600), 365 * 10))
+                    if counter > 2:
+                        _max_date = end + datetime.timedelta(days=1)
+                    if start < _predicted_date < end:
+                        _pred_data = concat([_pred_data, DataFrame([{self.time_indicator: _predicted_date,
+                                                                     self.customer_indicator: customer,
+                                                                     'time_diff': _pred_actual,
+                                                                     'time_diff_norm': _pred}])])
+                    counter += 1
+                else:
+                    _max_date = end + datetime.timedelta(days=1)
             else:
                 _max_date = end + datetime.timedelta(days=1)
-            # except Exception as e:
-            #    print(e)
         prediction_data[customer] = _pred_data
 
     def prediction_execute(self):
         print("*"*5, "PREDICTION", 5*"*")
         print("number of users :", len(self.customers))
-        self.results = self.data[[self.time_indicator, 'time_diff', 'time_diff_norm']]
+        self.results = self.data[[self.time_indicator, 'time_diff', 'time_diff_norm', self.customer_indicator]]
         global prediction_data
         prediction_data = {}
-        execute_parallel_run(self.customers, self.prediction_per_customer, arguments=None)
-        for c in prediction_data:
+        # execute_parallel_run(self.customers, self.prediction_per_customer, arguments=None, parallel=8)
+        print("merge predicted data ...")
+
+        for c in self.customers:
+            self.prediction_per_customer(c)
             self.results = concat([self.results, prediction_data[c]])
         self.results['max_date'], self.results['future_date'] = self.max_date, self.future_date
         self.results = self.results[(self.results[self.time_indicator] > self.results['max_date']) &
                                     (self.results[self.time_indicator] < self.results['future_date'])]
+        print(self.results.head())
 
     def parameter_tuning(self):
         if check_for_existing_parameters(self.directory, 'next_purchase_model') is None:
+            print(self.hyper_params)
             tuner = RandomSearch(
                                  self.build_parameter_tuning_model,
                                  max_trials=5,
@@ -272,14 +253,22 @@ class TrainLSTM:
                          epochs=5,
                          verbose=1,
                          validation_data=(self.model_data['x_test'], self.model_data['y_test']))
-            self.model = tuner.get_best_models(num_models=10)[0]
             for p in tuner.get_best_hyperparameters()[0].values:
                 if p in list(self.params.keys()):
                     self.params[p] = tuner.get_best_hyperparameters()[0].values[p]
-            shutil.rmtree(join(abspath(__file__).split("next_purchase_model.py")[0], "untitled_project"))
-            write_yaml(self.directory, "test_parameters.yaml", self.params, ignoring_aliases=True)
+            shutil.rmtree(join(abspath(__file__).split("next_purchase_model.py")[0].split("clv")[0][:-1],
+                               "clv_prediction", "untitled_project"))
+            try:
+                _params = read_yaml(self.directory, "test_parameters.yaml")
+                _params['next_purchase'] = self.params
+                write_yaml(self.directory, "test_parameters.yaml", _params, ignoring_aliases=True)
+            except Exception as e:
+                print(e)
+                print("Non of parameter tuning for both Model has been observed.")
+                write_yaml(self.directory, "test_parameters.yaml", {'next_purchase': self.params}, ignoring_aliases=True)
         else:
-            self.params = check_for_existing_parameters(self.directory, 'purchase_amount')
+            self.params = check_for_existing_parameters(self.directory, 'next_purchase')
+            print("ASDASDASDD!'^^'^^'='=='='=!!!!!!!!!!!!'^^^EQWEQWER!+RQfasf *******************************   ")
 
 
 
