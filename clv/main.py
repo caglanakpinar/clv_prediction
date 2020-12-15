@@ -41,9 +41,7 @@ def main(job='train',
                               customer_indicator=customer_indicator,
                               amount_indicator=amount_indicator)
     if job == 'train':
-        print("sasdsdsdsdsdsaaaaa..........")
         next_purchase.train_execute()
-    next_purchase.prediction_execute()
     purchase_amount = TrainConv1Dimension(
                                           date=date,
                                           time_indicator=time_indicator,
@@ -53,8 +51,8 @@ def main(job='train',
                                           time_period=time_period,
                                           directory=export_path,
                                           customer_indicator=customer_indicator,
-                                          num_of_future_orders=next_purchase.results,
-                                          amount_indicator=None)
+                                          predicted_orders=next_purchase.results,
+                                          amount_indicator=amount_indicator)
     if job == 'prediction':
         purchase_amount.prediction_execute()
     if job == 'train':
@@ -63,6 +61,7 @@ def main(job='train',
 
 
 if __name__ == '__main__':
+    print(sys.argv)
     parser = argparse.ArgumentParser()
     parser.add_argument("-J", "--job", type=str,
                         help="""
@@ -76,7 +75,7 @@ if __name__ == '__main__':
                         )
     parser.add_argument("-CI", "--customer_indicator", type=str,
                         help="""identifier of the customer (id)
-                                
+    
                         """,
                         )
     parser.add_argument("-AI", "--amount_indicator", type=str,
@@ -100,14 +99,14 @@ if __name__ == '__main__':
     parser.add_argument("-TI", "--time_indicator", type=str,
                         help="""
                         This can only be applied with date. It can be hour, day, week, week_part, quarter, year, month.
-                        Individually time indicator checks the date part is significantly 
+                        Individually time indicator checks the date part is significantly
                         a individual group for data set or not.
                         If it is uses time_indicator as a  group
                         """,
                         )
     parser.add_argument("-TP", "--time_period", type=str,
                         help="""
-                        This shows us to the time period 
+                        This shows us to the time period
                         """,
                         )
     parser.add_argument("-EP", "--export_path", type=str,
