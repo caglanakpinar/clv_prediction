@@ -73,6 +73,65 @@ def get_data_time_period_column(data, results, time_indicator, time_period):
 
 def pivoting_data_per_time_period(data, results, time_indicator, time_period, amount_indicator, customer_indicator):
     data = get_data_time_period_column(data, results, time_indicator, time_period)
+def get_new_comer_list(row, customer_list, time_p_ind, customer_indicator):
+    prev_customers = list(customer_list[customer_list[time_p_ind] < row[time_p_ind]][customer_indicator])
+    if len(prev_customers) != 0:
+        prev_customers = np.concatenate(np.array(prev_customers)).tolist()
+        return list(set(row[customer_indicator]) - set(prev_customers))
+    else:
+        return row[customer_indicator]
+
+
+def get_churn_list(row, customer_list, time_p_ind, customer_indicator, max_time_indicator):
+    prediction_customers = list(customer_list[customer_list[time_p_ind] == max_time_indicator][customer_indicator])
+    if len(row[customer_indicator]) != 0 and len(prediction_customers) != 0:
+        prediction_customers = np.concatenate(np.array(prediction_customers)).tolist()
+        return list(set(prediction_customers) - set(row[customer_indicator]))
+    else:
+        return []
+
+
+def get_churn_and_new_comer_columns(data, time_p_ind, amount_indicator, customer_indicator):
+    data_pv = data.groupby(time_p_ind).agg(
+        {amount_indicator + "_sum": "sum",
+         amount_indicator + "_mean": "mean",
+         customer_indicator: lambda x: list(np.unique(x))}).reset_index()
+
+    data_pv = data_pv.sort_values(by=time_p_ind, ascending=True)
+    customer_list = data_pv[[time_p_ind, customer_indicator]]
+    predicted_time_period = max(customer_list[time_p_ind])
+    data_pv['new_comer_list'] = data_pv.apply(
+        lambda row: get_new_comer_list(row, customer_list, time_p_ind, customer_indicator), axis=1)
+    data_pv['churn_list'] = data_pv.apply(
+        lambda row: get_churn_list(row, customer_list, time_p_ind, customer_indicator, predicted_time_period), axis=1)
+    groups = [time_p_ind, customer_indicator]
+    data = pd.merge(data, data_pv[[time_p_ind, 'new_comer_list']], on=time_p_ind, how='left')
+    data = pd.merge(data, data_pv[[time_p_ind, 'churn_list']], on=time_p_ind, how='left')
+    return data, max(customer_list[time_p_ind])
+
+
+def get_new_comer_churn_data(data, customer_indicator, amount_indicator, time_p_ind):
+    data['is_new_comer'] = data.apply(lambda row: True if row[customer_indicator] in row['new_comer_list'] else False,
+                                      axis=1)
+    data['is_churn'] = data.apply(lambda row: True if row[customer_indicator] in row['churn_list'] else False, axis=1)
+    new_comer_data = data.query("is_new_comer == True").groupby(time_p_ind).agg(
+        {amount_indicator + "_sum": "sum",
+         amount_indicator + "_mean": "mean"}).reset_index()
+    churn_data = data.query("is_churn == True").groupby(time_p_ind).agg(
+        {amount_indicator + "_sum": "sum",
+         amount_indicator + "_mean": "mean"}).reset_index()
+    return new_comer_data, churn_data
+
+
+def pivoting_data_per_time_period(data,
+                                  results,
+                                  time_indicator,
+                                  time_period,
+                                  amount_indicator,
+                                  customer_indicator,
+                                  top_100_customers,
+                                  worst_100_customers):
+    time_p_ind = time_indicator + '_per_' + time_period
     data[amount_indicator + "_sum"], data[amount_indicator + "_mean"] = data[amount_indicator], data[amount_indicator]
     data_pv = data.groupby([customer_indicator, time_indicator + '_per_' + time_period]).agg(
         {amount_indicator + "_sum": "sum", amount_indicator + "_mean": "mean"}).reset_index()
