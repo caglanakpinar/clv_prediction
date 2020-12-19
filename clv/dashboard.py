@@ -30,14 +30,6 @@ def data_source(time_indicator, amount_indicator):
     return data
 
 
-def get_results(directory):
-    results = pd.DataFrame()
-    result_files = [f for f in listdir(dirname(join(directory, ""))) if f.split("_")[0] == join(directory, "results")]
-    if len(result_files) != 0:
-        results = pd.concat([results] + [pd.read_csv(f) for f in result_files])
-    return results
-
-
 def get_filters(results, customer_indicator, amount_indicator):
     data_pv = results.groupby(customer_indicator).agg({"prediction_values": "sum"}).reset_index()
     top_100_customers = list(data_pv.sort_values("prediction_values",ascending=False)[customer_indicator])[0:100]
