@@ -250,14 +250,19 @@ class CLV:
 
     def show_dashboard(self):
         """
-        if you are running dashboard make sure you have assigned export_path.
+        if you are running dashboard, make sure you have assigned export_path.
         """
         create_dashboard(self.customer_indicator,
                          self.amount_indicator,
                          self.export_path,
                          self.time_indicator,
                          self.time_period,
-                         self.data_query_path,
+                         self.data_query_path_raw,
                          self.data_source)
 
+    def create_api_for_runnig_realtime_customer_valuePredicion(self):
+        """
+        Real time api for prediction values for individual customer or customer list
+        :return:
+        """
 
