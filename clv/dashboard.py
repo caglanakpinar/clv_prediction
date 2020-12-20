@@ -5,22 +5,26 @@ import dash_html_components as html
 import plotly.graph_objs as go
 import pandas as pd
 import numpy as np
-import random
 import datetime
-from os.path import dirname, join
-from os import listdir
+import webbrowser
+import argparse
+
+try:
+    from .data_access import GetData
+    from .utils import convert_date
+    from .functions import convert_time_preiod_to_days, get_results
+except Exception as e:
+    from data_access import GetData
+    from utils import convert_date
+    from functions import convert_time_preiod_to_days, get_results
 
 
-from .data_access import GetData
-from .utils import read_yaml
-
-
-def data_source(time_indicator, amount_indicator):
+def get_raw_data(time_indicator, amount_indicator, data_source, data_query_path):
     try:
-        source = GetData(data_query_path="sample_data.csv",
-                         data_source="csv",
+        source = GetData(data_query_path=data_query_path,
+                         data_source=data_source,
                          time_indicator=time_indicator,
-                         feature=amount_indicator, test=1000)
+                         feature=amount_indicator)
         source.query_data_source()
         source.convert_feature()
         data = source.data
@@ -176,12 +180,11 @@ def adding_filter(filter_id, labels, size, is_multi_select, value):
 
 
 """
+Time Line Chart with filter selected average/Total value per time period with predicted life time value
 Top 100 customer of Time Period Change
 Worst 100 Customer Of Time Period Value Change
-Time Line Chart with filter selected average/Total value per time period with predicted life time value
-One Single Value Of Total Life Time Value Filter selected.
-Comparison Of User With Selected Time Period And their Predicted Values
-
+New Comers of Time line with selected date from Time Line Chart
+Churn Customers of Time line with selected date from Time Line Chart
 """
 
 
