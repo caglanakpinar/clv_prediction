@@ -259,11 +259,18 @@ class TrainConv1Dimension:
                                                           self.model.input.shape[1] + 1,
                                                           self.c_min_max.query("user_id == @_user"))
             self.results = pd.concat([self.results, prediction])
-        self.results = merging_predicted_date_to_result_date(self.results, self.data, self.predicted_orders,
+        self.results = merging_predicted_date_to_result_date(self.results,
+                                                             self.predicted_orders,
                                                              self.customer_indicator,
                                                              self.time_indicator,
                                                              self.amount_indicator)
-        self.results.to_csv(get_result_data_path(self.directory, self.time_period), index=False)
+        self.results = check_for_previous_predicted_clv_results(self.results,
+                                                                self.directory,
+                                                                self.time_period,
+                                                                self.time_indicator,
+                                                                self.customer_indicator,
+                                                                self.amount_indicator)
+        self.results.to_csv(get_result_data_path(self.directory, self.time_period, self.max_date), index=False)
         print("lifetime value :")
         print(self.results.head())
 
