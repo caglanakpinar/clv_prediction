@@ -262,15 +262,11 @@ def check_model_exists(path, model_name, time_period):
     day_range_for_model_training = convert_time_preiod_to_days(time_period)
     prev_model = None
     for m in listdir(dirname(join(path, ""))):
-        print(m.split("_"))
-        print("_".join(m.split("_")[:-2]))
         if "_".join(m.split("_")[:-2]) == model_name:
             _date_str = m.split("_")[-2]
             _date_str = "-".join([_date_str[0:4], _date_str[4:6], _date_str[6:]])
             _date = datetime.datetime.strptime(_date_str, "%Y-%m-%d")
-            print(abs((_date - current_date).total_seconds()) / 60 / 60 / 24)
             if abs((_date - current_date).total_seconds()) / 60 / 60 / 24 < day_range_for_model_training:
-                print(m.split("_")[-1].split(".")[0])
                 if m.split("_")[-1].split(".")[0] == time_period:
                     prev_model = m
     return prev_model
