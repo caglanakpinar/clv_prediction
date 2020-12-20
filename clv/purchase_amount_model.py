@@ -46,9 +46,17 @@ def get_params(params, comb):
 
 
 def get_order_freq(predicted_orders, customer_indicator, time_indicator):
-    predicted_orders['order_seq_num'] = predicted_orders.sort_values(
-        by=[customer_indicator, time_indicator]).groupby([customer_indicator]).cumcount() + 1
+    if predicted_orders is not None:
+        predicted_orders['order_seq_num'] = predicted_orders.sort_values(
+            by=[customer_indicator, time_indicator]).groupby([customer_indicator]).cumcount() + 1
     return predicted_orders
+
+
+def get_number_of_orders(predicted_orders, customer_indicator):
+    number_of_orders = None
+    if predicted_orders is not None:
+        number_of_orders = predicted_orders.groupby(customer_indicator).agg({"order_seq_num": "max"}).reset_index()
+    return number_of_orders
 
 
 class TrainConv1Dimension:
@@ -91,7 +99,7 @@ class TrainConv1Dimension:
         self.residuals, self.anomaly = [], []
         self.customers = list(self.data[customer_indicator].unique())
         self.predicted_orders = get_order_freq(predicted_orders, customer_indicator, time_indicator)
-        self.num_of_future_orders = self.predicted_orders.groupby(customer_indicator).agg({"order_seq_num": "max"}).reset_index()
+        self.num_of_future_orders = get_number_of_orders(self.predicted_orders, self.customer_indicator)
         self.results = DataFrame()
 
     def train_test_split(self):
