@@ -106,7 +106,8 @@ class TrainLSTM:
     def data_preparation(self):
         global model_data
         model_data = {}
-        execute_parallel_run(self.customers, self.get_model_data, arguments=None)
+        print("number of customers :", len(self.customers))
+        execute_parallel_run(self.customers, self.get_model_data, arguments=None, parallel=16)
         try_count = 0
         while try_count < 20:
             try:
@@ -228,19 +229,26 @@ class TrainLSTM:
         self.results = self.data[[self.time_indicator, 'time_diff', 'time_diff_norm', self.customer_indicator]]
         global prediction_data
         prediction_data = {}
-        # execute_parallel_run(self.customers, self.prediction_per_customer, arguments=None, parallel=8)
+        execute_parallel_run(self.customers, self.prediction_per_customer, arguments=None, parallel=8)
         print("merge predicted data ...")
 
         for c in self.customers:
-            self.prediction_per_customer(c)
-            self.results = concat([self.results, prediction_data[c]])
+            try:
+                self.results = concat([self.results, prediction_data[c]])
+            except Exception as e:
+                time.sleep(2)
+                print(c)
+            # self.prediction_per_customer(c)
+            # self.results = concat([self.results, prediction_data[c]])
+        print("number of total predicted values")
+        print(len(self.results))
         self.results['max_date'], self.results['future_date'] = self.max_date, self.future_date
         self.results = self.results[(self.results[self.time_indicator] > self.results['max_date']) &
                                     (self.results[self.time_indicator] < self.results['future_date'])]
         print(self.results.head())
 
     def parameter_tuning(self):
-        if check_for_existing_parameters(self.directory, 'next_purchase_model') is None:
+        if check_for_existing_parameters(self.directory, 'next_purchase') is None:
             print(self.hyper_params)
             tuner = RandomSearch(
                                  self.build_parameter_tuning_model,
@@ -268,7 +276,6 @@ class TrainLSTM:
                 write_yaml(self.directory, "test_parameters.yaml", {'next_purchase': self.params}, ignoring_aliases=True)
         else:
             self.params = check_for_existing_parameters(self.directory, 'next_purchase')
-            print("ASDASDASDD!'^^'^^'='=='='=!!!!!!!!!!!!'^^^EQWEQWER!+RQfasf *******************************   ")
 
 
 
