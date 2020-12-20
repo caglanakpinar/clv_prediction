@@ -185,18 +185,20 @@ Churn Customers of Time line with selected date from Time Line Chart
 
 
 def get_hover_data(data, time_indicator, time_period, number_of_graph):
-    return [{'customdata': sorted(list(data[time_indicator + '_per_' + time_period]))[-3]}] * number_of_graph
+    value = sorted(list(data[time_indicator + '_per_' + time_period]))
+    return [{'customdata': str(value[-min(3, len(value))])}] * number_of_graph
 
 
-def create_dashboard(server, customer_indicator, amount_indicator, directory, time_indicator, time_period):
+def create_dashboard(customer_indicator, amount_indicator, directory,
+                     time_indicator, time_period, data_query_path, data_source):
     external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
     app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
     try:
-        data = data_source()
-        results = get_results(directory)
+        data = get_raw_data(time_indicator, amount_indicator, data_source, data_query_path)
+        results = get_results(directory, time_period, amount_indicator)
         num_f_p, filters, filter_ids, top_100_customers, worst_100_customers = get_filters(results,
-                                                                                                        customer_indicator,
-                                                                                                        amount_indicator)
+                                                                                           customer_indicator,
+                                                                                           amount_indicator)
         app.layout = html.Div()
         if len(data) == 0:
             return app
@@ -204,9 +206,16 @@ def create_dashboard(server, customer_indicator, amount_indicator, directory, ti
         print(e)
         app.layout = html.Div()
         return app
-    data = pivoting_data_per_time_period(data, results, time_indicator, time_period, amount_indicator, customer_indicator)
-    top_100_data = data[data[customer_indicator].isin(top_100_customers)]
-    worst_100_data = data[data[customer_indicator].isin(worst_100_customers)]
+    data, top_100_data, worst_100_data, predicted_time_period, \
+    new_comer_data, churn_data = pivoting_data_per_time_period(
+                                                                data,
+                                                                results,
+                                                                time_indicator,
+                                                                time_period,
+                                                                amount_indicator,
+                                                                customer_indicator,
+                                                                top_100_customers,
+                                                                worst_100_customers)
 
     filter_style = {
                     'borderBottom': 'thin lightgrey solid',
