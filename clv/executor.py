@@ -1,5 +1,6 @@
 from os.path import join
 import threading
+import pandas as pd
 
 try:
     from main import main
@@ -7,12 +8,14 @@ try:
     from utils import get_folder_path, write_yaml, read_yaml
     from configs import conf
     from scheduler_service import create_job
+    from dashboard import create_dahboard
 except Exception as e:
     from .main import main
     from .data_access import GetData
     from .utils import get_folder_path, write_yaml, read_yaml
     from .configs import conf
     from .scheduler_service import create_job
+    from .dashboard import create_dashboard
 
 
 class CLV:
@@ -76,6 +79,9 @@ class CLV:
         self.time_schedule = time_schedule
         self.export_path = export_path
         self.connector = connector
+        self.result_columns = [customer_indicator, 'order_seq_num', time_indicator, amount_indicator, 'data_type']
+        self.raw_data = pd.DataFrame()
+        self.results = pd.DataFrame()
         self.arguments = {"job": job,
                           "time_period": time_period,
                           "order_count": order_count,
@@ -86,16 +92,16 @@ class CLV:
                           "data_query_path": data_query_path,
                           "time_indicator": time_indicator,
                           "export_path": export_path}
-        self.arg_terminal ={"job": "J",
-                            "time_period": "TP",
-                            "order_count": "OC",
-                            "date": "D",
-                            "customer_indicator": "CI",
-                            "amount_indicator": "AI",
-                            "data_source": "DS",
-                            "data_query_path": "DQP",
-                            "time_indicator": "TI",
-                            "export_path": "EP"}
+        self.arg_terminal = {"job": "J",
+                             "time_period": "TP",
+                             "order_count": "OC",
+                             "date": "D",
+                             "customer_indicator": "CI",
+                             "amount_indicator": "AI",
+                             "data_source": "DS",
+                             "data_query_path": "DQP",
+                             "time_indicator": "TI",
+                             "export_path": "EP"}
         self.schedule_arg = "TS"
         self.args_str = ""
         self.mandetory_arguments = ["data_source", "data_query_path", "customer_indicator",
@@ -194,6 +200,17 @@ class CLV:
         else:
             print("pls check for data source connection / path / query.")
 
+    def get_result_data(self):
+        if self.clv_predicted is not None:
+            self.raw_data = self.clv_predicted['next_purchase'].data
+            self.results = self.clv_predicted['purchase_amount'].results
+            self.raw_data['data_type'] = 'actual'
+            self.raw_data['order_seq_num'] = self.raw_data.sort_values(
+                by=[self.customer_indicator, self.time_indicator]).groupby([self.customer_indicator]).cumcount() + 1
+            self.raw_data = self.raw_data[self.result_columns]
+            return pd.concat([self.raw_data, self.results])
+        else: return None
+
     def check_for_time_schedule(self):
         if self.time_schedule is None:
             return True
@@ -225,5 +242,12 @@ class CLV:
         """
         if you are running dashboard make sure you have assigned export_path.
         """
+        create_dashboard(self.customer_indicator,
+                         self.amount_indicator,
+                         self.export_path,
+                         self.time_indicator,
+                         self.time_period,
+                         self.data_query_path,
+                         self.data_source)
 
 
