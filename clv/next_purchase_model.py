@@ -184,7 +184,6 @@ class TrainLSTM:
             self.model = model_from_to_json(path=join(self.directory, self.model))
             print(self.model)
             print("Previous model already exits in the given directory  '" + self.directory + "'.")
-        self.prediction_execute()
 
     def prediction_per_customer(self,  customer):
         warnings.simplefilter("ignore")
