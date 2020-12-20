@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from dateutil.parser import parse
 
 try:
     from data_access import GetData
@@ -44,6 +45,7 @@ def data_manipulation(date, time_indicator, order_count, data_source, data_query
     print("data size :", len(data_process.data))
     data = data_process.data
     data[time_indicator] = data[time_indicator].apply(lambda x: convert_str_to_day(x))
+    max_date = max(data[time_indicator])
     data = data.sort_values(by=[customer_indicator, time_indicator], ascending=True)
     data['order_seq_num'] = data.sort_values(by=[customer_indicator,
                                                  time_indicator]).groupby([customer_indicator]).cumcount() + 1
@@ -62,7 +64,7 @@ def data_manipulation(date, time_indicator, order_count, data_source, data_query
     data, customer_min_max = get_customer_min_max_data(data, feature, customer_indicator)
     data = pivoting_orders_sequence(data, customer_indicator, feature)
     features = list(range(1, order_count))
-    return data, features, order_count, customer_min_max
+    return data, features, order_count, customer_min_max, max_date
 
 
 def order_count_decision(data, order_count, customer_indicator):
