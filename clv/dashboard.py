@@ -31,10 +31,10 @@ def data_source(time_indicator, amount_indicator):
 
 
 def get_filters(results, customer_indicator, amount_indicator):
-    data_pv = results.groupby(customer_indicator).agg({"prediction_values": "sum"}).reset_index()
-    top_100_customers = list(data_pv.sort_values("prediction_values",ascending=False)[customer_indicator])[0:100]
-    worst_100_customers = list(data_pv.sort_values("prediction_values", ascending=True)[customer_indicator])[0:100]
-    calculation_selection = ['Sum Of ' + amount_indicator, 'Average Of ' + amount_indicator]
+    data_pv = results.groupby(customer_indicator).agg({amount_indicator: "sum"}).reset_index()
+    top_100_customers = list(data_pv.sort_values(amount_indicator,ascending=False)[customer_indicator])[0:100]
+    worst_100_customers = list(data_pv.sort_values(amount_indicator, ascending=True)[customer_indicator])[0:100]
+    calculation_selection = ['sum', 'mean']
     filter_datas = [top_100_customers, worst_100_customers, calculation_selection]
     filter_ids = ['top_100_customers', 'worst_100_customers', 'calculation_type']
     filter_sizes = [100, 100, 2]
