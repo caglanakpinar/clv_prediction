@@ -252,15 +252,18 @@ class CLV:
         """
         if you are running dashboard, make sure you have assigned export_path.
         """
-        create_dashboard(self.customer_indicator,
-                         self.amount_indicator,
-                         self.export_path,
-                         self.time_indicator,
-                         self.time_period,
-                         self.data_query_path_raw,
-                         self.data_source)
+        process = threading.Thread(target=create_dashboard,
+                                   kwargs={"customer_indicator": self.customer_indicator,
+                                           "amount_indicator": self.amount_indicator,
+                                           "directory": self.export_path,
+                                           "time_indicator": self.time_indicator,
+                                           "time_period": self.time_period,
+                                           "data_query_path": self.data_query_path_raw,
+                                           "data_source": self.data_source})
+        process.daemon = True
+        process.start()
 
-    def create_api_for_runnig_realtime_customer_valuePredicion(self):
+    def create_api_for_runig_realtime_customer_value_predicion(self):
         """
         Real time api for prediction values for individual customer or customer list
         :return:

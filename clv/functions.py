@@ -250,9 +250,9 @@ def convert_time_preiod_to_days(time_period):
         return 30
     if time_period == 'week':
         return 7
-    if time_period == '2_weeks':
+    if time_period == '2*week':
         return 14
-    if time_period == '2_months':
+    if time_period == '2*month':
         return 60
     if time_period == 'quarter':
         return 90
