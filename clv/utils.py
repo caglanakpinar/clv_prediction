@@ -373,9 +373,8 @@ def get_iter_sample(s_values, i, iters, cpus):
 def execute_parallel_run(values, executor, parallel=2, arguments=None):
     global process
     cpus = cpu_count()
-    print(cpu_count(), parallel)
-    if parallel > cpus:
-        parallel = cpus
+    if parallel > cpus * 4:
+        parallel = cpus * 4
     iters = int(len(values) / parallel) + 1
     print("number of iterations :", iters)
     for i in range(iters):
