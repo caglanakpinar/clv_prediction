@@ -200,8 +200,9 @@ def get_current_day(replace=True):
     return str(datetime.datetime.now())[0:10].replace("-", "") if replace else str(datetime.datetime.now())[0:10]
 
 
-def get_result_data_path(directory, time_period):
-    return join(directory, "results_" + time_period + "_" + get_current_day() + ".csv")
+def get_result_data_path(directory, time_period, max_date):
+    return join(directory, "results_" + time_period + "_" +
+                str(max_date)[0:10].replace("-", "") + "_" + get_current_day() + ".csv")
 
 
 def convert_date_v2(x):
