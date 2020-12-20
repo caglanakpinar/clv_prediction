@@ -222,11 +222,10 @@ def create_dashboard(customer_indicator, amount_indicator, directory,
                     'backgroundColor': 'rgb(250, 250, 250)',
                     'padding': '10px 5px'
     }
-    plot_ids = ['top_100_customer', 'worst_100_customer', 'time_line_of_values',
-                'comparion_with_prediction', 'user_selection_comparison']
-    plot_sizes = [99, 45, 45, 45, 45]
+    plot_ids = ['time_line_of_values', 'top_100_customer', 'worst_100_customer',
+                'churn_customer', 'new_comer_customer', 'churn_rate', 'new_comer_engage_rate']
+    plot_sizes = [99, 24, 24, 24, 24, 24, 24]
     hover_datas = get_hover_data(data, time_indicator, time_period, len(plot_ids))
-    plot_dfs = []
     plots = list(zip(plot_ids, plot_sizes, hover_datas))
     # adding filters
     pane_count = int(len(filters) / num_f_p) if int(len(filters) / num_f_p) == len(filters) / num_f_p else int(
@@ -240,106 +239,181 @@ def create_dashboard(customer_indicator, amount_indicator, directory,
     for p in plots:
         components.append(adding_plots_to_pane(p[0], p[2], p[1]))
     app.layout = html.Div(components)
+    # Churn Rate
+    """
+    HoverData from clv time line selected date of customers who are newcomer of time line till the predicted time period
+    """
+    @app.callback(
+        dash.dependencies.Output(plot_ids[5], 'figure'),
+        [dash.dependencies.Input('time_line_of_values', 'hoverData')]
+    )
+    def update_graph_4(hover_data):
+        starting_date = hover_data['points'][0]['customdata']
+        dff = churn_data[churn_data[time_indicator + '_per_' + time_period] == starting_date]
+        if len(dff) == 0:
+            return {"data": [], "layout": go.Layout(height=600, title="Churn Customers Of Purchase Time Line")}
+        else:
+            churn_rate = \
+            list(churn_data[churn_data[time_indicator + '_per_' + time_period] == starting_date]['churn_ratio'])[0]
+            return_rate = 1 - churn_rate
+            trace = [go.Pie(labels=['Churn Rate', 'Return Rate'],
+                            values=[churn_rate, return_rate],
+                            )
+                     ]
+            return {"data": trace,
+                    "layout": go.Layout(height=600, title=" Churn Rate (%) per " + time_period)}
+
+    # New Comer Rati0
+    """
+    HoverData from clv time line selected date of customers who are newcomer of time line till the predicted time period
+    """
+    @app.callback(
+        dash.dependencies.Output(plot_ids[6], 'figure'),
+        [dash.dependencies.Input('time_line_of_values', 'hoverData')]
+    )
+    def update_graph_4(hover_data):
+        starting_date = hover_data['points'][0]['customdata']
+        dff = new_comer_data[new_comer_data[time_indicator + '_per_' + time_period] == starting_date]
+        if len(dff) == 0:
+            return {"data": [], "layout": go.Layout(height=600, title="Churn Customers Of Purchase Time Line")}
+        else:
+            newc_rate = \
+            list(churn_data[churn_data[time_indicator + '_per_' + time_period] == starting_date]['churn_ratio'])[0]
+            engaged_users = 1 - newc_rate
+            trace = [go.Pie(labels=['New Comer User Ratio', 'Engaged User Ratio'],
+                            values=[newc_rate, engaged_users],
+                            )
+                     ]
+            return {"data": trace,
+                    "layout": go.Layout(height=600, title=" New Comer Rate (%) per " + time_period)}
+
+    # Churn Customers Of Purchase Time Line
+    """
+    HoverData from clv time line selected date of customers who are newcomer of time line till the predicted time period
+    """
+    @app.callback(
+        dash.dependencies.Output(plot_ids[3], 'figure'),
+        [dash.dependencies.Input(f, 'value') for f in [filter_ids[-1]]] +
+        [dash.dependencies.Input('time_line_of_values', 'hoverData')]
+    )
+    def update_graph_4(sum_or_avg, hover_data):
+        starting_date = hover_data['points'][0]['customdata']
+        value_column = amount_indicator + "_sum" if sum_or_avg == 'sum' else amount_indicator + "_mean"
+        dff = churn_data[churn_data[time_indicator + '_per_' + time_period] >= starting_date]
+        func = {value_column: "sum"} if sum_or_avg == 'sum' else {amount_indicator + "_mean": "mean"}
+        dff = dff.groupby(time_indicator + '_per_' + time_period).agg(func).reset_index()
+        if len(dff) == 0:
+            return {"data": [], "layout": go.Layout(height=600, title="Churn Customers Of Purchase Time Line")}
+        else:
+            trace = [go.Scatter(x=dff[time_indicator + '_per_' + time_period],
+                                y=dff[value_column],
+                                mode='markers+lines',
+                                name=value_column)
+                     ]
+            return {"data": trace,
+                    "layout": go.Layout(height=600, title=" Churn customers Of Customers Of Purchase Time Line ")}
+
     # top 100 customers
     @app.callback(
-        dash.dependencies.Output(plot_ids[0], 'figure'),
+        dash.dependencies.Output(plot_ids[1], 'figure'),
         [dash.dependencies.Input(f, 'value') for f in [filter_ids[0], filter_ids[-1]]]
     )
-    def update_graph_1(*args):
-        f = filter_ids[0]
-        dff = top_100_data[top_100_data[customer_indicator] == args[f]] if args[f] is not None else data
-        value_column = amount_indicator + "_sum" if args[filter_ids[-1]] == 'sum' else amount_indicator + "_mean"
-        func = {value_column: "sum"} if args[filter_ids[-1]] == 'sum' else {amount_indicator + "_mean": "mean"}
+    def update_graph_1(_customer, sum_or_avg):
+        dff = top_100_data[top_100_data[customer_indicator] == _customer] if _customer != 'all' else top_100_data
+        value_column = amount_indicator + "_sum" if sum_or_avg == 'sum' else amount_indicator + "_mean"
+        func = {value_column: "sum"} if sum_or_avg == 'sum' else {amount_indicator + "_mean": "mean"}
         dff = dff.groupby(time_indicator + '_per_' + time_period).agg(func).reset_index()
-        title = "Top Customer " + args[f] if args[f] is not None else "Top 100 Customers"
+        title = "Top 100 the most Engaged Customers of Average Values per " + time_period
+        if sum_or_avg == 'sum':
+            title = title.replace("Average", "Sum")
         if len(dff) == 0:
             return {"data": [], "layout": go.Layout(height=600, title=title)}
         else:
             trace = go.Scatter(x=dff[time_indicator + '_per_' + time_period],
                                y=dff[value_column],
                                mode='markers+lines',
-                               customdata=dff[time_indicator + '_per_' + time_period],
                                name=value_column)
-            return {"data": trace,
+            return {"data": [trace],
                     "layout": go.Layout(height=600, title=title)}
 
     # worst 100 customers
     @app.callback(
-        dash.dependencies.Output(plot_ids[1], 'figure'),
+        dash.dependencies.Output(plot_ids[2], 'figure'),
         [dash.dependencies.Input(f, 'value') for f in [filter_ids[1], filter_ids[-1]]]
     )
-    def update_graph_2(*args):
-        f = filter_ids[1]
-        dff = worst_100_data[worst_100_data[customer_indicator] == args[f]] if args[f] is not None else data
-        value_column = amount_indicator + "_sum" if args[filter_ids[-1]] == 'sum' else amount_indicator + "_mean"
-        func = {value_column: "sum"} if args[filter_ids[-1]] == 'sum' else {amount_indicator + "_mean": "mean"}
+    def update_graph_2(_customer, sum_or_avg):
+        dff = worst_100_data[worst_100_data[customer_indicator] == _customer] if _customer != 'all' else worst_100_data
+        value_column = amount_indicator + "_sum" if sum_or_avg == 'sum' else amount_indicator + "_mean"
+        func = {value_column: "sum"} if sum_or_avg == 'sum' else {amount_indicator + "_mean": "mean"}
         dff = dff.groupby(time_indicator + '_per_' + time_period).agg(func).reset_index()
-        title = "Worst Customer " + args[f] if args[f] is not None else "Worst 100 Customers"
+        title = "Top 100 the least Engaged Customers of Average Values per " + time_period
+        if sum_or_avg == 'sum':
+            title = title.replace("Average", "Sum")
         if len(dff) == 0:
             return {"data": [], "layout": go.Layout(height=600, title=title)}
         else:
-            trace = go.Scatter(x=dff[time_indicator + '_per_' + time_period],
-                               y=dff[value_column],
-                               mode='markers+lines',
-                               customdata=dff[time_indicator + '_per_' + time_period],
-                               name=value_column)
+            trace = [go.Scatter(x=dff[time_indicator + '_per_' + time_period],
+                                y=dff[value_column],
+                                mode='markers+lines',
+                                name=value_column)]
             return {"data": trace,
                     "layout": go.Layout(height=600, title=title)}
 
-    # New Commers Of Customer Value Prediction
+    # Time Line Of CLV Prediction
     """
     HoverData from clv time line selected date of customers who are newcomer of time line till the predicted time period
     """
     @app.callback(
-        dash.dependencies.Output(plot_ids[2], 'figure'),
-        [dash.dependencies.Input(f, 'value') for f in [filter_ids[-1]]] +
-        [dash.dependencies.Input('daily-winners-line', 'hoverData')]
+        dash.dependencies.Output(plot_ids[0], 'figure'),
+        [dash.dependencies.Input(f, 'value') for f in [filter_ids[-1]]]
     )
-    def update_graph_4(*args):
-        value_column = amount_indicator + "_sum" if args[filter_ids[-1]][-1] == 'sum' else amount_indicator + "_mean"
-        func = {value_column: "sum"} if args[filter_ids[-1]] == 'sum' else {amount_indicator + "_mean": "mean"}
-        dff = data.groupby(time_indicator + '_per_' + time_period).agg(func).reset_index()
-        title = "SUM of " if args[filter_ids[-1]] == 'sum' else "Average of "
+    def update_graph_4(sum_or_avg):
+        value_column = amount_indicator + "_sum" if sum_or_avg == 'sum' else amount_indicator + "_mean"
+        title = "SUM of " if sum_or_avg == 'sum' else "Average of "
         title += "CLV Prediction per " + time_period
-        if len(dff) == 0:
+        _prev_time_period = predicted_time_period - datetime.timedelta(days=convert_time_preiod_to_days(time_period))
+        if len(data) == 0:
             return {"data": [], "layout": go.Layout(height=600, title=title)}
         else:
-            trace = go.Scatter(x=dff[time_indicator + '_per_' + time_period],
-                               y=dff[value_column],
-                               mode='markers+lines',
-                               customdata=dff[time_indicator + '_per_' + time_period],
-                               name=value_column)
+            trace = [go.Scatter(x=data[time_indicator + '_per_' + time_period],
+                                y=data[value_column],
+                                mode='markers+lines',
+                                customdata=data[time_indicator + '_per_' + time_period],
+                                name=value_column),
+                     go.Scatter(x=[_prev_time_period, _prev_time_period],
+                                y=[0, max(data[value_column])],
+                                mode='markers+lines',
+                                name='CLV Prediction Date Start')]
             return {"data": trace,
                     "layout": go.Layout(height=600, title=title)}
 
-    # Churn customers Of Customer Value Prediction
+    # Newcomer Customers Of Customer Value Prediction
     """
     HoverData from clv time line selected date of customers who are newcomer of time line till the predicted time period
     """
     @app.callback(
-        dash.dependencies.Output(plot_ids[2], 'figure'),
+        dash.dependencies.Output(plot_ids[4], 'figure'),
         [dash.dependencies.Input(f, 'value') for f in [filter_ids[-1]]] +
-        [dash.dependencies.Input('daily-winners-line', 'hoverData')]
+        [dash.dependencies.Input('time_line_of_values', 'hoverData')]
     )
-    def update_graph_4(*args):
-        starting_date = args['hoverData']['points'][0]['customdata']
-
-
-        value_column = amount_indicator + "_sum" if args[filter_ids[-1]][-1] == 'sum' else amount_indicator + "_mean"
-        func = {value_column: "sum"} if args[filter_ids[-1]] == 'sum' else {amount_indicator + "_mean": "mean"}
-        dff = data.groupby(time_indicator + '_per_' + time_period).agg(func).reset_index()
-        title = "SUM of " if args[filter_ids[-1]] == 'sum' else "Average of "
-        title += "CLV Prediction per " + time_period
+    def update_graph_4(sum_or_avg, hover_data):
+        starting_date = hover_data['points'][0]['customdata'] # '2018-01-01 00:00:00'
+        value_column = amount_indicator + "_sum" if sum_or_avg == 'sum' else amount_indicator + "_mean"
+        dff = new_comer_data[new_comer_data[time_indicator + '_per_' + time_period] >= starting_date]
         if len(dff) == 0:
-            return {"data": [], "layout": go.Layout(height=600, title=title)}
+            return {"data": [], "layout": go.Layout(height=600,
+                                                    title="Newcomer Customers Of Customer Value Prediction")}
         else:
-            trace = go.Scatter(x=dff[time_indicator + '_per_' + time_period],
-                               y=dff[value_column],
-                               mode='markers+lines',
-                               customdata=dff[time_indicator + '_per_' + time_period],
-                               name=value_column)
+            trace = [go.Scatter(x=dff[time_indicator + '_per_' + time_period],
+                                y=dff[value_column],
+                                mode='markers+lines',
+                                customdata=dff[time_indicator + '_per_' + time_period],
+                                name=value_column)]
             return {"data": trace,
-                    "layout": go.Layout(height=600, title=title)}
+                    "layout": go.Layout(height=600, title="Newcomer Customers Of Customer Value Prediction")}
+
+    webbrowser.open('http://127.0.0.1:8050/')
+    app.run_server(debug=False)
 
 
 if __name__ == '__main__':
