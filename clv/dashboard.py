@@ -417,4 +417,56 @@ def create_dashboard(customer_indicator, amount_indicator, directory,
 
 
 if __name__ == '__main__':
-    create_dashboard()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-CI", "--customer_indicator", type=str,
+                        help="""identifier of the customer (id)
+#
+                        """,
+                        )
+    parser.add_argument("-AI", "--amount_indicator", type=str,
+                        help="""
+                                data column n-amount (preferred numeric)
+                        """,
+                        )
+    parser.add_argument("-TI", "--time_indicator", type=str,
+                        help="""
+                        This can only be applied with date. It can be hour, day, week, week_part, quarter, year, month.
+                        Individually time indicator checks the date part is significantly
+                        a individual group for data set or not.
+                        If it is uses time_indicator as a  group
+                        """,
+                        )
+    parser.add_argument("-TP", "--time_period", type=str,
+                        help="""
+                        This shows us to the time period
+                        """,
+                        )
+    parser.add_argument("-EP", "--export_path", type=str,
+                        help="""
+                        Exporting path of the results set. Csv file of exporting.
+                        """,
+                        )
+    parser.add_argument("-DS", "--data_source", type=str,
+                        help="""
+                        AWS RedShift, BigQuery, PostgreSQL, csv, json files can be connected to system
+                        """,
+                        required=True)
+    parser.add_argument("-DQP", "--data_query_path", type=str,
+                        help="""
+                        if there is file for data importing;
+                            must be the path (e.g /../.../ab_test_raw_data.csv)
+                        if there is ac- connection such as PostgreSQL / BigQuery
+                            query must at the format "SELECT++++*+++FROM++ab_test_table_+++"
+                        """,
+                        required=True)
+
+    arguments = parser.parse_args()
+
+    args = {
+            'customer_indicator': arguments.customer_indicator,
+            'amount_indicator': arguments.amount_indicator,
+            'directory': arguments.export_path,
+            'time_period': arguments.time_period,
+            'time_indicator': arguments.time_indicator}
+    print(args)
+    create_dashboard(**args)
