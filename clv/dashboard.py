@@ -37,9 +37,9 @@ def get_filters(results, customer_indicator, amount_indicator):
     calculation_selection = ['sum', 'mean']
     filter_datas = [top_100_customers, worst_100_customers, calculation_selection]
     filter_ids = ['top_100_customers', 'worst_100_customers', 'calculation_type']
-    filter_sizes = [100, 100, 2]
+    filter_sizes = [100, 100, 20]
     multiple_selection = [False] * 3
-    values = [top_100_customers[0], worst_100_customers[0], 'Sum Of ' + amount_indicator]
+    values = ['all', 'all', 'sum']
     filters = list(zip(filter_ids, filter_datas, filter_sizes, multiple_selection, values))
     return 3, filters, filter_ids, top_100_customers, worst_100_customers
 
