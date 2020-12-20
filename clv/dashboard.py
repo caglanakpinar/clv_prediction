@@ -55,7 +55,7 @@ def decide_time_period(date, time_period):
         return datetime.datetime.strptime(str(date)[0:4], "%Y")
     if time_period == 'week':  # only shows mondays for weekly comparison
         week_day = datetime.datetime.strptime(str(date)[0:10], "%Y-%m-%d").isoweekday()
-        return datetime.datetime.strptime(str(date)[0:10], "Y-%m-%d") - datetime.timedelta(days=week_day-1)
+        return datetime.datetime.strptime(str(date)[0:10], "%Y-%m-%d") - datetime.timedelta(days=week_day-1)
     if time_period == 'week':  # only shows mondays for weekly comparison
         date = datetime.datetime.strptime(str(date)[0:10], "Y-%m-%d")
         week_day = date.isoweekday()
