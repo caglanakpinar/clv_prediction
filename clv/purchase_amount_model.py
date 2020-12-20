@@ -46,7 +46,7 @@ def get_params(params, comb):
 
 
 def get_order_freq(predicted_orders, customer_indicator, time_indicator):
-    if predicted_orders is not None:
+    if len(predicted_orders) != 0:
         predicted_orders['order_seq_num'] = predicted_orders.sort_values(
             by=[customer_indicator, time_indicator]).groupby([customer_indicator]).cumcount() + 1
     return predicted_orders
@@ -54,7 +54,7 @@ def get_order_freq(predicted_orders, customer_indicator, time_indicator):
 
 def get_number_of_orders(predicted_orders, customer_indicator):
     number_of_orders = None
-    if predicted_orders is not None:
+    if len(predicted_orders) != 0:
         number_of_orders = predicted_orders.groupby(customer_indicator).agg({"order_seq_num": "max"}).reset_index()
     return number_of_orders
 
