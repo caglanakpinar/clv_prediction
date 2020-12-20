@@ -9,6 +9,7 @@ try:
     from configs import conf
     from scheduler_service import create_job
     from dashboard import create_dahboard
+    from functions import check_for_previous_predicted_clv_results
 except Exception as e:
     from .main import main
     from .data_access import GetData
@@ -16,7 +17,7 @@ except Exception as e:
     from .configs import conf
     from .scheduler_service import create_job
     from .dashboard import create_dashboard
-
+    from .functions import check_for_previous_predicted_clv_results
 
 class CLV:
     """
@@ -75,6 +76,7 @@ class CLV:
         self.customer_indicator = customer_indicator
         self.data_source = data_source
         self.data_query_path = data_query_path
+        self.data_query_path_raw = data_query_path
         self.time_indicator = time_indicator
         self.time_schedule = time_schedule
         self.export_path = export_path
@@ -203,11 +205,19 @@ class CLV:
     def get_result_data(self):
         if self.clv_predicted is not None:
             self.raw_data = self.clv_predicted['next_purchase'].data
-            self.results = self.clv_predicted['purchase_amount'].results
             self.raw_data['data_type'] = 'actual'
             self.raw_data['order_seq_num'] = self.raw_data.sort_values(
                 by=[self.customer_indicator, self.time_indicator]).groupby([self.customer_indicator]).cumcount() + 1
             self.raw_data = self.raw_data[self.result_columns]
+            self.results = self.clv_predicted['purchase_amount'].results
+            if len(self.results) == 0:
+                self.results = check_for_previous_predicted_clv_results(self.results,
+                                                                        self.export_path,
+                                                                        self.time_period,
+                                                                        self.time_indicator,
+                                                                        self.customer_indicator,
+                                                                        self.amount_indicator)
+
             return pd.concat([self.raw_data, self.results])
         else: return None
 
