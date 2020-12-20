@@ -190,6 +190,17 @@ def get_predicted_data_readable_form(user, prediction, removing_columns, norm_da
     return predictions
 
 
+def merging_predicted_date_to_result_date(results, feuture_orders,
+                                           customer_indicator, time_indicator, amount_indicator):
+    results = results.rename(columns={"prediction_values": amount_indicator, 'pred_order_seq': 'order_seq_num'})
+    results = pd.merge(results,
+                       feuture_orders[[customer_indicator, 'order_seq_num', time_indicator]],
+                       on=[customer_indicator, 'order_seq_num'], how='left')
+    results['data_type'] = 'prediction'
+    data_columns = [customer_indicator, 'order_seq_num', time_indicator, amount_indicator, 'data_type']
+    return results[data_columns]
+
+
 reshape_3 = lambda x: x.reshape((x.shape[0], x.shape[1], 1))
 reshape_2 = lambda x: x.reshape((x.shape[0], 1))
 
