@@ -74,14 +74,15 @@ class TrainConv1Dimension:
         self.hyper_params = get_tuning_params(hyper_conf('purchase_amount_hyper'), self.params)
         self.optimized_parameters = {}
         self._p = None
-        self.data, self.features, self.y, self.c_min_max = data_manipulation(
-                                                                             date=date,
-                                                                             feature=amount_indicator,
-                                                                             time_indicator=time_indicator,
-                                                                             order_count=order_count,
-                                                                             data_source=data_source,
-                                                                             data_query_path=data_query_path,
-                                                                             customer_indicator=customer_indicator)
+        self.data, self.features, self.y, self.c_min_max, \
+        self.max_date = data_manipulation(
+                                           date=date,
+                                           feature=amount_indicator,
+                                           time_indicator=time_indicator,
+                                           order_count=order_count,
+                                           data_source=data_source,
+                                           data_query_path=data_query_path,
+                                           customer_indicator=customer_indicator)
         self.hp = HyperParameters()
         self.model = check_model_exists(self.directory, "trained_purchase_amount_model", self.time_period)
         self.input = None
