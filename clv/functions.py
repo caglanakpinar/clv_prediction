@@ -356,11 +356,11 @@ def check_for_previous_predicted_clv_results(results,
                                              customer_indicator,
                                              amount_indicator):
     prev_result = get_results(path, time_period, amount_indicator)
-    if len(prev_result) != 0:
+    if len(prev_result) != 0 and len(results) != 0:
         prev_result['same_order'] = True
         prev_result = pd.merge(prev_result,
                                results[[customer_indicator, time_indicator]],
                                on=[customer_indicator, time_indicator], how='left')
         prev_result = prev_result.query("same_order != same_order").drop('same_order', axis=1)
-        results = pd.concat([prev_result, results])
+    results = pd.concat([prev_result, results])
     return results
