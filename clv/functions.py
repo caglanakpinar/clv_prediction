@@ -330,3 +330,37 @@ def get_tuning_params(parameter_tuning, params):
         if p not in list(hyper_params.keys()):
              hyper_params[p] = params[p]
     return hyper_params
+
+
+def get_results(directory, time_period, amount_indicator):
+    results = pd.DataFrame()
+    result_files = [f for f in listdir(dirname(join(directory, ""))) if f.split("_")[0] == "results"]
+    current_date = min([parse(i.split("_")[2]) for i in result_files])
+    date = current_date - datetime.timedelta(days=convert_time_preiod_to_days(time_period))
+    detected_file = None
+    for f in result_files:
+        f_split = f.split("_")
+        if f_split[1] == time_period:
+            if parse(f_split[3].split(".")[0]) >= date:
+                date = parse(f_split[3].split(".")[0])
+                detected_file = f
+    if detected_file is not None:
+        results = pd.read_csv(join(directory, detected_file))
+    return results[results[amount_indicator] == results[amount_indicator]]
+
+
+def check_for_previous_predicted_clv_results(results,
+                                             path,
+                                             time_period,
+                                             time_indicator,
+                                             customer_indicator,
+                                             amount_indicator):
+    prev_result = get_results(path, time_period, amount_indicator)
+    if len(prev_result) != 0:
+        prev_result['same_order'] = True
+        prev_result = pd.merge(prev_result,
+                               results[[customer_indicator, time_indicator]],
+                               on=[customer_indicator, time_indicator], how='left')
+        prev_result = prev_result.query("same_order != same_order").drop('same_order', axis=1)
+        results = pd.concat([prev_result, results])
+    return results
