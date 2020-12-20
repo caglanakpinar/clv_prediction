@@ -124,7 +124,6 @@ class CLV:
         try:
             if self.data_source not in ["csv", "json"]:
                 for i in config['db_connection']:
-                    print(i)
                     if i != 'data_source':
                         config['db_connection'][i] = self.connector[i]
                     else:
@@ -179,7 +178,7 @@ class CLV:
         if self.time_period is None:
             return True
         else:
-            if self.time_period in ["day", "year", "month", "week", "2_weeks", '2_months', "quarter"]:
+            if self.time_period in ["day", "year", "month", "week", "2*week", '2*month', "quarter"]:
                 return True
             else: return False
 
@@ -198,7 +197,7 @@ class CLV:
                     print(" - ".join(self.mandetory_arguments))
             else:
                 print("optional time periods are :")
-                print("day", "year", "month", "week", "2_weeks", '2_months', "hour", "quarter")
+                print("day", "year", "month", "week", "2*week", '2*month', "hour", "quarter")
         else:
             print("pls check for data source connection / path / query.")
 
