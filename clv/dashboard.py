@@ -136,6 +136,17 @@ def pivoting_data_per_time_period(data,
     data_pv = data.groupby([customer_indicator, time_indicator + '_per_' + time_period]).agg(
         {amount_indicator + "_sum": "sum", amount_indicator + "_mean": "mean"}).reset_index()
     return data_pv
+    data = get_data_time_period_column(data, results, time_indicator, time_period)
+    data = data[data[amount_indicator] == data[amount_indicator]]
+    data_pv = data.groupby(time_p_ind).agg(
+        {amount_indicator + "_sum": "sum",
+         amount_indicator + "_mean": "mean",
+         customer_indicator: lambda x: list(np.unique(x))}).reset_index()
+    data, predicted_time_period = get_churn_and_new_comer_columns(data, time_p_ind, amount_indicator, customer_indicator)
+    new_comer_data, churn_data = get_new_comer_churn_data(data, customer_indicator, amount_indicator, time_p_ind)
+    top_100_data = data[data[customer_indicator].isin(top_100_customers)]
+    worst_100_data = data[data[customer_indicator].isin(worst_100_customers)]
+    return data_pv, top_100_data, worst_100_data, predicted_time_period, new_comer_data, churn_data
 
 
 def adding_filter_to_pane(added_filters, f_style):
@@ -180,7 +191,7 @@ def get_hover_data(data, time_indicator, time_period, number_of_graph):
 
 def create_dashboard(server, customer_indicator, amount_indicator, directory, time_indicator, time_period):
     external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-    app = dash.Dash(__name__, server=server, external_stylesheets=external_stylesheets, routes_pathname_prefix='/dash/')
+    app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
     try:
         data = data_source()
         results = get_results(directory)
