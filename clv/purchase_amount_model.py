@@ -234,7 +234,6 @@ class TrainConv1Dimension:
         print("*" * 5, " Purchase Amount train model process ", "*" * 5)
         print(self.model)
         if self.model is None:
-            print(self.num_of_future_orders.head())
             self.data_preparation()
             self.parameter_tuning()
             self.build_model()
