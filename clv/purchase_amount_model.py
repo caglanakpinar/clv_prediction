@@ -245,6 +245,8 @@ class TrainConv1Dimension:
     def prediction_execute(self):
         print("number of users :", len(self.customers))
         self.model_data['prediction_data'] = self.data[self.features + ["user_id"]]
+        if self.model is not None:
+            self.model = model_from_to_json(path=join(self.directory, self.model))
         for u in self.num_of_future_orders.to_dict('results'):
             _number, _user = u['order_seq_num'], u['user_id']
             _prediction_data = self.model_data['prediction_data'].query("user_id == @_user").drop('user_id', axis=1)

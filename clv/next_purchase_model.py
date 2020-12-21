@@ -225,6 +225,8 @@ class TrainLSTM:
     def prediction_execute(self):
         print("*"*5, "PREDICTION", 5*"*")
         print("number of users :", len(self.customers))
+        if self.model is not None:
+            self.model = model_from_to_json(path=join(self.directory, self.model))
         self.results = self.data[[self.time_indicator, 'time_diff', 'time_diff_norm', self.customer_indicator]]
         global prediction_data
         prediction_data = {}
