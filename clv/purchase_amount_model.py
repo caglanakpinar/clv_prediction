@@ -242,7 +242,6 @@ class TrainConv1Dimension:
         else:
             self.model = model_from_to_json(path=join(self.directory, self.model))
             print("Previous model already exits in the given directory  '" + self.directory + "'.")
-        self.prediction_execute()
 
     def prediction_execute(self):
         print("number of users :", len(self.customers))
