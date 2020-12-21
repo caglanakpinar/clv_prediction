@@ -346,7 +346,7 @@ def get_results(directory, time_period, amount_indicator):
                 detected_file = f
     if detected_file is not None:
         results = pd.read_csv(join(directory, detected_file))
-    return results[results[amount_indicator] == results[amount_indicator]]
+    return results
 
 
 def check_for_previous_predicted_clv_results(results,
