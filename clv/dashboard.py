@@ -61,11 +61,11 @@ def decide_time_period(date, time_period):
         week_day = datetime.datetime.strptime(str(date)[0:10], "%Y-%m-%d").isoweekday()
         return datetime.datetime.strptime(str(date)[0:10], "%Y-%m-%d") - datetime.timedelta(days=week_day-1)
     if time_period == '2*week':  # only shows mondays for weekly comparison
-        date = datetime.datetime.strptime(str(date)[0:10], "Y-%m-%d")
+        date = datetime.datetime.strptime(str(date)[0:10], "%Y-%m-%d")
         week_day = date.isoweekday()
         week = date.isocalendar()[1]
         mondays_cal_day_count = week_day-1 if week % 2 == 0 else week_day - 1 + 7
-        return datetime.datetime.strptime(str(date)[0:10], "Y-%m-%d") - datetime.timedelta(days=mondays_cal_day_count)
+        return datetime.datetime.strptime(str(date)[0:10], "%Y-%m-%d") - datetime.timedelta(days=mondays_cal_day_count)
 
 
 def get_data_time_period_column(data, results, time_indicator, time_period):
