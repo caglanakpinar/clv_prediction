@@ -358,6 +358,8 @@ def check_for_previous_predicted_clv_results(results,
     prev_result = get_results(path, time_period)
     if len(prev_result) != 0 and len(results) != 0:
         prev_result['same_order'] = True
+        prev_result[time_indicator] = prev_result[time_indicator].apply(lambda x: str(x))
+        results[time_indicator] = results[time_indicator].apply(lambda x: str(x))
         prev_result = pd.merge(prev_result,
                                results[[customer_indicator, time_indicator]],
                                on=[customer_indicator, time_indicator], how='left')
