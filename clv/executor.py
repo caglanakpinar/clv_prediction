@@ -215,7 +215,7 @@ class CLV:
                                                                         self.time_period,
                                                                         self.time_indicator,
                                                                         self.customer_indicator,
-                                                                        self.amount_indicator)
+                                                                        )
 
             return pd.concat([self.raw_data, self.results])
         else: return None
