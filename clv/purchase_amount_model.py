@@ -269,7 +269,7 @@ class TrainConv1Dimension:
                                                                 self.time_period,
                                                                 self.time_indicator,
                                                                 self.customer_indicator,
-                                                                self.amount_indicator)
+                                                                )
         self.results.to_csv(get_result_data_path(self.directory, self.time_period, self.max_date), index=False)
         print("lifetime value :")
         print(self.results.head())
