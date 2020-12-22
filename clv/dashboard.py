@@ -195,7 +195,8 @@ def create_dashboard(customer_indicator, amount_indicator, directory,
     app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
     try:
         data = get_raw_data(time_indicator, amount_indicator, data_source, data_query_path)
-        results = get_results(directory, time_period, amount_indicator)
+        results = get_results(directory, time_period)
+        results = results[results[amount_indicator] == results[amount_indicator]]
         num_f_p, filters, filter_ids, top_100_customers, worst_100_customers = get_filters(results,
                                                                                            customer_indicator,
                                                                                            amount_indicator)
