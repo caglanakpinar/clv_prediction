@@ -42,6 +42,10 @@ def main(job='train',
                               amount_indicator=amount_indicator)
     if job == 'train':
         next_purchase.train_execute()
+
+    if job == 'prediction':
+        next_purchase.prediction_execute()
+
     purchase_amount = TrainConv1Dimension(
                                           date=date,
                                           time_indicator=time_indicator,
@@ -53,11 +57,14 @@ def main(job='train',
                                           customer_indicator=customer_indicator,
                                           predicted_orders=next_purchase.results,
                                           amount_indicator=amount_indicator)
-    if job == 'prediction':
-        purchase_amount.prediction_execute()
+
     if job == 'train':
         purchase_amount.train_execute()
-    return next_purchase, purchase_amount
+
+    if job == 'prediction':
+        purchase_amount.prediction_execute()
+
+    return {"next_purchase": next_purchase, "purchase_amount": purchase_amount}
 
 
 if __name__ == '__main__':
