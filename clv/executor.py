@@ -17,7 +17,7 @@ except Exception as e:
     from .configs import conf
     from .scheduler_service import create_job
     from .dashboard import create_dashboard
-    from .functions import check_for_previous_predicted_clv_results
+    from .functions import check_for_previous_predicted_clv_results, check_model_exists
 
 class CLV:
     """
@@ -186,12 +186,27 @@ class CLV:
         if self.data_source in ['mysql', 'postgresql', 'awsredshift', 'googlebigquery']:
             self.data_query_path = self.data_query_path.replace("\r", " ").replace("\n", " ").replace(" ", "+")
 
+    def checking_for_prediction_process(self):
+        if self.job == 'prediction':
+            if len(check_model_exists(self.export_path, "trained_next_purchase_model", self.time_period)) != 0:
+                return True
+            else: return False
+        else: True
+
     def clv_prediction(self):
         self.query_string_change()
         if self.get_connector():
             if self.check_for_time_period():
                 if self.check_for_mandetory_arguments():
-                    self.clv_predicted = main(**self.arguments)
+                    if self.checking_for_prediction_process():
+                        self.clv_predicted = main(**self.arguments)
+                    else:
+                        print("Execution : *** Prediction")
+                        print("None of trained model has been detected!. Please run for Train process!")
+                        print("if these are trained model with .json format please check any of these models of ",
+                              "the time period ('month', 'week', ..) matchs with given time preiod.",
+                              " Given time period is :", self.time_period)
+                        print("argument; job: 'train'")
                 else:
                     print("check for the required paramters to initialize CLV Prediction:")
                     print(" - ".join(self.mandetory_arguments))
