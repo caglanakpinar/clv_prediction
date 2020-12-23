@@ -5,10 +5,10 @@ import random
 import shutil
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '4'
 import traceback
-from tensorflow.keras.layers import Dense, LSTM, Input, BatchNormalization, Conv1D, MaxPooling1D, Dropout, Flatten
-from keras.regularizers import l1, l2, l1_l2
-from tensorflow.keras.optimizers import RMSprop, Adam
-from tensorflow.keras.initializers import Ones
+from tensorflow.keras.layers import Dense, LSTM, Input, BatchNormalization
+from tensorflow.keras.regularizers import l2, l1_l2
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.initializers import Zeros
 from tensorflow.keras.models import Model
 from tensorflow.keras.models import model_from_json
 from kerastuner.tuners import RandomSearch
