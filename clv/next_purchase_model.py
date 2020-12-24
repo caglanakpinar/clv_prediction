@@ -127,9 +127,7 @@ class TrainLSTM:
     def build_parameter_tuning_model(self, hp):
         self.input = Input(shape=(self.model_data['x_train'].shape[1], 1))
         lstm = LSTM(int(hp.Choice('units', self.hyper_params['units'])),
-                    use_bias=False,
-                    activation=hp.Choice('activation', self.hyper_params['activation']),
-                    batch_size=int(hp.Choice('batch_size', self.hyper_params['batch_size'])),
+                    use_bias=True,
                     kernel_regularizer=l1_l2(l1=hp.Choice('l1', self.hyper_params['l1']),
                                              l2=hp.Choice('l2', self.hyper_params['l2'])),
                     bias_regularizer=l2(hp.Choice('l2', self.hyper_params['l2'])),
@@ -147,12 +145,11 @@ class TrainLSTM:
         self.input = Input(shape=(self.model_data['x_train'].shape[1], 1))
         # LSTM layer
         lstm = LSTM(self.params['units'],
-                    batch_size=self.params['batch_size'],
-                    recurrent_initializer=Ones(),
-                    kernel_initializer=Ones(),
-                    use_bias=False,
-                    recurrent_activation=self.params['activation'],
-                    dropout=0.1
+                    use_bias=True,
+                    kernel_regularizer=l1_l2(l1=self.params['l1'],
+                                             l2=self.params['l2']),
+                    bias_regularizer=l2(self.params['l2']),
+                    activity_regularizer=l2(self.params['l2']))
                     )(self.input)
         lstm = BatchNormalization()(lstm)
         lstm = Dense(1)(lstm)
