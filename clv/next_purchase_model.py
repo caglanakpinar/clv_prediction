@@ -149,7 +149,7 @@ class TrainLSTM:
                     kernel_regularizer=l1_l2(l1=self.params['l1'],
                                              l2=self.params['l2']),
                     bias_regularizer=l2(self.params['l2']),
-                    activity_regularizer=l2(self.params['l2']))
+                    activity_regularizer=l2(self.params['l2'])
                     )(self.input)
         lstm = BatchNormalization()(lstm)
         lstm = Dense(1)(lstm)
