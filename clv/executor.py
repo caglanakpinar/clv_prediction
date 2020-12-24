@@ -188,10 +188,13 @@ class CLV:
 
     def checking_for_prediction_process(self):
         if self.job == 'prediction':
-            if len(check_model_exists(self.export_path, "trained_next_purchase_model", self.time_period)) != 0:
-                return True
+            model_files = check_model_exists(self.export_path, "trained_next_purchase_model", self.time_period)
+            if model_files is not None:
+                if len(check_model_exists(self.export_path, "trained_next_purchase_model", self.time_period)) != 0:
+                    return True
+                else: return False
             else: return False
-        else: True
+        else: return True
 
     def clv_prediction(self):
         self.query_string_change()
