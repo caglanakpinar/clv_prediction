@@ -248,8 +248,10 @@ class TrainConv1Dimension:
         if self.model is not None:
             self.model = model_from_to_json(path=join(self.directory, self.model))
         for u in self.num_of_future_orders.to_dict('results'):
-            _number, _user = u['order_seq_num'], u['user_id']
-            _prediction_data = self.model_data['prediction_data'].query("user_id == @_user").drop('user_id', axis=1)
+            _number, _user = u['order_seq_num'], u[self.customer_indicator]
+            _prediction_data = self.model_data['prediction_data'][
+                self.model_data['prediction_data'][self.customer_indicator] == _user].drop(self.customer_indicator,
+                                                                                           axis=1)
             _prediction = get_prediction(_prediction_data,
                                          _number,
                                          self.model.input.shape[1],
@@ -257,7 +259,9 @@ class TrainConv1Dimension:
             prediction = get_predicted_data_readable_form(_user,
                                                           _prediction,
                                                           self.model.input.shape[1] + 1,
-                                                          self.c_min_max.query("user_id == @_user"))
+                                                          self.c_min_max[
+                                                              self.c_min_max[self.customer_indicator] == _user],
+                                                          self.customer_indicator)
             self.results = pd.concat([self.results, prediction])
         self.results = merging_predicted_date_to_result_date(self.results,
                                                              self.predicted_orders,

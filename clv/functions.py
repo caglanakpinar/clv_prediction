@@ -180,9 +180,9 @@ def get_prediction(data, number, model_num, model):
     return data
 
 
-def get_predicted_data_readable_form(user, prediction, removing_columns, norm_data):
+def get_predicted_data_readable_form(user, prediction, removing_columns, norm_data, customer_indicator):
     removing_cols = list(range(removing_columns + 1))
-    predictions = [{"user_id": user,
+    predictions = [{customer_indicator: user,
                     "user_min": list(norm_data['user_min'])[0],
                     "user_max": list(norm_data['user_max'])[0],
                     "pred_order_seq": col - removing_columns,
