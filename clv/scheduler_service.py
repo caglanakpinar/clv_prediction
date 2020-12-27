@@ -66,7 +66,18 @@ def check_for_first_running(args):
 
 
 def decision_of_time_sleep(time_schedule):
+    if time_schedule == 'hour':
+        return 60
+    if time_schedule == 'day':
+        return 600
+    if time_schedule == 'week':
+        return 3600
     if time_schedule == 'month':
+        return 18000
+    if time_schedule not in ['hour', 'day', 'week', 'month']:
+        return 1000
+
+
 def create_job(ab_test_arguments, time_period):
     iteration = 0
     time_schedule = time_period
@@ -74,9 +85,12 @@ def create_job(ab_test_arguments, time_period):
     check_for_first_running(args)
     _sch = get_schedule(time_period)
     _sch.do(run_ab_test)
+    print(_sch)
+    time_sec_wait = decision_of_time_sleep(time_period)
     while True:
-        _sch.run_pending()
-        time.sleep(1000)
+        schedule.run_pending()
+        time.sleep(time_sec_wait)
+        print("waiting ...")
 
 
 if __name__ == '__main__':

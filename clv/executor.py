@@ -246,10 +246,15 @@ class CLV:
                 return True
             else: return False
 
+    def create_schedule_file(self):
+        write_yaml(self.directory, 'schedule.yaml',
+                   {'ab_test_arguments': self.arguments, 'time_period': self.time_schedule})
+
     def schedule_clv_prediction(self):
         if self.get_connector():
             if self.check_for_time_schedule():
                 if self.check_for_mandetory_arguments():
+                    self.create_schedule_file()
                     process = threading.Thread(target=create_job, kwargs={'ab_test_arguments': self.arguments,
                                                                           'time_period': self.time_schedule})
                     process.daemon = True
