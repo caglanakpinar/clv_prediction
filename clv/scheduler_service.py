@@ -54,10 +54,22 @@ def run_ab_test():
     iteration += 1
 
 
+def check_for_first_running(args):
+    """
+    before initialize the periodically run, it must be trained.
+    If there are the trained model stored in the given directory, process will be skipped.
+    args: arguments,  in order to initialize the train or prediction process.
+    :return: None
+    """
+    if args['job'] == 'train':
+        main(**args)
+
+
 def create_job(ab_test_arguments, time_period):
     iteration = 0
     time_schedule = time_period
     args = ab_test_arguments
+    check_for_first_running(args)
     _sch = get_schedule(time_period)
     _sch.do(run_ab_test)
     while True:
