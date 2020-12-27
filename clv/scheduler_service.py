@@ -65,6 +65,8 @@ def check_for_first_running(args):
         main(**args)
 
 
+def decision_of_time_sleep(time_schedule):
+    if time_schedule == 'month':
 def create_job(ab_test_arguments, time_period):
     iteration = 0
     time_schedule = time_period

@@ -151,7 +151,6 @@ class CLV:
         try:
             if self.data_source not in ["csv", "json"]:
                 for i in config['db_connection']:
-                    print(i)
                     if i != 'data_source':
                         config['db_connection'][i] = self.connector[i]
                     else:
@@ -247,7 +246,7 @@ class CLV:
                 return True
             else: return False
 
-    def schedule_test(self):
+    def schedule_clv_prediction(self):
         if self.get_connector():
             if self.check_for_time_schedule():
                 if self.check_for_mandetory_arguments():
