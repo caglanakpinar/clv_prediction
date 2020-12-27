@@ -49,7 +49,7 @@ def update_date():
 
 
 def run_ab_test():
-    update_date()
+    update_date(args)
     main(**args)
     iteration += 1
 
