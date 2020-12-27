@@ -22,7 +22,8 @@ def data_manipulation_np(date, time_indicator, order_count,
     print("data size :", len(data_process.data))
     data = data_process.data
     data[time_indicator] = data[time_indicator].apply(lambda x: convert_str_to_day(x))
-    data['last_days'] = data.sort_values(by=['user_id', 'days'], ascending=True).groupby("user_id")['days'].shift(1)
+    data['last_days'] = data.sort_values(by=[customer_indicator, time_indicator],
+                                         ascending=True).groupby(customer_indicator)[time_indicator].shift(1)
     data = data.query("last_days == last_days")
     data = pd.merge(data, data.rename(columns={"last_days": "last_days_2"}).groupby(
                                             customer_indicator)['last_days_2'].max(),
