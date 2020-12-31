@@ -372,3 +372,18 @@ def check_for_previous_predicted_clv_results(results,
         prev_result = prev_result.query("same_order != same_order").drop('same_order', axis=1)
     results = pd.concat([prev_result, results])
     return results
+
+
+def batch_size_optimization(client_sample_sizes, num_of_customers):
+    """
+    Main aim hete to find optimum k fold for the cross validation
+    :param client_sample_sizes:
+    :param num_of_customers:
+    :return:
+    """
+    (unique, counts) = np.unique(client_sample_sizes, return_counts=True)
+    optimum_batch = sorted(zip(counts, unique))[-1][1]
+    average_customer_batch = num_of_customers - (num_of_customers % optimum_batch)
+    return average_customer_batch
+
+
