@@ -250,7 +250,10 @@ class TrainLSTM:
 
     def parameter_tuning(self):
         if check_for_existing_parameters(self.directory, 'next_purchase') is None:
-            print(self.hyper_params)
+            print(""*3, "batch size optimization", "*"*3)
+            print("number of sample client size:", len(self.client_sample_sizes))
+            print("average of sample client size:", np.mean(self.client_sample_sizes))
+            self.params['batch_size'] = batch_size_optimization(self.client_sample_sizes, len(self.customers))
             tuner = RandomSearch(
                                  self.build_parameter_tuning_model,
                                  max_trials=5,
@@ -260,6 +263,7 @@ class TrainLSTM:
             tuner.search(x=self.model_data['x_train'],
                          y=self.model_data['y_train'],
                          epochs=5,
+                         batch_size=self.params['batch_size'],
                          verbose=1,
                          validation_data=(self.model_data['x_test'], self.model_data['y_test']))
             for p in tuner.get_best_hyperparameters()[0].values:
