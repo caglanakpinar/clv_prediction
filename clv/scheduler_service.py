@@ -7,14 +7,10 @@ from os.path import abspath, join
 
 try:
     from main import main
-    from utils import date_part, convert_date, read_yaml, write_yaml
+    from utils import date_part, convert_date, read_yaml, write_yaml, convert_date_v2
 except Exception as e:
     from .main import main
-    from .utils import date_part, convert_date, read_yaml, write_yaml
-
-global args
-global time_schedule
-global iteration
+    from .utils import date_part, convert_date, read_yaml, write_yaml, convert_date_v2
 
 
 def get_schedule(time_period):
@@ -35,8 +31,23 @@ def get_schedule(time_period):
         return schedule.every(1).hours.at(str(datetime.datetime.now())[11:16])
 
 
-def update_date():
-    date = convert_date(args['date'])
+def convert_to_day_hour(x):
+    return datetime.datetime.strptime(str(x)[0:13], "%Y-%m-%d %H")
+
+
+def convert_to_day(x):
+    return datetime.datetime.strptime(str(x)[0:10], "%Y-%m-%d")
+
+
+def update_date(args):
+    iteration = args['iteration']
+    time_schedule = args['time_schedule']
+    if time_schedule == 'hour':
+        if len(str(args['arguments']['date'])) == 10:
+            args['arguments']['date'] = args['arguments']['date'] + ' 00'
+        date = convert_to_day_hour(args['arguments']['date'])
+    else:
+        date = convert_to_day(args['arguments']['date'])
     if iteration != 0:
         if time_schedule == 'hour':
             date = date + datetime.timedelta(hours=iteration)
@@ -44,14 +55,19 @@ def update_date():
             date = date + datetime.timedelta(days=iteration)
         if time_schedule == 'week':
             date = date + datetime.timedelta(days=int(7 * iteration))
-    args['date'] = str(date)[0:19]
-    print("AB Test Date :", args['date'])
+    args['arguments']['date'] = str(date)[0:13]
+    write_yaml(args['arguments']['export_path'], 'schedule_' + args['arguments']['job'] + '.yaml',
+               {'arguments': args['arguments'],
+                'time_schedule': args['time_schedule'],
+                'iteration': args['iteration'] + 1
+                })
+    print("CLV Prediction Date :", args['arguments']['date'])
 
 
-def run_ab_test():
-    update_date(args)
-    main(**args)
-    iteration += 1
+def run_ab_test(directory, job):
+    arguments = read_yaml(directory, 'schedule_' + job + '.yaml')
+    update_date(arguments)
+    main(**arguments['arguments'])
 
 
 def check_for_first_running(args):
@@ -78,15 +94,15 @@ def decision_of_time_sleep(time_schedule):
         return 1000
 
 
-def create_job(ab_test_arguments, time_period):
+def create_job(arguments, time_schedule):
     iteration = 0
-    time_schedule = time_period
-    args = ab_test_arguments
+    time_schedule = time_schedule
+    args = arguments
     check_for_first_running(args)
-    _sch = get_schedule(time_period)
-    _sch.do(run_ab_test)
+    _sch = get_schedule(time_schedule)
+    _sch.do(run_ab_test, arguments['export_path'], arguments['job'])
     print(_sch)
-    time_sec_wait = decision_of_time_sleep(time_period)
+    time_sec_wait = decision_of_time_sleep(time_schedule)
     while True:
         schedule.run_pending()
         time.sleep(time_sec_wait)
