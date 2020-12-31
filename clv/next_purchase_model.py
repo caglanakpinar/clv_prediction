@@ -110,13 +110,17 @@ class TrainLSTM:
         try_count = 0
         while try_count < 20:
             try:
+                self.model_data = {"x_train": None, "y_train": None, "x_test": None, "y_test": None}
+                self.client_sample_sizes = []
                 for c in model_data:
                     if self.model_data['x_train'] is not None:
                         self.model_data['x_train'] = np.concatenate([self.model_data['x_train'], model_data[c]['x_train']])
                         self.model_data['y_train'] = np.concatenate([self.model_data['y_train'], model_data[c]['y_train']])
                         self.model_data['x_test'] = np.concatenate([self.model_data['x_test'], model_data[c]['x_test']])
                         self.model_data['y_test'] = np.concatenate([self.model_data['y_test'], model_data[c]['y_test']])
+                        self.client_sample_sizes.append(model_data[c]['x_train'].shape[0])
                     else:
+                        self.client_sample_sizes.append(model_data[c]['x_train'].shape[0])
                         self.model_data = model_data[c]
                 try_count = 20
             except Exception as e:
