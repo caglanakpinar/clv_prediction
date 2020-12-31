@@ -12,8 +12,8 @@ except Exception as e:
     from .configs import time_dimensions, day_of_year, time_indicator_accept_threshold, s_size_ratio
 
 
-def data_manipulation_np(date, time_indicator, order_count,
-                         data_source, data_query_path, feature, customer_indicator):
+def data_manipulation_np(date, time_indicator,
+                         data_source, data_query_path, feature, customer_indicator, params, directory):
     data_process = GetData(data_source=data_source,
                            data_query_path=data_query_path,
                            time_indicator=time_indicator,
@@ -32,9 +32,13 @@ def data_manipulation_np(date, time_indicator, order_count,
         lambda row: 1 if row['last_days'] == row['last_days'] and row['last_days_2'] == row[time_indicator] else 0,
         axis=1)
     data['time_diff'] = data.apply(lambda row: calculate_time_diff(row['last_days'], row[time_indicator]), axis=1)
+    opt_lag = OptimumLagDecision(data, customer_indicator, time_indicator, params, directory)
+    opt_lag.find_optimum_lag()
+    params['lahead'], params['lag'] = opt_lag.best_lag, opt_lag.best_lag
+    params['batch_size'] = max((params['tsteps'] - 1), (params['lahead'] - 1)) + (params['lahead'] * 2)
+
     data, customer_min_max = get_customer_min_max_data(data, 'time_diff', customer_indicator)
-    features = list(range(order_count))
-    return data, 'time_diff_norm', customer_min_max
+    return data, 'time_diff_norm', customer_min_max, params
 
 
 def data_manipulation(date, time_indicator, order_count, data_source, data_query_path, feature, customer_indicator):
