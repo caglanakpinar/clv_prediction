@@ -257,8 +257,8 @@ class CLV:
             if self.check_for_time_schedule():
                 if self.check_for_mandetory_arguments():
                     self.create_schedule_file()
-                    process = threading.Thread(target=create_job, kwargs={'ab_test_arguments': self.arguments,
-                                                                          'time_period': self.time_schedule})
+                    process = threading.Thread(target=create_job, kwargs={'arguments': self.arguments,
+                                                                          'time_schedule': self.time_schedule})
                     process.daemon = True
                     process.start()
                 else:
