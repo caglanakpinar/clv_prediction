@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
+from math import sqrt
 from dateutil.parser import parse
+from statsmodels.tsa.arima.model import ARIMA
 
 try:
     from data_access import GetData
@@ -76,7 +78,7 @@ def data_manipulation(date, time_indicator, order_count, data_source, data_query
 def order_count_decision(data, order_count, customer_indicator):
     if order_count is None:
         total_orders = []
-        for rc in range(5, max(data['max_max_order'])):
+        for rc in range(5, max(data['max_order'])):
             data = pd.merge(data,
                             data.groupby(customer_indicator)['order_seq_num'].max().reset_index().rename(
                                 columns={"order_seq_num": "max_order"}),
@@ -85,6 +87,7 @@ def order_count_decision(data, order_count, customer_indicator):
             total_orders.append({"order_count": rc,
                                  "total_orders": sum([abs(prev_order) for prev_order in list(data['prev_orders'])])})
         order_count = list(pd.DataFrame(total_orders).sort_values(by='total_orders', ascending=True)['order_count'])[0]
+        print("optimum order count :", order_count)
     return order_count
 
 
@@ -388,5 +391,63 @@ def batch_size_optimization(client_sample_sizes, num_of_customers):
     optimum_batch = sorted(zip(counts, unique))[-1][1]
     average_customer_batch = num_of_customers - (num_of_customers % optimum_batch)
     return average_customer_batch
+
+
+class OptimumLagDecision:
+    def __init__(self, data, customer_indicator, time_indicator, params, directory):
+        self.data = data
+        self.customer_indicator = customer_indicator
+        self.time_indicator = time_indicator
+        self.directory = directory
+        self.minimum_batch_size_count = params['batch_size']
+        self.split_ratio = params['split_ratio']
+        self.lag_range = list(range(1, 4))
+        self.train, self.test, self.prediction = [], [], []
+        self.model = None
+        self.best_lag = 1
+        self.min_rmse = 1000000000000
+
+    def collect_data(self):
+        self.data['order_seq_num'] = self.data.sort_values(by=[self.customer_indicator,
+                                                               self.time_indicator]
+                                                           ).groupby([self.customer_indicator]).cumcount() + 1
+        self.data = self.data.sort_values(by='order_seq_num', ascending=True).groupby('order_seq_num').agg(
+            {"time_diff": "mean"}).reset_index()
+
+    def split_data(self):
+        self.train = list(
+            self.data[self.data['order_seq_num'] < int(max(self.data['order_seq_num']) * self.split_ratio)][
+                'time_diff'])
+        self.test = list(
+            self.data[self.data['order_seq_num'] >= int(max(self.data['order_seq_num']) * self.split_ratio)][
+                'time_diff'])
+
+    def build_arima_model(self, p):
+        self.prediction = []
+        for i in self.test:
+            try:
+                self.model = ARIMA(self.train, order=(p, 1, 1))
+                self.model = self.model.fit()
+                self.prediction.append(self.cal_residuals(i, self.model.forecast(steps=1)[0]))
+            except Exception as e:
+                print(e)
+            self.train += [i]
+        return sqrt(sum(self.prediction))
+
+    def cal_residuals(self, actual, prediction):
+        return pow(abs(actual - prediction), 2)
+
+    def find_optimum_lag(self):
+        if check_for_existing_parameters(self.directory, 'next_purchase') is None:
+            self.collect_data()
+            self.split_data()
+            for lag in self.lag_range:
+                _rmse = self.build_arima_model(lag)
+                print("lag :", lag, "RMSE :", _rmse)
+                if self.min_rmse > _rmse:
+                    self.min_rmse = _rmse
+                    self.best_lag = lag
+            print("optimum lag :", self.best_lag)
+
 
 
