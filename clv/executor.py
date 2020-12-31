@@ -247,8 +247,10 @@ class CLV:
             else: return False
 
     def create_schedule_file(self):
-        write_yaml(self.directory, 'schedule.yaml',
-                   {'ab_test_arguments': self.arguments, 'time_period': self.time_schedule})
+        write_yaml(self.export_path, 'schedule_' + self.job + '.yaml',
+                   {'arguments': self.arguments,
+                    'time_schedule': self.time_schedule,
+                    'iteration': 0})
 
     def schedule_clv_prediction(self):
         if self.get_connector():
