@@ -341,15 +341,18 @@ def get_tuning_params(parameter_tuning, params):
 def get_results(directory, time_period):
     results = pd.DataFrame()
     result_files = [f for f in listdir(dirname(join(directory, ""))) if f.split("_")[0] == "results"]
-    current_date = min([parse(i.split("_")[2]) for i in result_files])
-    date = current_date - datetime.timedelta(days=convert_time_preiod_to_days(time_period))
+    parsed_date = [parse(i.split("_")[2]) for i in result_files]
     detected_file = None
-    for f in result_files:
-        f_split = f.split("_")
-        if f_split[1] == time_period:
-            if parse(f_split[3].split(".")[0]) >= date:
-                date = parse(f_split[3].split(".")[0])
-                detected_file = f
+    if len(parsed_date) != 0:
+        current_date = min([parse(i.split("_")[2]) for i in result_files])
+        date = current_date - datetime.timedelta(days=convert_time_preiod_to_days(time_period))
+        detected_file = None
+        for f in result_files:
+            f_split = f.split("_")
+            if f_split[1] == time_period:
+                if parse(f_split[3].split(".")[0]) >= date:
+                    date = parse(f_split[3].split(".")[0])
+                    detected_file = f
     if detected_file is not None:
         results = pd.read_csv(join(directory, detected_file))
     return results
