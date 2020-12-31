@@ -90,17 +90,17 @@ class TrainLSTM:
         self.max_date = max(self.data[self.time_indicator])
         self.future_date = self.max_date + datetime.timedelta(days=convert_time_preiod_to_days(self.time_period))
         self.model_data = {"x_train": None, "y_train": None, "x_test": None, "y_test": None}
+        self.client_sample_sizes = []
 
     def get_model_data(self, customer):
         _data = self.data[(self.data[self.customer_indicator] == customer) & (self.data['last_recency'] == 0)]
-        # try:
-        data = arrange__data_for_model(df=_data, f=[self.features], parameters=self.params)
-        if data['x_train'].shape[0] != 0:
-            model_data[customer] = {}
-            model_data[customer] = arrange__data_for_model(df=_data, f=[self.features], parameters=self.params)
-
-        # except Exception as e:
-        #    print(e)
+        try:
+            data = arrange__data_for_model(df=_data, f=[self.features], parameters=self.params)
+            if data['x_train'].shape[0] != 0:
+                model_data[customer] = {}
+                model_data[customer] = data
+        except Exception as e:
+            print(e)
 
     def data_preparation(self):
         global model_data

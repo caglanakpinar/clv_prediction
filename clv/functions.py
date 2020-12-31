@@ -163,7 +163,7 @@ def data_for_customer_prediction(data, params):
         for i, c in enumerate(x.columns):
             x[c] = x[c].shift(i * shift_day)  # every each same days of shifted
     to_drop = max((params['tsteps'] - 1), (params['lahead'] - 1))
-    return x, data, to_drop# reshape_3(x[to_drop:to_drop + 1].values)
+    return x, data, to_drop
 
 
 def check_for_next_prediction(data, model_num):
