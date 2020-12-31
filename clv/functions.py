@@ -59,6 +59,7 @@ def data_manipulation(date, time_indicator, order_count, data_source, data_query
                     data.groupby(customer_indicator)['order_seq_num'].max().reset_index().rename(
                         columns={"order_seq_num": "max_order"}),
                     on=customer_indicator, how='left')
+    order_count = order_count_decision(data, order_count, customer_indicator)
     data['prev_orders'] = data['max_order'] - order_count
     data = data.query("order_seq_num > prev_orders")
     data['order_seq_num'] = data.sort_values(by=[customer_indicator, time_indicator]).groupby(
@@ -84,8 +85,7 @@ def order_count_decision(data, order_count, customer_indicator):
             total_orders.append({"order_count": rc,
                                  "total_orders": sum([abs(prev_order) for prev_order in list(data['prev_orders'])])})
         order_count = list(pd.DataFrame(total_orders).sort_values(by='total_orders', ascending=True)['order_count'])[0]
-    data = data.query("order_seq_num > prev_orders")
-    data['prev_orders'] = data['max_order'] - order_count
+    return order_count
 
 
 def min_max_norm(value, _min, _max):
