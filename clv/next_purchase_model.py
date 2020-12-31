@@ -64,20 +64,19 @@ class TrainLSTM:
         self.customer_indicator = customer_indicator
         self.time_indicator = time_indicator
         self.params = hyper_conf('next_purchase')
-        ## TODO: hyper parameters of ranges must be updated related to data
         self.hyper_params = get_tuning_params(hyper_conf('next_purchase_hyper'), self.params)
         self.optimized_parameters = {}
         self._p = None
         self.order_count = order_count
         self.time_period = time_period
-        self.data, self.features, self.c_min_max = data_manipulation_np(date=date,
-                                                                        feature=amount_indicator,
-                                                                        time_indicator=time_indicator,
-                                                                        order_count=order_count,
-
-                                                                        data_source=data_source,
-                                                                        data_query_path=data_query_path,
-                                                                        customer_indicator=customer_indicator)
+        self.data, self.features, self.c_min_max, self.params = data_manipulation_np(date=date,
+                                                                                     feature=amount_indicator,
+                                                                                     time_indicator=time_indicator,
+                                                                                     data_source=data_source,
+                                                                                     data_query_path=data_query_path,
+                                                                                     customer_indicator=customer_indicator,
+                                                                                     params=self.params,
+                                                                                     directory=directory)
 
         self.hp = HyperParameters()
         self.model_data = {}
