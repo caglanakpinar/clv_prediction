@@ -225,7 +225,8 @@ def drop_calculation(df, parameters, is_prediction=False):
     to_drop = max((parameters['tsteps'] - 1), (parameters['lahead'] - 1))
     df = df[to_drop:]
     if not is_prediction:
-        to_drop = df.shape[0] % parameters['batch_size']
+        if df.shape[0] > parameters['batch_size']:
+            to_drop = df.shape[0] % parameters['batch_size']
         if to_drop > 0:
             df = df[:-1 * to_drop]
     return df
