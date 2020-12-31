@@ -159,19 +159,32 @@ class TrainLSTM:
         self.model = Model(inputs=self.input, outputs=lstm)
         self.model.compile(loss='mae', optimizer=Adam(lr=self.params['lr']), metrics=['mae'])
 
-    def learning_process(self, save_model=True):
-        self.model.fit(self.model_data['x_train'],
-                       self.model_data['y_train'],
-                       batch_size=self.params['batch_size'],
-                       epochs=int(self.params['epochs']),
-                       verbose=1,
-                       validation_split=1 - self.params['split_ratio'],
-                       shuffle=True)
+    def learning_process(self, save_model=True, history=False):
+        if history:
+            history = self.model.fit(self.model_data['x_train'],
+                                     self.model_data['y_train'],
+                                     batch_size=self.params['batch_size'],
+                                     epochs=int(self.params['epochs']),
+                                     verbose=1,
+                                     validation_split=1 - self.params['split_ratio'],
+                                     shuffle=True)
+        else:
+            self.model.fit(self.model_data['x_train'],
+                           self.model_data['y_train'],
+                           batch_size=self.params['batch_size'],
+                           epochs=int(self.params['epochs']),
+                           verbose=1,
+                           validation_split=1 - self.params['split_ratio'],
+                           shuffle=True)
         if save_model:
             model_from_to_json(path=model_path(self.directory,
                                                "trained_next_purchase_model", self.time_period),
                                model=self.model,
                                is_writing=True)
+
+        if history:
+            return history
+
 
     def train_execute(self):
         print("*"*5, "Next purchase train model process ", "*"*5)
@@ -269,8 +282,18 @@ class TrainLSTM:
             for p in tuner.get_best_hyperparameters()[0].values:
                 if p in list(self.params.keys()):
                     self.params[p] = tuner.get_best_hyperparameters()[0].values[p]
+            counter = 0
+            optimum_epoch_process_done = False
+            while not optimum_epoch_process_done:
+                self.params['epochs'] = self.hyper_params['epochs'][counter]
+                self.build_model()
+                _history = self.learning_process(history=True)
+                if _history.history['loss'][-1] < 0.05:
+                    optimum_epoch_process_done = True
+                counter += 1
             shutil.rmtree(join(abspath(__file__).split("next_purchase_model.py")[0].split("clv")[0][:-1],
                                "clv_prediction", "untitled_project"))
+
             try:
                 _params = read_yaml(self.directory, "test_parameters.yaml")
                 _params['next_purchase'] = self.params
