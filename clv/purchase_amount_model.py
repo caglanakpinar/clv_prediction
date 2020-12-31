@@ -213,10 +213,6 @@ class TrainConv1Dimension:
                            metrics=[self.params['loss']])
 
     def learning_process(self, save_model=True):
-        print(self.model_data['x_train'].shape)
-        print(self.model_data['y_train'].shape)
-        print(self.model_data['x_test'].shape)
-        print(self.model_data['y_test'].shape)
         self.model.fit(self.model_data['x_train'],
                        self.model_data['y_train'],
                        batch_size=int(self.params['batch_size']),
