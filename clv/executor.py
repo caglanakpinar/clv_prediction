@@ -18,6 +18,7 @@ except Exception as e:
     from .scheduler_service import create_job
     from .dashboard import create_dashboard
     from .functions import check_for_previous_predicted_clv_results, check_model_exists
+    from .functions import check_for_previous_predicted_clv_results
 
 class CLV:
     """
@@ -219,6 +220,13 @@ class CLV:
             print("pls check for data source connection / path / query.")
 
     def get_result_data(self):
+        """
+        When model prediction has been done, this allows us to get the predicted data with merge to the raw data.
+        If model has not been initialized (clv_prediction has not been run yet),
+        it directly collects the data from last predicted result_data.csv
+        with given arguments (time_period, time_indicator, export_path, customer_indicator)
+        :return: data frame
+        """
         if self.clv_predicted is not None:
             self.raw_data = self.clv_predicted['next_purchase'].data
             self.raw_data['data_type'] = 'actual'
@@ -226,16 +234,15 @@ class CLV:
                 by=[self.customer_indicator, self.time_indicator]).groupby([self.customer_indicator]).cumcount() + 1
             self.raw_data = self.raw_data[self.result_columns]
             self.results = self.clv_predicted['purchase_amount'].results
-            if len(self.results) == 0:
-                self.results = check_for_previous_predicted_clv_results(self.results,
-                                                                        self.export_path,
-                                                                        self.time_period,
-                                                                        self.time_indicator,
-                                                                        self.customer_indicator,
-                                                                        )
+        if self.clv_predicted is None or len(self.results) == 0:
+            self.results = check_for_previous_predicted_clv_results(self.results,
+                                                                    self.export_path,
+                                                                    self.time_period,
+                                                                    self.time_indicator,
+                                                                    self.customer_indicator,
+                                                                    )
 
-            return pd.concat([self.raw_data, self.results])
-        else: return None
+        return self.results if self.clv_predicted is None else pd.concat([self.raw_data, self.results])
 
     def check_for_time_schedule(self):
         if self.time_schedule is None:
