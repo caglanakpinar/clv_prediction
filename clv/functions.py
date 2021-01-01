@@ -200,8 +200,11 @@ def get_predicted_data_readable_form(user, prediction, removing_columns, norm_da
     return predictions
 
 
-def merging_predicted_date_to_result_date(results, feuture_orders,
-                                           customer_indicator, time_indicator, amount_indicator):
+def merging_predicted_date_to_result_data(results,
+                                          feuture_orders,
+                                          customer_indicator,
+                                          time_indicator,
+                                          amount_indicator):
     results = results.rename(columns={"prediction_values": amount_indicator, 'pred_order_seq': 'order_seq_num'})
     results = pd.merge(results,
                        feuture_orders[[customer_indicator, 'order_seq_num', time_indicator]],
@@ -209,6 +212,21 @@ def merging_predicted_date_to_result_date(results, feuture_orders,
     results['data_type'] = 'prediction'
     data_columns = [customer_indicator, 'order_seq_num', time_indicator, amount_indicator, 'data_type']
     return results[data_columns]
+
+
+def merge_0_result_at_time_period(data,
+                                  max_date,
+                                  time_period,
+                                  customer_indicator,
+                                  time_indicator,
+                                  amount_indicator):
+    last_time_period_date = max_date + datetime.timedelta(days=convert_time_preiod_to_days(time_period))
+    result = pd.DataFrame(data[customer_indicator].unique()).rename(columns={0: customer_indicator})
+    result['order_seq_num'] = 1
+    result[amount_indicator] = 0
+    result['data_type'] = 'prediction'
+    result[time_indicator] = last_time_period_date
+    return result
 
 
 reshape_3 = lambda x: x.reshape((x.shape[0], x.shape[1], 1))
