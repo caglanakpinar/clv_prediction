@@ -382,10 +382,12 @@ def check_for_previous_predicted_clv_results(results,
 
 def batch_size_optimization(client_sample_sizes, num_of_customers):
     """
-    Main aim hete to find optimum k fold for the cross validation
-    :param client_sample_sizes:
-    :param num_of_customers:
-    :return:
+    Main aim here to find optimum k fold for the cross validation.
+    Find the maximum number of raw count per user (via client_sample_sizes).
+    Divide number of customer count to maximum number of raw count per user as integer.
+    :param client_sample_sizes: number of row count per user
+    :param num_of_customers: number ıf unique customer count
+    :return: optimum batch size
     """
     (unique, counts) = np.unique(client_sample_sizes, return_counts=True)
     optimum_batch = sorted(zip(counts, unique))[-1][1]
