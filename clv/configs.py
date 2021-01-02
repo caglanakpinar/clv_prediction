@@ -64,17 +64,8 @@ def hyper_conf(var):
             }[var]
 
 
-alpha = 0.01
 iteration = 30
 boostrap_ratio = 0.5
-time_dimensions = ['year', 'quarter', 'month', 'week', 'week_part', 'week_day', 'day_part', 'hour', 'min', 'second']
 weekdays = ['Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays', 'Sundays']
-folder_name = 'anomaly_detection_framework'
 web_port_default = 7002
-day_of_year = 366
-time_indicator_accept_threshold = {
-    'threshold': 0.9, 'accept_ratio_value': 0.5
-}
-s_size_ratio = 0.6
-normal_dist_confidence_intervals = [.9, .99, .01]
-descriptive_columns = ['mean1', 'mean2', 'size1', 'size2', 'var1', 'var2']
+accepted_ratio_of_actual_order = 0.75
