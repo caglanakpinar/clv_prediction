@@ -289,10 +289,15 @@ class TrainLSTM:
                 if _history.history['loss'][-1] < accept_threshold_for_loss_diff:
                     optimum_epoch_process_done = True
                 counter += 1
-            shutil.rmtree(join(abspath(__file__).split("next_purchase_model.py")[0].split("clv")[0][:-1],
-                               "clv_prediction", "untitled_project"))
 
             try:
+                shutil.rmtree(
+                    join(abspath(__file__).split("next_purchase_model.py")[0].split("clv")[0][:-1], "clv_prediction",
+                         "untitled_project"))
+            except Exception as e:
+                print(" Parameter Tuning Keras Turner dummy files have already removed!!")
+
+            if check_for_existing_parameters(self.directory, 'purchase_amount') is not None:
                 _params = read_yaml(self.directory, "test_parameters.yaml")
                 _params['next_purchase'] = self.params
                 write_yaml(self.directory, "test_parameters.yaml", _params, ignoring_aliases=True)
