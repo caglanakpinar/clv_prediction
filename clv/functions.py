@@ -88,7 +88,6 @@ def order_count_decision(data, order_count, customer_indicator):
         total_orders = []
         for rc in range(5, max(data['max_order'])):
             data = pd.merge(data,
-                            data.groupby(customer_indicator)['order_seq_num'].max().reset_index().rename(
                                 columns={"order_seq_num": "max_order"}),
                             on=customer_indicator, how='left')
             data['prev_orders'] = data['max_order'] - order_count
