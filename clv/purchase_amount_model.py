@@ -333,15 +333,13 @@ class TrainConv1Dimension:
             except Exception as e:
                 print(" Parameter Tuning Keras Turner dummy files have already removed!!")
 
-            try:
+            if check_for_existing_parameters(self.directory, 'next_purchase') is not None:
                 _params = read_yaml(self.directory, "test_parameters.yaml")
                 _params['purchase_amount'] = self.params
-                write_yaml(self.directory, "test_parameters.yaml", _params, ignoring_aliases=True)
-            except Exception as e:
-                print(e)
-                print("None of parameter tuning for both Model has been observed.")
-                write_yaml(self.directory, "test_parameters.yaml", {'purchase_amount': self.params},
-                           ignoring_aliases=True)
+            else:
+                _params = {'purchase_amount': self.params}
+            write_yaml(self.directory, "test_parameters.yaml", _params, ignoring_aliases=True)
+            
         else:
             self.params = check_for_existing_parameters(self.directory, 'purchase_amount')
 

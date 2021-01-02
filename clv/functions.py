@@ -77,24 +77,79 @@ def data_manipulation(date,
     data['order_seq_num'] = data.apply(
         lambda row: row['order_seq_num'] + abs(row['prev_orders']) if row['prev_orders'] < 0 else row['order_seq_num'],
         axis=1)
-    data, customer_min_max = get_customer_min_max_data(data, feature, customer_indicator)
-    data = pivoting_orders_sequence(data, customer_indicator, feature)
+    data, customer_min_max = get_customer_min_max_data(data, amount_indicator, customer_indicator)
+    data = pivoting_orders_sequence(data, customer_indicator, amount_indicator)
     features = list(range(1, order_count))
     return data, features, order_count, customer_min_max, max_date
 
 
-def order_count_decision(data, order_count, customer_indicator):
+def order_count_decision(data, order_count, customer_indicator, directory):
+    """
+    This allows us to calculate an optimum number of order counts.
+    Order count is also the feature number of the purchase amount model.
+
+    !!! Caution !!!
+        - Order count must be inserted into the test_parameters.yaml in order not to allow for changing later on prediction.
+        - Once the model is built with calculated order_count it must be predicted with the same order count.
+
+    !!! Why we need an order count of a decision? !!!
+        - it is a crucial parameter for the purchase amount model.
+        - The purchase amount is a 1 Dimensional Conv NN. It works with kernels and it is sizes are related to feature size.
+        - At the purchase amount model features are sequential orders.
+        - For instance if we assign order count as 5, user_1, user_2, user_3, user_4 have 100, 101, 300, 2 orders.
+            The data set will be;
+                - user_1: 95th, 96th, 97th, 98th, 99th, 100th  orders
+                - user_2: 96th, 97th, 98th, 99th, q00th, 101st  orders
+                - user_3: 295th, 296th, 297th, 298th, 299th, 300th  orders
+                - user_4: only have 2 orders first 9 orders will be 0 and this will affect the model process.
+        - That is why it is crucial to have a minimum 0 assigned order as user_4
+          However, it is also a crucial point  to get as much previous order count for make kernel size larger,
+
+    !!! How does it work? !!!
+        - At least the last 5 orders are accepted for the model. Lower than 5 orders will not be fully Dimensional Conv.NN.
+          It will work as Feed Forward NN because of the lack of kernel size.
+        - Iterate from 5 to max order count for any customer at the data set.
+        - Finds zero assign number of orders
+        - Calculate expected total numbers with given order count; order_count * unique_customers
+        - Calculate ratio: zero assign number of orders / expected total numbers with given order count
+        - Collect the order count which has ratio less than 0.05
+        - Assign as order count form max collected order count (ratio < 0.05)
+
+
+    :param data: raw data with order_sequential per customer
+    :param order_count: if order_count is assigned when the platform is triggered.
+    :param customer_indicator: customer columns on data frame
+    :param directory: need to check order count has been decided before on test_parameters.yaml
+    :return: decided order_count
+    """
     if order_count is None:
-        total_orders = []
-        for rc in range(5, max(data['max_order'])):
-            data = pd.merge(data,
-                                columns={"order_seq_num": "max_order"}),
-                            on=customer_indicator, how='left')
-            data['prev_orders'] = data['max_order'] - order_count
-            total_orders.append({"order_count": rc,
-                                 "total_orders": sum([abs(prev_order) for prev_order in list(data['prev_orders'])])})
-        order_count = list(pd.DataFrame(total_orders).sort_values(by='total_orders', ascending=True)['order_count'])[0]
-        print("optimum order count :", order_count)
+        params = check_for_existing_parameters(directory, 'purchase_amount')
+        if params is None:
+            total_orders = []
+            max_order = max(data['max_order'])
+            data = data.drop('max_order', axis=1)
+            for rc in range(5, max_order):
+                _data = pd.merge(data,
+                                 data.groupby(customer_indicator)['order_seq_num'].max().reset_index().rename(
+                                     columns={"order_seq_num": "max_order"}),
+                                 on=customer_indicator, how='left')
+                _data['prev_orders'] = _data['max_order'] - rc
+                _data = _data.query("order_seq_num > prev_orders")
+                _total_unique_customers = len(_data[customer_indicator].unique())
+                _total_orders = len(_data)
+                total_orders.append({"order_count": rc,
+                                     "total_orders": _total_orders,
+                                     "total_data_point": _total_unique_customers * rc,
+                                     "zero_orders": (_total_unique_customers * rc) - _total_orders,
+                                     "ratio": _total_orders / (_total_unique_customers * rc),
+                                     'unique_customers': _total_unique_customers})
+            df = pd.DataFrame(total_orders).query("ratio >= @accepted_ratio_of_actual_order")
+            df = df.sort_values(by='ratio', ascending=False)
+            df = df.sort_values(by='order_count', ascending=False)
+            order_count = list(df['order_count'])[0]
+            print("optimum order count :", order_count)
+        else:
+            order_count = params['feature_count']
     return order_count
 
 
