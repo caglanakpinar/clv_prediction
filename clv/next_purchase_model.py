@@ -1,12 +1,10 @@
 import warnings
 from pandas import DataFrame, concat
 import os
-import random
 import shutil
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '4'
-import traceback
+
 from tensorflow.keras.layers import Dense, LSTM, Input, BatchNormalization
-from tensorflow.keras.regularizers import l2, l1_l2
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.initializers import Ones
 from tensorflow.keras.models import Model
@@ -16,11 +14,11 @@ from kerastuner.engine.hyperparameters import HyperParameters
 
 try:
     from functions import *
-    from configs import conf, boostrap_ratio, iteration, hyper_conf
+    from configs import hyper_conf
     from data_access import *
 except Exception as e:
     from .functions import *
-    from .configs import conf, boostrap_ratio, iteration, hyper_conf
+    from .configs import hyper_conf
     from .data_access import *
 
 

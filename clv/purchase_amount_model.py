@@ -1,5 +1,6 @@
 from pandas import DataFrame, concat
 import os
+from itertools import product
 import random
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '4'
 import traceback
@@ -15,11 +16,11 @@ from kerastuner.engine.hyperparameters import HyperParameters
 
 try:
     from functions import *
-    from configs import conf, boostrap_ratio, iteration, hyper_conf
+    from configs import hyper_conf
     from data_access import *
 except Exception as e:
     from .functions import *
-    from .configs import conf, boostrap_ratio, iteration, hyper_conf
+    from .configs import hyper_conf
     from .data_access import *
     from .utils import get_current_day
 

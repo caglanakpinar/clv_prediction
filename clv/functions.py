@@ -7,11 +7,11 @@ from statsmodels.tsa.arima.model import ARIMA
 try:
     from data_access import GetData
     from utils import *
-    from configs import time_dimensions, day_of_year, time_indicator_accept_threshold, s_size_ratio
+    from configs import accepted_ratio_of_actual_order
 except Exception as e:
     from .data_access import GetData
     from .utils import *
-    from .configs import time_dimensions, day_of_year, time_indicator_accept_threshold, s_size_ratio
+    from .configs import accepted_ratio_of_actual_order
 
 
 def data_manipulation_np(date, time_indicator,

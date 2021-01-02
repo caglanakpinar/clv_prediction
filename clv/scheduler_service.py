@@ -7,10 +7,10 @@ from os.path import abspath, join
 
 try:
     from main import main
-    from utils import date_part, convert_date, read_yaml, write_yaml, convert_date_v2
+    from utils import convert_date, read_yaml, write_yaml
 except Exception as e:
     from .main import main
-    from .utils import date_part, convert_date, read_yaml, write_yaml, convert_date_v2
+    from .utils import convert_date, read_yaml, write_yaml
 
 
 def get_schedule(time_period):
