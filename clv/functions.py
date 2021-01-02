@@ -472,7 +472,7 @@ def batch_size_optimization(client_sample_sizes, num_of_customers):
     (unique, counts) = np.unique(client_sample_sizes, return_counts=True)
     optimum_batch = sorted(zip(counts, unique))[-1][1]
     average_customer_batch = num_of_customers - (num_of_customers % optimum_batch)
-    return average_customer_batch
+    return int(average_customer_batch)
 
 
 class OptimumLagDecision:

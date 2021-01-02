@@ -137,7 +137,6 @@ if __name__ == '__main__':
                         Exporting path of the results set. Csv file of exporting.
                         """,
                         )
-
     arguments = parser.parse_args()
     args = {'job': arguments.job, 'order_count': arguments.order_count,
             'customer_indicator': arguments.customer_indicator,
