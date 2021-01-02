@@ -300,11 +300,11 @@ class TrainLSTM:
             if check_for_existing_parameters(self.directory, 'purchase_amount') is not None:
                 _params = read_yaml(self.directory, "test_parameters.yaml")
                 _params['next_purchase'] = self.params
-                write_yaml(self.directory, "test_parameters.yaml", _params, ignoring_aliases=True)
-            except Exception as e:
-                print(e)
+            else:
                 print("Non of parameter tuning for both Model has been observed.")
-                write_yaml(self.directory, "test_parameters.yaml", {'next_purchase': self.params}, ignoring_aliases=True)
+                _params = {'next_purchase': self.params}
+            write_yaml(self.directory, "test_parameters.yaml", _params, ignoring_aliases=True)
+
         else:
             self.params = check_for_existing_parameters(self.directory, 'next_purchase')
 
