@@ -20,6 +20,7 @@ except Exception as e:
     from .functions import check_for_previous_predicted_clv_results, check_model_exists
     from .functions import check_for_previous_predicted_clv_results
 
+
 class CLV:
     """
     order_count:        column of the data which represents  A - B Test of groups.
@@ -112,67 +113,57 @@ class CLV:
         self.clv_predicted = None
         self.path = get_folder_path()
 
+    def query_string_change(self):
+        if self.data_source in ['mysql', 'postgresql', 'awsredshift', 'googlebigquery']:
+            self.data_query_path = self.data_query_path.replace("\r", " ").replace("\n", " ").replace(" ", "+")
+
+    def create_schedule_file(self):
+        write_yaml(self.export_path, 'schedule_' + self.job + '.yaml',
+                   {'arguments': self.arguments,
+                    'time_schedule': self.time_schedule,
+                    'iteration': 0})
+
+    def get_connector(self):
+        """
+        Connection checks for given data_source, data_path, connection parameters.
+        This will be stored at configs.yaml at docs folder.
+        If it can read the data well, returns True
+        :return: True or False
+        """
+        config = conf('config')
+        try:
+            if self.data_source not in ["csv", "json"]:
+                for i in config['db_connection']:
+                    if i != 'data_source':
+                        config['db_connection'][i] = self.connector[i]
+                    else:
+                        config['db_connection']['data_source'] = self.data_source
+            write_yaml(join(self.path, "docs"), "configs.yaml", config, ignoring_aliases=False)
+            source = GetData(data_source=self.data_source,
+                             data_query_path=self.data_query_path,
+                             time_indicator=self.time_indicator,
+                             feature=self.amount_indicator)
+            source.get_connection()
+            return True
+        except Exception as e:
+            print(e)
+            if self.data_source not in ["csv", "json"]:
+                for i in config['db_connection']:
+                    if i is not 'data_source':
+                        config['db_connection'][i] = None
+                    else:
+                        config['db_connection']['data_source'] = self.data_source
+            write_yaml(join(self.path, "docs"), "configs.yaml", config, ignoring_aliases=False)
+            return False
+
     def check_for_mandetory_arguments(self):
+        """
+        checking for mandetory arguments before initialized to model train or prediction process.
+        :return: True, False
+        """
         for arg in self.arg_terminal:
             if arg in self.mandetory_arguments:
                 return False if self.arguments[arg] is None else True
-
-    def get_connector(self):
-        """
-       query_string_change İf data
-        """
-        config = conf('config')
-        try:
-            if self.data_source not in ["csv", "json"]:
-                for i in config['db_connection']:
-                    if i != 'data_source':
-                        config['db_connection'][i] = self.connector[i]
-                    else:
-                        config['db_connection']['data_source'] = self.data_source
-            write_yaml(join(self.path, "docs"), "configs.yaml", config, ignoring_aliases=False)
-            source = GetData(data_source=self.data_source,
-                             data_query_path=self.data_query_path,
-                             time_indicator=self.time_indicator,
-                             feature=self.amount_indicator)
-            source.get_connection()
-            return True
-        except Exception as e:
-            print(e)
-            if self.data_source not in ["csv", "json"]:
-                for i in config['db_connection']:
-                    if i is not 'data_source':
-                        config['db_connection'][i] = None
-                    else:
-                        config['db_connection']['data_source'] = self.data_source
-            write_yaml(join(self.path, "docs"), "configs.yaml", config, ignoring_aliases=False)
-            return False
-
-    def get_connector(self):
-        config = conf('config')
-        try:
-            if self.data_source not in ["csv", "json"]:
-                for i in config['db_connection']:
-                    if i != 'data_source':
-                        config['db_connection'][i] = self.connector[i]
-                    else:
-                        config['db_connection']['data_source'] = self.data_source
-            write_yaml(join(self.path, "docs"), "configs.yaml", config, ignoring_aliases=False)
-            source = GetData(data_source=self.data_source,
-                             data_query_path=self.data_query_path,
-                             time_indicator=self.time_indicator,
-                             feature=self.amount_indicator)
-            source.get_connection()
-            return True
-        except Exception as e:
-            print(e)
-            if self.data_source not in ["csv", "json"]:
-                for i in config['db_connection']:
-                    if i is not 'data_source':
-                        config['db_connection'][i] = None
-                    else:
-                        config['db_connection']['data_source'] = self.data_source
-            write_yaml(join(self.path, "docs"), "configs.yaml", config, ignoring_aliases=False)
-            return False
 
     def check_for_time_period(self):
         if self.time_period is None:
@@ -181,10 +172,6 @@ class CLV:
             if self.time_period in ["day", "year", "month", "week", "2*week", '2*month', "quarter"]:
                 return True
             else: return False
-
-    def query_string_change(self):
-        if self.data_source in ['mysql', 'postgresql', 'awsredshift', 'googlebigquery']:
-            self.data_query_path = self.data_query_path.replace("\r", " ").replace("\n", " ").replace(" ", "+")
 
     def checking_for_prediction_process(self):
         if self.job == 'prediction':
@@ -195,6 +182,15 @@ class CLV:
                 else: return False
             else: return False
         else: return True
+
+    def check_for_time_schedule(self):
+        if self.time_schedule is None:
+            return True
+        else:
+            if self.time_schedule in ["Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays",
+                                      "Saturdays", "Sundays", "Daily", "hour", "week"]:
+                return True
+            else: return False
 
     def clv_prediction(self):
         self.query_string_change()
@@ -244,21 +240,6 @@ class CLV:
 
         return self.results if self.clv_predicted is None else pd.concat([self.raw_data, self.results])
 
-    def check_for_time_schedule(self):
-        if self.time_schedule is None:
-            return True
-        else:
-            if self.time_schedule in ["Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays",
-                                      "Saturdays", "Sundays", "Daily", "hour", "week"]:
-                return True
-            else: return False
-
-    def create_schedule_file(self):
-        write_yaml(self.export_path, 'schedule_' + self.job + '.yaml',
-                   {'arguments': self.arguments,
-                    'time_schedule': self.time_schedule,
-                    'iteration': 0})
-
     def schedule_clv_prediction(self):
         if self.get_connector():
             if self.check_for_time_schedule():
@@ -293,7 +274,7 @@ class CLV:
         process.daemon = True
         process.start()
 
-    def create_api_for_runig_realtime_customer_value_predicion(self):
+    def create_api_for_runnig_realtime_customer_value_predicion(self):
         """
         Real time api for prediction values for individual customer or customer list
         :return:

@@ -14,8 +14,14 @@ except Exception as e:
     from .configs import accepted_ratio_of_actual_order
 
 
-def data_manipulation_np(date, time_indicator,
-                         data_source, data_query_path, feature, customer_indicator, params, directory):
+def data_manipulation_np(date,
+                         time_indicator,
+                         data_source,
+                         data_query_path,
+                         feature,
+                         customer_indicator,
+                         params,
+                         directory):
     data_process = GetData(data_source=data_source,
                            data_query_path=data_query_path,
                            time_indicator=time_indicator,

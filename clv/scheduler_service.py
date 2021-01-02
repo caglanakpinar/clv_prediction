@@ -13,6 +13,14 @@ except Exception as e:
     from .utils import convert_date, read_yaml, write_yaml
 
 
+def convert_to_day_hour(x):
+    return datetime.datetime.strptime(str(x)[0:13], "%Y-%m-%d %H")
+
+
+def convert_to_day(x):
+    return datetime.datetime.strptime(str(x)[0:10], "%Y-%m-%d")
+
+
 def get_schedule(time_period):
     if time_period not in ['minute', 'hour', 'week']:
         return {'Mondays': schedule.every().monday,
@@ -31,17 +39,8 @@ def get_schedule(time_period):
         return schedule.every(1).hours.at(str(datetime.datetime.now())[11:16])
 
 
-def convert_to_day_hour(x):
-    return datetime.datetime.strptime(str(x)[0:13], "%Y-%m-%d %H")
-
-
-def convert_to_day(x):
-    return datetime.datetime.strptime(str(x)[0:10], "%Y-%m-%d")
-
-
 def update_date(args):
-    iteration = args['iteration']
-    time_schedule = args['time_schedule']
+    iteration, time_schedule = args['iteration'], args['time_schedule']
     if time_schedule == 'hour':
         if len(str(args['arguments']['date'])) == 10:
             args['arguments']['date'] = args['arguments']['date'] + ' 00'
@@ -95,7 +94,6 @@ def decision_of_time_sleep(time_schedule):
 
 
 def create_job(arguments, time_schedule):
-    iteration = 0
     time_schedule = time_schedule
     args = arguments
     check_for_first_running(args)
