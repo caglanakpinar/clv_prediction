@@ -321,8 +321,8 @@ class TrainConv1Dimension:
                 self.params['epochs'] = self.params['epochs'] + pow(self.params['epochs'], counter)
                 self.params['batch_size'] = self.params['batch_size'] + pow(self.params['epochs'], counter)
                 self.build_model()
-                _history = self.learning_process(history=True)
-                if abs(_history.history['loss'][-1]  - _history.history['loss'][-2]) < accept_threshold_for_loss_diff:
+                _history = self.learning_process(save_model=False, history=True)
+                if abs(_history.history['loss'][-1] - _history.history['loss'][-2]) < accept_threshold_for_loss_diff:
                     optimum_epoch_process_done = True
                 counter += 1
 

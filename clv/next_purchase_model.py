@@ -286,8 +286,8 @@ class TrainLSTM:
             while not optimum_epoch_process_done:
                 self.params['epochs'] = self.hyper_params['epochs'][counter]
                 self.build_model()
-                _history = self.learning_process(history=True)
                 if _history.history['loss'][-1] < 0.05:
+                _history = self.learning_process(save_model=False, history=True)
                     optimum_epoch_process_done = True
                 counter += 1
             shutil.rmtree(join(abspath(__file__).split("next_purchase_model.py")[0].split("clv")[0][:-1],
