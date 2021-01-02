@@ -79,19 +79,20 @@ class TrainConv1Dimension:
         self.time_period = time_period
         self.amount_indicator = amount_indicator
         self.params = hyper_conf('purchase_amount')
-        ## TODO: hyper parametrs of ranges must be updated related to data
         self.hyper_params = get_tuning_params(hyper_conf('purchase_amount_hyper'), self.params)
         self.optimized_parameters = {}
         self._p = None
         self.data, self.features, self.y, self.c_min_max, \
         self.max_date = data_manipulation(
                                            date=date,
-                                           feature=amount_indicator,
+                                           amount_indicator=amount_indicator,
                                            time_indicator=time_indicator,
                                            order_count=order_count,
                                            data_source=data_source,
                                            data_query_path=data_query_path,
-                                           customer_indicator=customer_indicator)
+                                           customer_indicator=customer_indicator,
+                                           directory=self.directory)
+        self.params['feature_count'] = self.y
         self.hp = HyperParameters()
         self.model = check_model_exists(self.directory, "trained_purchase_amount_model", self.time_period)
         self.input = None

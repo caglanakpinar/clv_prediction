@@ -43,11 +43,19 @@ def data_manipulation_np(date, time_indicator,
     return data, 'time_diff_norm', customer_min_max, params
 
 
-def data_manipulation(date, time_indicator, order_count, data_source, data_query_path, feature, customer_indicator):
+def data_manipulation(date,
+                      time_indicator,
+                      order_count,
+                      data_source,
+                      data_query_path,
+                      amount_indicator,
+                      customer_indicator,
+                      directory):
     data_process = GetData(data_source=data_source,
                            data_query_path=data_query_path,
                            time_indicator=time_indicator,
-                           feature=feature, date=date)
+                           feature=amount_indicator,
+                           date=date)
     data_process.data_execute()
     print("data size :", len(data_process.data))
     data = data_process.data
@@ -61,7 +69,7 @@ def data_manipulation(date, time_indicator, order_count, data_source, data_query
                     data.groupby(customer_indicator)['order_seq_num'].max().reset_index().rename(
                         columns={"order_seq_num": "max_order"}),
                     on=customer_indicator, how='left')
-    order_count = order_count_decision(data, order_count, customer_indicator)
+    order_count = order_count_decision(data, order_count, customer_indicator, directory)
     data['prev_orders'] = data['max_order'] - order_count
     data = data.query("order_seq_num > prev_orders")
     data['order_seq_num'] = data.sort_values(by=[customer_indicator, time_indicator]).groupby(
