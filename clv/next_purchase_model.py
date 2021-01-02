@@ -14,11 +14,11 @@ from kerastuner.engine.hyperparameters import HyperParameters
 
 try:
     from functions import *
-    from configs import hyper_conf
+    from configs import hyper_conf, accept_threshold_for_loss_diff
     from data_access import *
 except Exception as e:
     from .functions import *
-    from .configs import hyper_conf
+    from .configs import hyper_conf, accept_threshold_for_loss_diff
     from .data_access import *
 
 
