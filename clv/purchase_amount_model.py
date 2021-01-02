@@ -16,11 +16,11 @@ from kerastuner.engine.hyperparameters import HyperParameters
 
 try:
     from functions import *
-    from configs import hyper_conf
+    from configs import hyper_conf, accept_threshold_for_loss_diff
     from data_access import *
 except Exception as e:
     from .functions import *
-    from .configs import hyper_conf
+    from .configs import hyper_conf, accept_threshold_for_loss_diff
     from .data_access import *
     from .utils import get_current_day
 
@@ -214,19 +214,32 @@ class TrainConv1Dimension:
                            optimizer=Adam(lr=self.params['lr']),
                            metrics=[self.params['loss']])
 
-    def learning_process(self, save_model=True):
-        self.model.fit(self.model_data['x_train'],
-                       self.model_data['y_train'],
-                       batch_size=int(self.params['batch_size']),
-                       epochs=int(self.params['epochs']),
-                       verbose=1,
-                       validation_data=(self.model_data['x_test'], self.model_data['y_test']),
-                       shuffle=True)
+    def learning_process(self, save_model=True, history=True):
+        if history:
+            history = self.model.fit(self.model_data['x_train'],
+                                     self.model_data['y_train'],
+                                     batch_size=int(self.params['batch_size']),
+                                     epochs=int(self.params['epochs']),
+                                     verbose=1,
+                                     validation_data=(self.model_data['x_test'], self.model_data['y_test']),
+                                     shuffle=True)
+        else:
+            self.model.fit(self.model_data['x_train'],
+                           self.model_data['y_train'],
+                           batch_size=int(self.params['batch_size']),
+                           epochs=int(self.params['epochs']),
+                           verbose=1,
+                           validation_data=(self.model_data['x_test'], self.model_data['y_test']),
+                           shuffle=True)
+
         if save_model:
             model_from_to_json(path=model_path(self.directory,
                                                "trained_purchase_amount_model", self.time_period),
                                model=self.model,
                                is_writing=True)
+
+        if history:
+            return history
 
     def train_execute(self):
         print("*" * 5, " Purchase Amount train model process ", "*" * 5)
@@ -309,7 +322,7 @@ class TrainConv1Dimension:
                 self.params['batch_size'] = self.params['batch_size'] + pow(self.params['epochs'], counter)
                 self.build_model()
                 _history = self.learning_process(history=True)
-                if abs(_history.history['loss'][-1]  - _history.history['loss'][-2]) < 0.05:
+                if abs(_history.history['loss'][-1]  - _history.history['loss'][-2]) < accept_threshold_for_loss_diff:
                     optimum_epoch_process_done = True
                 counter += 1
 
