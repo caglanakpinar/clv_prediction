@@ -184,7 +184,6 @@ class TrainLSTM:
         if history:
             return history
 
-
     def train_execute(self):
         print("*"*5, "Next purchase train model process ", "*"*5)
         if self.model is None:
@@ -284,7 +283,7 @@ class TrainLSTM:
             counter = 0
             optimum_epoch_process_done = False
             while not optimum_epoch_process_done:
-                self.params['epochs'] = self.hyper_params['epochs'][counter]
+                self.params['epochs'] = int(self.hyper_params['epochs'][counter])
                 self.build_model()
                 _history = self.learning_process(save_model=False, history=True)
                 if _history.history['loss'][-1] < accept_threshold_for_loss_diff:
