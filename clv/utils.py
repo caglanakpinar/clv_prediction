@@ -115,7 +115,7 @@ def get_folder_path():
 
 def check_for_existing_parameters(directory, model):
     try:
-        params = read_yaml(directory, "test_parameters")[model]
+        params = read_yaml(directory, "test_parameters.yaml")[model]
     except Exception as e:
         params = None
     return params
