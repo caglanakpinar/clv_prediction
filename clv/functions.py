@@ -299,10 +299,11 @@ reshape_2 = lambda x: x.reshape((x.shape[0], 1))
 
 
 def split_data(Y, X, params):
-    x_train = reshape_3(X.values)
-    y_train = reshape_2(Y.values)
-    x_test = reshape_3(X.values)
-    y_test = reshape_2(Y.values)
+    split_size = int(params['split_ratio'] * len(X))
+    x_train = reshape_3(X[:split_size].values)
+    y_train = reshape_2(Y[:split_size].values)
+    x_test = reshape_3(X[split_size:].values)
+    y_test = reshape_2(Y[split_size:].values)
     return {'x_train': x_train, 'y_train': y_train, 'x_test': x_test, 'y_test': y_test}
 
 
