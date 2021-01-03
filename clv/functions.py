@@ -184,6 +184,7 @@ def pivoting_orders_sequence(data, customer_indicator, feature):
     return data
 
 
+def calculate_time_diff(date, prev_date, time_period):
     date = datetime.datetime.strptime(str(date)[0:19], '%Y-%m-%d %H:%M:%S')
     prev_date = datetime.datetime.strptime(str(prev_date)[0:19], '%Y-%m-%d %H:%M:%S')
     if time_period == 'hour':
@@ -192,6 +193,7 @@ def pivoting_orders_sequence(data, customer_indicator, feature):
         return abs((date - prev_date).total_seconds()) / 60 / 60
     if time_period not in ['hour', 'day']:
         return abs((date - prev_date).total_seconds()) / 60 / 60 / 24
+
 
 
 def sampling(sample, sample_size):
