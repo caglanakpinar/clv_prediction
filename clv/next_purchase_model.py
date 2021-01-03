@@ -75,6 +75,7 @@ class TrainLSTM:
                                                                                      data_query_path=data_query_path,
                                                                                      customer_indicator=customer_indicator,
                                                                                      params=self.params,
+                                                                                     time_period=time_period,
                                                                                      directory=directory)
 
         self.hp = HyperParameters()
