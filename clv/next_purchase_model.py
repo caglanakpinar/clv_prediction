@@ -115,10 +115,8 @@ class TrainLSTM:
                 self.client_sample_sizes = []
                 for c in model_data:
                     if self.model_data['x_train'] is not None:
-                        self.model_data['x_train'] = np.concatenate([self.model_data['x_train'], model_data[c]['x_train']])
-                        self.model_data['y_train'] = np.concatenate([self.model_data['y_train'], model_data[c]['y_train']])
-                        self.model_data['x_test'] = np.concatenate([self.model_data['x_test'], model_data[c]['x_test']])
-                        self.model_data['y_test'] = np.concatenate([self.model_data['y_test'], model_data[c]['y_test']])
+                        for _split in ['x_train', 'y_train', 'x_test', 'y_test']:
+                            self.model_data[_split] = np.concatenate([self.model_data[_split], model_data[c][_split]])
                         self.client_sample_sizes.append(model_data[c]['x_train'].shape[0])
                     else:
                         self.client_sample_sizes.append(model_data[c]['x_train'].shape[0])
