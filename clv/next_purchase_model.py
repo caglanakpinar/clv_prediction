@@ -259,51 +259,97 @@ class TrainLSTM:
                                     (self.results[self.time_indicator] < self.results['future_date'])]
         print(self.results.head())
 
+    def initialize_keras_tuner(self):
+        """
+        Parameter tuning process is triggered via Keras-Turner Library.
+        However, batch_size and epoch parameters of optimization are created individually.
+        """
+
+        self.hyper_params, self.optimum_batch_size = batch_size_hp_ranges(client_sample_sizes=self.client_sample_sizes,
+                                                                          num_of_customers=len(self.customers),
+                                                                          hyper_params=self.hyper_params)
+        tuner = RandomSearch(
+            self.build_parameter_tuning_model,
+            max_trials=parameter_tuning_trials,
+            hyperparameters=self.hp,
+            allow_new_entries=True,
+            objective='loss')
+        tuner.search(x=self.model_data['x_train'],
+                     y=self.model_data['y_train'],
+                     epochs=5,
+                     batch_size=self.optimum_batch_size,
+                     verbose=1,
+                     validation_data=(self.model_data['x_test'], self.model_data['y_test']))
+        for p in tuner.get_best_hyperparameters()[0].values:
+            if p in list(self.params.keys()):
+                self.params[p] = tuner.get_best_hyperparameters()[0].values[p]
+
+    def batch_size_and_epoch_tuning(self):
+        """
+        It finds the optimum batch_size and epoch.
+        Each chosen epoch and batch_size of model created via model.
+        Last epoch of loss is lower than 'accept_threshold_for_loss_diff' decision be finalized.
+        Epoch will test ascending format (e.g. 4, 8, 16, ..., 1024) in order to minimize time consumption
+        of both parameter tuning and model creation.
+        Batch size will test descending format (e.g. 1024, 512, ...4) in order to minimize time consumption
+        of both parameter tuning and model creation.
+        """
+
+        counter = 0
+        optimum_epoch_process_done = False
+        epoch_bs_combs = list(product(sorted(self.hyper_params['batch_sizes'], reverse=True),
+                                      sorted(self.hyper_params['epochs'])
+                                      ))
+        loss_values = []
+        while not optimum_epoch_process_done:
+            self.params['epochs'] = int(epoch_bs_combs[counter][1])
+            self.params['batch_size'] = int(epoch_bs_combs[counter][0])
+            self.build_model()
+            _history = self.learning_process(save_model=False, history=True)
+            if _history.history['loss'][-1] < accept_threshold_for_loss_diff:
+                optimum_epoch_process_done = True
+            loss_values.append({"epochs": self.params['epochs'],
+                                "batch_size": self.params['batch_size'],
+                                "loss": _history.history['loss'][-1]})
+            counter += 1
+            if counter >= parameter_tuning_trials:
+                optimum_epoch_process_done = True
+                loss_values_df = pd.DataFrame(loss_values).sort_values(by='loss', ascending=True)
+                self.params['epochs'] = list(loss_values_df['epochs'])[0]
+                self.params['batch_size'] = list(loss_values_df['batch_size'])[0]
+
+    def remove_keras_tuner_folder(self):
+        """
+        removing keras tuner file. while you need to update the parameters it will affect rerun the parameter tuning.
+        It won`t start unless the folder has been removed.
+        """
+
+        try:
+            shutil.rmtree(
+                join(abspath(__file__).split("next_purchase_model.py")[0].split("clv")[0][:-1], "clv_prediction",
+                     "untitled_project"))
+        except Exception as e:
+            print(" Parameter Tuning Keras Turner dummy files have already removed!!")
+
+    def update_tuned_parameter_file(self):
+        """
+        tuned parameters are stored at 'test_parameters.yaml.' in given 'export_path' argument.
+        """
+
+        if check_for_existing_parameters(self.directory, 'purchase_amount') is not None:
+            _params = read_yaml(self.directory, "test_parameters.yaml")
+            _params['next_purchase'] = self.params
+        else:
+            print("Non of parameter tuning for both Model has been observed.")
+            _params = {'next_purchase': self.params}
+        write_yaml(self.directory, "test_parameters.yaml", _params, ignoring_aliases=True)
+
     def parameter_tuning(self):
         if check_for_existing_parameters(self.directory, 'next_purchase') is None:
-            print(""*3, "batch size optimization", "*"*3)
-            print("number of sample client size:", len(self.client_sample_sizes))
-            print("average of sample client size:", np.mean(self.client_sample_sizes))
-            self.params['batch_size'] = batch_size_optimization(self.client_sample_sizes, len(self.customers))
-            tuner = RandomSearch(
-                                 self.build_parameter_tuning_model,
-                                 max_trials=5,
-                                 hyperparameters=self.hp,
-                                 allow_new_entries=True,
-                                 objective='loss')
-            tuner.search(x=self.model_data['x_train'],
-                         y=self.model_data['y_train'],
-                         epochs=5,
-                         batch_size=self.params['batch_size'],
-                         verbose=1,
-                         validation_data=(self.model_data['x_test'], self.model_data['y_test']))
-            for p in tuner.get_best_hyperparameters()[0].values:
-                if p in list(self.params.keys()):
-                    self.params[p] = tuner.get_best_hyperparameters()[0].values[p]
-            counter = 0
-            optimum_epoch_process_done = False
-            while not optimum_epoch_process_done:
-                self.params['epochs'] = int(self.hyper_params['epochs'][counter])
-                self.build_model()
-                _history = self.learning_process(save_model=False, history=True)
-                if _history.history['loss'][-1] < accept_threshold_for_loss_diff:
-                    optimum_epoch_process_done = True
-                counter += 1
-
-            try:
-                shutil.rmtree(
-                    join(abspath(__file__).split("next_purchase_model.py")[0].split("clv")[0][:-1], "clv_prediction",
-                         "untitled_project"))
-            except Exception as e:
-                print(" Parameter Tuning Keras Turner dummy files have already removed!!")
-
-            if check_for_existing_parameters(self.directory, 'purchase_amount') is not None:
-                _params = read_yaml(self.directory, "test_parameters.yaml")
-                _params['next_purchase'] = self.params
-            else:
-                print("Non of parameter tuning for both Model has been observed.")
-                _params = {'next_purchase': self.params}
-            write_yaml(self.directory, "test_parameters.yaml", _params, ignoring_aliases=True)
+            self.initialize_keras_tuner()
+            self.batch_size_and_epoch_tuning()
+            self.remove_keras_tuner_folder()
+            self.update_tuned_parameter_file()
 
         else:
             self.params = check_for_existing_parameters(self.directory, 'next_purchase')

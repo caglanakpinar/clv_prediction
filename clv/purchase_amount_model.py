@@ -297,49 +297,95 @@ class TrainConv1Dimension:
         print("lifetime value :")
         print(self.results.head())
 
+    def initialize_keras_tuner(self):
+        """
+        Parameter tuning process is triggered via Keras-Turner Library.
+        However, batch_size and epoch parameters of optimization are created individually.
+        :return:
+        """
+
+        tuner = RandomSearch(
+            self.build_parameter_tuning_model,
+            max_trials=parameter_tuning_trials,
+            hyperparameters=self.hp,
+            allow_new_entries=True,
+            objective='loss')
+        tuner.search(x=self.model_data['x_train'],
+                     y=self.model_data['y_train'],
+                     epochs=5,
+                     verbose=1,
+                     validation_data=(self.model_data['x_test'], self.model_data['y_test']))
+
+        for p in tuner.get_best_hyperparameters()[0].values:
+            if p in list(self.params.keys()):
+                self.params[p] = tuner.get_best_hyperparameters()[0].values[p]
+
+    def batch_size_and_epoch_tuning(self):
+        """
+        It finds the optimum batch_size and epoch.
+        Each chosen epoch and batch_size of model created via model.
+        Last epoch of loss is lower than 'accept_threshold_for_loss_diff' decision be finalized.
+        Epoch will test ascending format (e.g. 4, 8, 16, ..., 1024) in order to minimize time consumption
+        of both parameter tuning and model creation.
+        Batch size will test descending format (e.g. 1024, 512, ...4) in order to minimize time consumption
+        of both parameter tuning and model creation.
+        """
+
+        counter = 0
+        optimum_epoch_process_done = False
+        epoch_bs_combs = list(product(sorted(self.hyper_params['batch_sizes'], reverse=True),
+                                      sorted(self.hyper_params['epochs'])
+                                      ))
+        loss_values = []
+        while not optimum_epoch_process_done:
+            self.params['epochs'] = int(epoch_bs_combs[counter][1])
+            self.params['batch_size'] = int(epoch_bs_combs[counter][0])
+            self.build_model()
+            _history = self.learning_process(save_model=False, history=True)
+            if _history.history['loss'][-1] < accept_threshold_for_loss_diff:
+                optimum_epoch_process_done = True
+            loss_values.append({"epochs": self.params['epochs'],
+                                "batch_size": self.params['batch_size'],
+                                "loss": _history.history['loss'][-1]})
+            counter += 1
+            if counter >= parameter_tuning_trials:
+                optimum_epoch_process_done = True
+                loss_values_df = pd.DataFrame(loss_values).sort_values(by='loss', ascending=True)
+                self.params['epochs'] = list(loss_values_df['epochs'])[0]
+                self.params['batch_size'] = list(loss_values_df['batch_size'])[0]
+
+    def remove_keras_tuner_folder(self):
+        """
+        removing keras tuner file. while you need to update the parameters it will affect rerun the parameter tuning.
+        It won`t start unless the folder has been removed.
+        """
+
+        try:
+            shutil.rmtree(
+                join(abspath(__file__).split("purchase_amount_model.py")[0].split("clv")[0][:-1], "clv_prediction",
+                     "untitled_project"))
+        except Exception as e:
+            print(" Parameter Tuning Keras Turner dummy files have already removed!!")
+
+    def update_tuned_parameter_file(self):
+        """
+        tuned parameters are stored at 'test_parameters.yaml.' in given 'export_path' argument.
+        """
+
+        try:
+            _params = read_yaml(self.directory, "test_parameters.yaml")
+        except Exception as e:
+            print(e)
+            _params = None
+        _params['purchase_amount'] = self.params if _params is not None else {'purchase_amount': self.params}
+        write_yaml(self.directory, "test_parameters.yaml", _params, ignoring_aliases=True)
+
     def parameter_tuning(self):
         if check_for_existing_parameters(self.directory, 'purchase_amount') is None:
-            tuner = RandomSearch(
-                                 self.build_parameter_tuning_model,
-                                 max_trials=5,
-                                 hyperparameters=self.hp,
-                                 allow_new_entries=True,
-                                 objective='loss')
-            tuner.search(x=self.model_data['x_train'],
-                         y=self.model_data['y_train'],
-                         epochs=5,
-                         verbose=1,
-                         validation_data=(self.model_data['x_test'], self.model_data['y_test']))
-
-            for p in tuner.get_best_hyperparameters()[0].values:
-                if p in list(self.params.keys()):
-                    self.params[p] = tuner.get_best_hyperparameters()[0].values[p]
-
-            counter = 0
-            optimum_epoch_process_done = False
-            while not optimum_epoch_process_done:
-                self.params['epochs'] = int(self.params['epochs'] + pow(self.params['epochs'], counter))
-                self.params['batch_size'] = int(self.params['batch_size'] + pow(self.params['epochs'], counter))
-                self.build_model()
-                _history = self.learning_process(save_model=False, history=True)
-                if abs(_history.history['loss'][-1] - _history.history['loss'][-2]) < accept_threshold_for_loss_diff:
-                    optimum_epoch_process_done = True
-                counter += 1
-
-            try:
-                shutil.rmtree(
-                    join(abspath(__file__).split("purchase_amount_model.py")[0].split("clv")[0][:-1], "clv_prediction",
-                         "untitled_project"))
-            except Exception as e:
-                print(" Parameter Tuning Keras Turner dummy files have already removed!!")
-
-            try:
-                _params = read_yaml(self.directory, "test_parameters.yaml")
-            except Exception as e:
-                print(e)
-                _params = None
-            _params['purchase_amount'] = self.params if _params is not None else {'purchase_amount': self.params}
-            write_yaml(self.directory, "test_parameters.yaml", _params, ignoring_aliases=True)
+            self.initialize_keras_tuner()
+            self.batch_size_and_epoch_tuning()
+            self.remove_keras_tuner_folder()
+            self.update_tuned_parameter_file()
         else:
             self.params = check_for_existing_parameters(self.directory, 'purchase_amount')
 
