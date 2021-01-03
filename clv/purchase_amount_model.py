@@ -328,7 +328,7 @@ class TrainConv1Dimension:
 
             try:
                 shutil.rmtree(
-                    join(abspath(__file__).split("next_purchase_model.py")[0].split("clv")[0][:-1], "clv_prediction",
+                    join(abspath(__file__).split("purchase_amount_model.py")[0].split("clv")[0][:-1], "clv_prediction",
                          "untitled_project"))
             except Exception as e:
                 print(" Parameter Tuning Keras Turner dummy files have already removed!!")
