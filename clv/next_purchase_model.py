@@ -2,6 +2,7 @@ import warnings
 from pandas import DataFrame, concat
 import os
 import shutil
+from itertools import product
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '4'
 
 from tensorflow.keras.layers import Dense, LSTM, Input, BatchNormalization
@@ -14,11 +15,11 @@ from kerastuner.engine.hyperparameters import HyperParameters
 
 try:
     from functions import *
-    from configs import hyper_conf, accept_threshold_for_loss_diff
+    from configs import hyper_conf, accept_threshold_for_loss_diff, parameter_tuning_trials
     from data_access import *
 except Exception as e:
     from .functions import *
-    from .configs import hyper_conf, accept_threshold_for_loss_diff
+    from .configs import hyper_conf, accept_threshold_for_loss_diff, parameter_tuning_trials
     from .data_access import *
 
 
