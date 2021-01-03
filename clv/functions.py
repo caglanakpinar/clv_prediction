@@ -230,14 +230,17 @@ def reshape_data(model_data, features, y, prediction):
     return model_data
 
 
-def data_for_customer_prediction(data, params):
+def data_for_customer_prediction(data, prediction_data, params):
+    if len(prediction_data) != 0:
+        data = pd.concat([data[['time_diff_norm']], prediction_data[['time_diff_norm']]])
+
     x = pd.DataFrame(np.repeat(data[['time_diff_norm']].values, repeats=params['lag'], axis=1))
     shift_day = int(params['lahead'] / params['lag'])
     if params['lahead'] > 1:
         for i, c in enumerate(x.columns):
             x[c] = x[c].shift(i * shift_day)  # every each same days of shifted
     to_drop = max((params['tsteps'] - 1), (params['lahead'] - 1))
-    return x, data, to_drop
+    return reshape_3(x[to_drop:].values)
 
 
 def check_for_next_prediction(data, model_num):
