@@ -111,10 +111,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-TS", "--time_schedule", type=str,
                         help="""
-                        column of the data which represents  A - B Test of groups. 
-                        It  is a column name from the data.
-                        AB test runs as control  - active group name related to columns of unique values.
-                        This column has to 2 unique values which shows us the test groups
+                        
                         """)
     parser.add_argument("-J", "--job", type=str,
                         help="""
@@ -163,18 +160,10 @@ if __name__ == '__main__':
                         """,
                         )
     arguments = parser.parse_args()
-    clv_arguments = {'order_count': arguments.order_count,
-                     'customer_indicator': arguments.customer_indicator,
-                     'amount_indicator': arguments.amount_indicator,
-                     'data_source': arguments.data_source,
-                     'data_query_path': arguments.data_query_path,
-                     'time_indicator': arguments.time_indicator,
-                     'export_path': arguments.export_path}
-
-    ab_test_arguments = {'test_groups': arguments.test_groups,
+    clv_arguments = {'test_groups': arguments.test_groups,
                          'groups': arguments.groups, 'date': arguments.date,
                          'feature': arguments.feature, 'data_source': arguments.data_source,
                          'data_query_path': arguments.data_query_path, 'time_period': arguments.time_period,
                          "export_path": arguments.export_path}
 
-    create_job(ab_test_arguments, arguments.time_schedule)
+    create_job(clv_arguments, arguments.time_schedule)

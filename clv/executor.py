@@ -23,39 +23,28 @@ except Exception as e:
 
 class CLV:
     """
-    order_count:        column of the data which represents  A - B Test of groups.
-                        It  is a column name from the data.
-                        AB test runs as control  - active group name related to columns of unique values.
-                        This column has to 2 unique values which shows us the test groups
-    customer_indicator:
-
-    amount_indicator:
-
-    job:                train, prediction
-
-
-    date:
-
-    data_source:        AWS RedShift, BigQuery, PostgreSQL, csv, json files can be connected to system
-                        E.g.
-                        {"data_source": ..., "db": ..., "password": ..., "port": ..., "server": ..., "user": ...}
-
-    data_query_path:    if there is file for data importing;
-                            must be the path (e.g /../.../ab_test_raw_data.csv)
-                        if there is ac- connection such as PostgreSQL / BigQuery
-                            query must at the format "SELECT++++*+++FROM++ab_test_table_+++"
-
-    time_indicator      This can only be applied with date. It can be hour, day, week, week_part, quarter, year, month.
-                        Individually time indicator checks the date part is significantly
-                        a individual group for data set or not.
-                        If it is uses time_indicator as a  group
-
-   time_schedule:      When AB Test need to be scheduled, only need to be assign here 'Hourly', 'Monthly',
-                        'Weekly', 'Mondays', ... , Sundays.
-
-    export_path        exporting the results data to. only path is enough for importing data with .csv format.
-
-    time_period:
+    job                 :  Train, Prediction. train process is related to creating a model
+    order_count         :  it allows us to create feature set of purchase amount model. if it is not assigned (it is not a
+                           required argument in order to initialize the clv prediction), platform handles for decide
+                           optimum order_count.
+     customer_indicator :  This parameter indicates which column represents a unique customer identifier on given data.
+     amount_indicator   :  This parameter indicates which column represents purchase value (integer, float ..) on the given data.
+     time_indicator     :  This parameter indicates which column represents order checkout date with date format (timestamp)
+                           (YYYY/MM/DD hh:mm:ss, YYYY-MM-DD hh:mm:ss, YYYY-MM-DD) on given data.
+     date               :  This allows us to query the data with a date filter. This removes data that occurs after the given date.
+     data_source        :  The location where the data is stored or the query (check data source for details).
+     data_query_path    :  Type of data source to import data to the platform (optional Ms SQL, PostgreSQL,
+                           AWS RedShift, Google BigQuery, csv, json, pickle).
+     connector          :  if there is a connection parameters as user, pasword, host port, this allows us to assign it
+                           as dictionary format (e.g {"user":  , "pw":  *}).
+     export_path        :  Export path where the outputs are stored. created models (.json format),
+                           tunned parameters (test_parameters.yaml), schedule service arguments (schedule_service.yaml),
+                           result data with predicted values per user per predicted order 
+                           (.csv format) are willing to store at given path.
+     time_period        :  A period of time which is willing to predict.
+                           Supported time periods month, hour, week, 2*week (Required).
+     time_schedule      :  A period of time which handles for running clv_prediction train or
+                           prediction process periodically. Supported schedule periods day, year, month, week, 2*week.
     """
     def __init__(self,
                  customer_indicator,

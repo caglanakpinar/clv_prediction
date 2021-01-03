@@ -27,15 +27,15 @@ def main(job='train',
     if **order_count** is null, it is detecting for optimum order count.
     the date is crucial for data query. (< date)
 
-    :param job: traşn or prediction
+    :param job: train or prediction
     :param order_count: number of order for purchase amount model
-    :param customer_indicator: customer column at dta
+    :param customer_indicator: customer column at data
     :param amount_indicator: amount column at data
     :param data_source: postgres, .csv, .json, awsredshift, bigquery.
     :param data_query_path: query or file_name (with whole path).
     :param time_period: a period of time which is willing to predict.
     :param time_indicator: time columns at data set
-    :param export_path: where data, model,tunned_paramters, schedule arguments are stored
+    :param export_path: where data, model,tuned_parameters, schedule arguments are stored
     :param date: given date of previous data (< date)
     :return: class TrainLSTM (Next Purchase Model) & class TrainConv1Dimension (Purchase Amount Model)
     """
