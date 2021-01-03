@@ -21,6 +21,7 @@ def data_manipulation_np(date,
                          feature,
                          customer_indicator,
                          params,
+                         time_period,
                          directory):
     data_process = GetData(data_source=data_source,
                            data_query_path=data_query_path,
@@ -36,7 +37,9 @@ def data_manipulation_np(date,
     data = pd.merge(data, data.rename(columns={"last_days": "last_days_2"}).groupby(
                                             customer_indicator)['last_days_2'].max(),
                     on=customer_indicator, how='left')
-    data['time_diff'] = data.apply(lambda row: calculate_time_diff(row['last_days'], row[time_indicator]), axis=1)
+    data['time_diff'] = data.apply(lambda row: calculate_time_diff(row['last_days'],
+                                                                   row[time_indicator],
+                                                                   time_period), axis=1)
     opt_lag = OptimumLagDecision(data, customer_indicator, time_indicator, params, directory)
     opt_lag.find_optimum_lag()
     params['lahead'], params['lag'] = opt_lag.best_lag, opt_lag.best_lag
@@ -181,10 +184,14 @@ def pivoting_orders_sequence(data, customer_indicator, feature):
     return data
 
 
-def calculate_time_diff(date, prev_date):
     date = datetime.datetime.strptime(str(date)[0:19], '%Y-%m-%d %H:%M:%S')
     prev_date = datetime.datetime.strptime(str(prev_date)[0:19], '%Y-%m-%d %H:%M:%S')
-    return abs((date - prev_date).total_seconds()) / 60 / 60 / 24
+    if time_period == 'hour':
+        return abs((date - prev_date).total_seconds()) / 60
+    if time_period == 'day':
+        return abs((date - prev_date).total_seconds()) / 60 / 60
+    if time_period not in ['hour', 'day']:
+        return abs((date - prev_date).total_seconds()) / 60 / 60 / 24
 
 
 def sampling(sample, sample_size):

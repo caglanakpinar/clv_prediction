@@ -70,3 +70,4 @@ weekdays = ['Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturd
 web_port_default = 7002
 accepted_ratio_of_actual_order = 0.75
 accept_threshold_for_loss_diff = 0.05
+parameter_tuning_trials = 10
