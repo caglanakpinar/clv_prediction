@@ -36,9 +36,6 @@ def data_manipulation_np(date,
     data = pd.merge(data, data.rename(columns={"last_days": "last_days_2"}).groupby(
                                             customer_indicator)['last_days_2'].max(),
                     on=customer_indicator, how='left')
-    data['last_recency'] = data.apply(
-        lambda row: 1 if row['last_days'] == row['last_days'] and row['last_days_2'] == row[time_indicator] else 0,
-        axis=1)
     data['time_diff'] = data.apply(lambda row: calculate_time_diff(row['last_days'], row[time_indicator]), axis=1)
     opt_lag = OptimumLagDecision(data, customer_indicator, time_indicator, params, directory)
     opt_lag.find_optimum_lag()

@@ -91,7 +91,7 @@ class TrainLSTM:
         self.client_sample_sizes = []
 
     def get_model_data(self, customer):
-        _data = self.data[(self.data[self.customer_indicator] == customer) & (self.data['last_recency'] == 0)]
+        _data = self.data[self.data[self.customer_indicator] == customer]
         try:
             data = arrange__data_for_model(df=_data, f=[self.features], parameters=self.params)
             if data['x_train'].shape[0] != 0:
