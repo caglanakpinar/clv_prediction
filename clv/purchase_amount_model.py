@@ -224,6 +224,7 @@ class TrainConv1Dimension:
                                      validation_data=(self.model_data['x_test'], self.model_data['y_test']),
                                      shuffle=True)
         else:
+            print("*" * 5, "Fit Purchase Amount Model", "*" * 5)
             self.model.fit(self.model_data['x_train'],
                            self.model_data['y_train'],
                            batch_size=int(self.params['batch_size']),
@@ -258,7 +259,7 @@ class TrainConv1Dimension:
         self.model_data['prediction_data'] = self.data[self.features + ["user_id"]]
         if self.model is not None:
             self.model = model_from_to_json(path=join(self.directory, self.model))
-        if len(self.num_of_future_orders) != 0:
+        if num_of_future_orders is not None:
             for u in self.num_of_future_orders.to_dict('results'):
                 _number, _user = u['order_seq_num'], u[self.customer_indicator]
                 _prediction_data = self.model_data['prediction_data'][
