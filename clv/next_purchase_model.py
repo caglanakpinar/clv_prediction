@@ -91,6 +91,7 @@ class TrainLSTM:
         self.future_date = self.max_date + datetime.timedelta(days=convert_time_preiod_to_days(self.time_period))
         self.model_data = {"x_train": None, "y_train": None, "x_test": None, "y_test": None}
         self.client_sample_sizes = []
+        self.optimum_batch_size = 32
 
     def get_model_data(self, customer):
         _data = self.data[self.data[self.customer_indicator] == customer]
