@@ -166,7 +166,7 @@ class TrainLSTM:
                                      batch_size=self.params['batch_size'],
                                      epochs=int(self.params['epochs']),
                                      verbose=1,
-                                     validation_split=1 - self.params['split_ratio'],
+                                     validation_data=(self.model_data['x_test'], self.model_data['y_test']),
                                      shuffle=True)
         else:
             print("*"*5, "Fit Next Purchase Model", "*"*5)
@@ -175,7 +175,7 @@ class TrainLSTM:
                            batch_size=self.params['batch_size'],
                            epochs=int(self.params['epochs']),
                            verbose=1,
-                           validation_split=1 - self.params['split_ratio'],
+                           validation_data=(self.model_data['x_test'], self.model_data['y_test']),
                            shuffle=True)
         if save_model:
             model_from_to_json(path=model_path(self.directory,
