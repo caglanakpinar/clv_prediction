@@ -473,19 +473,28 @@ def check_for_previous_predicted_clv_results(results,
     return results
 
 
-def batch_size_optimization(client_sample_sizes, num_of_customers):
+def batch_size_hp_ranges(client_sample_sizes, num_of_customers, hyper_params):
     """
-    Main aim here to find optimum k fold for the cross validation.
-    Find the maximum number of raw count per user (via client_sample_sizes).
-    Divide number of customer count to maximum number of raw count per user as integer.
+    For the computational cost and model of bias/variance problem related to other parameters of the NN.
+    !!! optimum_batch_size: !!!
+    client_sample_sizes are number of customers orders.
+    The most frequent order count will be the business of the average of order count per user.
+    batch size must be the  most frequent order count in order to
+    make the predictive model more representative for customers.
+    This will only become more affective when batch_size is assigned as The most frequent order count.
+    That is why optimum_batch_size is The most frequent order count.
+
+    additional to batch_size hyper parameters, optimum_batch_size and number of unique customers must be tunned.
     :param client_sample_sizes: number of row count per user
     :param num_of_customers: number ıf unique customer count
-    :return: optimum batch size
+    :return: range of batch sizes, average_customer_batch
     """
     (unique, counts) = np.unique(client_sample_sizes, return_counts=True)
-    optimum_batch = sorted(zip(counts, unique))[-1][1]
-    average_customer_batch = num_of_customers - (num_of_customers % optimum_batch)
-    return int(average_customer_batch)
+    optimum_batch_size = int(sorted(zip(counts, unique))[-1][1])
+    average_customer_batch = int(num_of_customers - (num_of_customers % optimum_batch_size))
+    hyper_params['batch_sizes'] = sorted(hyper_params['batch_sizes'] +
+                                         [optimum_batch_size, average_customer_batch], reverse=True)
+    return hyper_params, average_customer_batch
 
 
 class OptimumLagDecision:
