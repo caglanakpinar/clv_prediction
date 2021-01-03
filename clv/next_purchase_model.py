@@ -169,6 +169,7 @@ class TrainLSTM:
                                      validation_split=1 - self.params['split_ratio'],
                                      shuffle=True)
         else:
+            print("*"*5, "Fit Next Purchase Model", "*"*5)
             self.model.fit(self.model_data['x_train'],
                            self.model_data['y_train'],
                            batch_size=self.params['batch_size'],
