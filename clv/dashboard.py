@@ -69,6 +69,7 @@ def decide_time_period(date, time_period):
 
 def get_data_time_period_column(data, results, time_indicator, time_period):
     data = pd.concat([data, results])
+    data = data[data[time_indicator] == data[time_indicator]]
     data[time_indicator + '_per_' + time_period] = data[time_indicator].apply(
         lambda x: decide_time_period(x, time_period))
     return data
