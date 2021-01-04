@@ -40,6 +40,7 @@ class CLV:
      export_path        :  Export path where the outputs are stored. created models (.json format),
                            tunned parameters (test_parameters.yaml), schedule service arguments (schedule_service.yaml),
                            result data with predicted values per user per predicted order 
+                           result data with predicted values per user per predicted order
                            (.csv format) are willing to store at given path.
      time_period        :  A period of time which is willing to predict.
                            Supported time periods month, hour, week, 2*week (Required).
@@ -75,6 +76,7 @@ class CLV:
         self.result_columns = [customer_indicator, 'order_seq_num', time_indicator, amount_indicator, 'data_type']
         self.raw_data = pd.DataFrame()
         self.results = pd.DataFrame()
+        self.sorting_columns = [self.customer_indicator, self.time_indicator]
         self.arguments = {"job": job,
                           "time_period": time_period,
                           "order_count": order_count,
@@ -103,10 +105,21 @@ class CLV:
         self.path = get_folder_path()
 
     def query_string_change(self):
+        """
+        When query with SQL syntax, it is more accurate to sent query string as argument with coverşng spaces with "+"
+        character.
+        """
         if self.data_source in ['mysql', 'postgresql', 'awsredshift', 'googlebigquery']:
             self.data_query_path = self.data_query_path.replace("\r", " ").replace("\n", " ").replace(" ", "+")
 
     def create_schedule_file(self):
+        """
+        When scheduling process has been initialized, there will be a file 'schedule.yaml' at the given 'export_path'.
+        This .yaml file is updated every each periodic iteration.
+        Each iteration date argument is updated according to number of the iteration and time_period argument.
+        E.g. date is 2020-01-01 03:00, time_period = 'hour', iteration : 3
+        The current date  is goşng to be 2020-01-01 06:00
+        """
         write_yaml(self.export_path, 'schedule_' + self.job + '.yaml',
                    {'arguments': self.arguments,
                     'time_schedule': self.time_schedule,
@@ -147,7 +160,7 @@ class CLV:
 
     def check_for_mandetory_arguments(self):
         """
-        checking for mandetory arguments before initialized to model train or prediction process.
+        checking for mandetory arguments before initializing for model train or prediction process.
         :return: True, False
         """
         for arg in self.arg_terminal:
@@ -155,6 +168,11 @@ class CLV:
                 return False if self.arguments[arg] is None else True
 
     def check_for_time_period(self):
+        """
+        When clv_prediction is triggered, valid time period must be checked.
+        Here are the valid time periods that platform is supporting;
+            - "day", "year", "month", "week", "2*week", '2*month', "quarter"
+        """
         if self.time_period is None:
             return True
         else:
@@ -163,6 +181,10 @@ class CLV:
             else: return False
 
     def checking_for_prediction_process(self):
+        """
+        When the platform is triggered for prediction, first, trained model for related time_period and time
+        must be check. If the current trained models are not valid for this prediction process, it won`t be started.
+        """
         if self.job == 'prediction':
             model_files = check_model_exists(self.export_path, "trained_next_purchase_model", self.time_period)
             if model_files is not None:
@@ -173,15 +195,33 @@ class CLV:
         else: return True
 
     def check_for_time_schedule(self):
+        """
+        Time schedule periods must be valid periods that are supporting from the platform.
+        Here are the valid periods;
+            - "mondays", "tuesdays", "wednesdays", "thursdays",
+            - "fridays", "saturdays", "sundays", "day", "hour", "week"
+        """
         if self.time_schedule is None:
             return True
         else:
-            if self.time_schedule in ["Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays",
-                                      "Saturdays", "Sundays", "Daily", "hour", "week"]:
+            if self.time_schedule in ["mondays", "tuesdays", "wednesdays", "thursdays",
+                                      "fridays", "saturdays", "sundays", "day", "hour", "week"]:
                 return True
             else: return False
 
     def clv_prediction(self):
+        """
+        This the process where all has begun.
+        Train process is triggered with running clv_prediction.
+        Prediction process is triggered with running clv_prediction.
+        There are conditions that must be acceoted in order to initialized the process;
+            - connection .... Done (get_connector)
+            - time period check ... Done (check_for_time_period)
+            - required arguments .. Done (check_for_mandetory_arguments)
+            - Check for trained model exits if it is the prediction process .. Done(checking_for_prediction_process)
+            Sending arguments to main function at main.py which handles the model,
+            prediction Deep Learning and other staff
+        """
         self.query_string_change()
         if self.get_connector():
             if self.check_for_time_period():
@@ -204,21 +244,31 @@ class CLV:
         else:
             print("pls check for data source connection / path / query.")
 
-    def get_result_data(self):
+    def check_for_raw_data(self):
         """
-        When model prediction has been done, this allows us to get the predicted data with merge to the raw data.
-        If model has not been initialized (clv_prediction has not been run yet),
-        it directly collects the data from last predicted result_data.csv
-        with given arguments (time_period, time_indicator, export_path, customer_indicator)
-        :return: data frame
+        if model has been initialized before triggering for raw data,
+        raw data can be collected from clv_predicted.next_purchase.data
+        However, order_seq_num must be created.
         """
         if self.clv_predicted is not None:
             self.raw_data = self.clv_predicted['next_purchase'].data
             self.raw_data['data_type'] = 'actual'
-            self.raw_data['order_seq_num'] = self.raw_data.sort_values(
-                by=[self.customer_indicator, self.time_indicator]).groupby([self.customer_indicator]).cumcount() + 1
-            self.raw_data = self.raw_data[self.result_columns]
+            self.raw_data['order_seq_num'] = self.raw_data.sort_values(by=self.sorting_columns).groupby(
+                [self.customer_indicator]).cumcount() + 1
+
+    def check_for_result_data(self):
+        """
+        if model has been initialized before triggering for result data,
+        result data can be collected from clv_predicted.purchase_amount.results
+        """
+        if self.clv_predicted is not None:
             self.results = self.clv_predicted['purchase_amount'].results
+
+    def check_for_result_data_from_previous_progresses(self):
+        """
+        If model has not been triggered but there is predicted result_Data.csv file in 'export_path'
+        it can be collected from the given path by merging with previous available result_data.csv files.
+        """
         if self.clv_predicted is None or len(self.results) == 0:
             self.results = check_for_previous_predicted_clv_results(self.results,
                                                                     self.export_path,
@@ -227,6 +277,17 @@ class CLV:
                                                                     self.customer_indicator,
                                                                     )
 
+    def get_result_data(self):
+        """
+        When model prediction has been done, this allows us to get the predicted data with merge to the raw data.
+        If model has not been initialized (clv_prediction has not been run yet),
+        it directly collects the data from last predicted result_data.csv
+        with given arguments (time_period, time_indicator, export_path, customer_indicator)
+        :return: data frame
+        """
+        self.check_for_raw_data()
+        self.check_for_result_data()
+        self.check_for_result_data_from_previous_progresses()
         return self.results if self.clv_predicted is None else pd.concat([self.raw_data, self.results])
 
     def schedule_clv_prediction(self):
@@ -234,8 +295,9 @@ class CLV:
             if self.check_for_time_schedule():
                 if self.check_for_mandetory_arguments():
                     self.create_schedule_file()
-                    process = threading.Thread(target=create_job, kwargs={'arguments': self.arguments,
-                                                                          'time_schedule': self.time_schedule})
+                    process = threading.Thread(target=create_job,
+                                               kwargs={'arguments': self.arguments,
+                                                       'time_schedule': self.time_schedule})
                     process.daemon = True
                     process.start()
                 else:
