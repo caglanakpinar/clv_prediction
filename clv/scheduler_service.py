@@ -22,14 +22,14 @@ def convert_to_day(x):
 
 def get_schedule(time_period):
     if time_period not in ['minute', 'hour', 'week']:
-        return {'Mondays': schedule.every().monday,
-                'Tuesdays': schedule.every().tuesday,
-                'Wednesdays': schedule.every().wednesday,
-                'Thursdays': schedule.every().thursday,
-                'Fridays': schedule.every().friday,
-                'Saturdays': schedule.every().saturday,
-                'Sundays': schedule.every().sunday,
-                'Daily': schedule.every().day
+        return {'mondays': schedule.every().monday,
+                'tuesdays': schedule.every().tuesday,
+                'wednesdays': schedule.every().wednesday,
+                'thursdays': schedule.every().thursday,
+                'fridays': schedule.every().friday,
+                'saturdays': schedule.every().saturday,
+                'sundays': schedule.every().sunday,
+                'day': schedule.every().day
                 }[time_period]
     if time_period == 'week':
         return schedule.every().week
