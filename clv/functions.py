@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 from math import sqrt
+import random
+from os import listdir
 from dateutil.parser import parse
 from statsmodels.tsa.arima.model import ARIMA
 
@@ -233,7 +235,6 @@ def reshape_data(model_data, features, y, prediction):
 def data_for_customer_prediction(data, prediction_data, params):
     if len(prediction_data) != 0:
         data = pd.concat([data[['time_diff_norm']], prediction_data[['time_diff_norm']]])
-
     x = pd.DataFrame(np.repeat(data[['time_diff_norm']].values, repeats=params['lag'], axis=1))
     shift_day = int(params['lahead'] / params['lag'])
     if params['lahead'] > 1:
