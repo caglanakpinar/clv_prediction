@@ -1,5 +1,3 @@
-import sys
-from os.path import abspath
 import argparse
 
 try:

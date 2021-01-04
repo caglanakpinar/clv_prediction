@@ -1,14 +1,11 @@
 from pandas import DataFrame, concat
 import os
 from itertools import product
-import random
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '4'
-import traceback
 import shutil
 from tensorflow.keras.layers import Dense, LSTM, Input, BatchNormalization, Conv1D, MaxPooling1D, Dropout, Flatten
 from keras.regularizers import l1, l2, l1_l2
-from tensorflow.keras.optimizers import RMSprop, Adam
-from tensorflow.keras.initializers import Ones
+from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import Model
 from tensorflow.keras.models import model_from_json
 from kerastuner.tuners import RandomSearch
@@ -259,7 +256,7 @@ class TrainConv1Dimension:
         self.model_data['prediction_data'] = self.data[self.features + ["user_id"]]
         if self.model is not None:
             self.model = model_from_to_json(path=join(self.directory, self.model))
-        if num_of_future_orders is not None:
+        if self.num_of_future_orders is not None:
             for u in self.num_of_future_orders.to_dict('results'):
                 _number, _user = u['order_seq_num'], u[self.customer_indicator]
                 _prediction_data = self.model_data['prediction_data'][

@@ -2,7 +2,6 @@ import schedule
 import datetime
 import time
 import argparse
-from os.path import abspath, join
 
 
 try:
