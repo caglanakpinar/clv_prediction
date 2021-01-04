@@ -198,41 +198,63 @@ class TrainLSTM:
             print(self.model)
             print("Previous model already exits in the given directory  '" + self.directory + "'.")
 
+    def prediction_date_add(self, data, pred_data, pred):
+        max_date = max(data[self.time_indicator]) if len(pred_data) == 0 else max(pred_data[self.time_indicator])
+        if self.time_period != 'hour':
+            _predicted_date = max_date + datetime.timedelta(minutes=pred)
+        if self.time_period != 'day':
+            _predicted_date = max_date + datetime.timedelta(hours=pred)
+        if self.time_period not in ['day', 'hour']:
+            _predicted_date = max_date + datetime.timedelta(days=pred)
+        return _predicted_date
+
+    def predicted_date_in_range_decision(self, start, end, _pred_data, _predicted_date, customer, _pred_actual, _pred):
+        if _predicted_date < end:
+            _pred_data = concat([_pred_data, DataFrame([{self.time_indicator: _predicted_date,
+                                                         self.customer_indicator: customer,
+                                                         'time_diff': _pred_actual,
+                                                         'time_diff_norm': _pred}])])
+        return _pred_data
+
+    def check_number_of_tries(self, counter, start, end, _predicted_date):
+        if _predicted_date < start:
+            _predicted_date = end - datetime.timedelta(days=1)
+            if counter > 2:
+                _predicted_date = end + datetime.timedelta(days=1)
+            counter += 1
+        return _predicted_date, counter
+
     def prediction_per_customer(self,  customer):
         warnings.simplefilter("ignore")
         _norm_data = self.c_min_max[self.c_min_max[self.customer_indicator] == customer].iloc[0:1]
-        start = self.max_date
-        end = self.future_date
-        _max_date = end - datetime.timedelta(days=1)
+        data = self.data[self.data[self.customer_indicator] == customer]
         _pred_data = DataFrame()
-        counter = 0
+        start, end = self.max_date, self.future_date
+        _predicted_date = end - datetime.timedelta(days=1)
         prediction_data[customer] = _pred_data
-        while start < _max_date < end:
-            x, _data, to_drop = data_for_customer_prediction(
-                self.data[self.data[self.customer_indicator] == customer], self.params)
-            if len(reshape_3(x[to_drop:].values)) != 0:
-                _pred = self.model.predict(reshape_3(x[to_drop:].values))[0][-1]
-                if _pred != 0:  # don`t waste time if prediction is O
-                    _pred_actual = self.get_actual_value(_min=list(_norm_data['user_min'])[0],
-                                                         _max=list(_norm_data['user_max'])[0],
-                                                         _value=_pred)
-                    if self.time_period != 'hour':
-                        _predicted_date = max(_data[self.time_indicator]) + datetime.timedelta(days=min(int(max(_pred_actual, 0)), 365 * 10))
-                    else:
-                        _predicted_date = max(_data[self.time_indicator]) + \
-                                          datetime.timedelta(minutes=min(int(max(_pred_actual, 0) * 3600), 365 * 10))
-                    if counter > 2:
-                        _max_date = end + datetime.timedelta(days=1)
-                    if start < _predicted_date < end:
-                        _pred_data = concat([_pred_data, DataFrame([{self.time_indicator: _predicted_date,
-                                                                     self.customer_indicator: customer,
-                                                                     'time_diff': _pred_actual,
-                                                                     'time_diff_norm': _pred}])])
-                    counter += 1
-                else:
-                    _max_date = end + datetime.timedelta(days=1)
-            else:
-                _max_date = end + datetime.timedelta(days=1)
+        counter = 0
+        while start < _predicted_date < end:
+            x = data_for_customer_prediction(data, _pred_data, self.params)
+            try:
+                _pred = self.model.predict(x)[0][-1]
+                _pred_actual = self.get_actual_value(_min=list(_norm_data['user_min'])[0],
+                                                     _max=list(_norm_data['user_max'])[0],
+                                                     _value=_pred)
+                _predicted_date = self.prediction_date_add(data, _pred_data, _pred_actual)
+                _pred_data = self.predicted_date_in_range_decision(start,
+                                                                   end,
+                                                                   _pred_data,
+                                                                   _predicted_date,
+                                                                   customer,
+                                                                   _pred_actual,
+                                                                   _pred)
+                _predicted_date, counter = self.check_number_of_tries(counter, start, end, _predicted_date)
+            except Exception as e:
+                _predicted_date = end + datetime.timedelta(days=1)
+        try:
+            _pred_data = _pred_data[_pred_data[self.time_indicator] >= start]
+        except Exception as e:
+            print(e)
         prediction_data[customer] = _pred_data
 
     def prediction_execute(self):
@@ -245,15 +267,12 @@ class TrainLSTM:
         prediction_data = {}
         execute_parallel_run(self.customers, self.prediction_per_customer, arguments=None, parallel=8)
         print("merge predicted data ...")
-
         for c in self.customers:
             try:
                 self.results = concat([self.results, prediction_data[c]])
             except Exception as e:
                 time.sleep(2)
                 print(c)
-            # self.prediction_per_customer(c)
-            # self.results = concat([self.results, prediction_data[c]])
         print("number of total predicted values")
         print(len(self.results))
         self.results['max_date'], self.results['future_date'] = self.max_date, self.future_date
