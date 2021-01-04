@@ -39,7 +39,6 @@ class CLV:
                            as dictionary format (e.g {"user":  , "pw":  *}).
      export_path        :  Export path where the outputs are stored. created models (.json format),
                            tunned parameters (test_parameters.yaml), schedule service arguments (schedule_service.yaml),
-                           result data with predicted values per user per predicted order 
                            result data with predicted values per user per predicted order
                            (.csv format) are willing to store at given path.
      time_period        :  A period of time which is willing to predict.
