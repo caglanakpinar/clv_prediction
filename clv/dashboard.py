@@ -284,12 +284,12 @@ def create_dashboard(customer_indicator, amount_indicator, directory,
             newc_rate = \
             list(churn_data[churn_data[time_indicator + '_per_' + time_period] == starting_date]['churn_ratio'])[0]
             engaged_users = 1 - newc_rate
-            trace = [go.Pie(labels=['New Comer User Ratio', 'Engaged User Ratio'],
+            trace = [go.Pie(labels=['Newcomer User Ratio', 'Engaged User Ratio'],
                             values=[newc_rate, engaged_users],
                             )
                      ]
             return {"data": trace,
-                    "layout": go.Layout(height=600, title=" New Comer Rate (%) per " + time_period)}
+                    "layout": go.Layout(height=600, title=" Newcomer Rate (%) per " + time_period)}
 
     # Churn Customers Of Purchase Time Line
     """
@@ -315,7 +315,7 @@ def create_dashboard(customer_indicator, amount_indicator, directory,
                                 name=value_column)
                      ]
             return {"data": trace,
-                    "layout": go.Layout(height=600, title=" Churn customers Of Customers Of Purchase Time Line ")}
+                    "layout": go.Layout(height=600, title=" Churn Customers Of Purchase Time Line")}
 
     # top 100 customers
     @app.callback(
@@ -407,7 +407,7 @@ def create_dashboard(customer_indicator, amount_indicator, directory,
         dff = new_comer_data[new_comer_data[time_indicator + '_per_' + time_period] >= starting_date]
         if len(dff) == 0:
             return {"data": [], "layout": go.Layout(height=600,
-                                                    title="Newcomer Customers Of Customer Value Prediction")}
+                                                    title="Newcomer Customer Value Prediction")}
         else:
             trace = [go.Scatter(x=dff[time_indicator + '_per_' + time_period],
                                 y=dff[value_column],
@@ -415,7 +415,7 @@ def create_dashboard(customer_indicator, amount_indicator, directory,
                                 customdata=dff[time_indicator + '_per_' + time_period],
                                 name=value_column)]
             return {"data": trace,
-                    "layout": go.Layout(height=600, title="Newcomer Customers Of Customer Value Prediction")}
+                    "layout": go.Layout(height=600, title="Newcomer Customer Value Prediction")}
 
     webbrowser.open('http://127.0.0.1:8050/')
     app.run_server(debug=False)
