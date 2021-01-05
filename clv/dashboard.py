@@ -68,6 +68,8 @@ def decide_time_period(date, time_period):
 
 
 def get_data_time_period_column(data, results, time_indicator, time_period):
+    data['data_type'] = 'actual'
+    results['data_type'] = 'prediction'
     data = pd.concat([data, results])
     data = data[data[time_indicator] == data[time_indicator]]
     data[time_indicator + '_per_' + time_period] = data[time_indicator].apply(
@@ -135,10 +137,10 @@ def pivoting_data_per_time_period(data,
                                   top_100_customers,
                                   worst_100_customers):
     time_p_ind = time_indicator + '_per_' + time_period
-    data[amount_indicator + "_sum"], data[amount_indicator + "_mean"] = data[amount_indicator], data[amount_indicator]
     data = get_data_time_period_column(data, results, time_indicator, time_period)
+    data[amount_indicator + "_sum"], data[amount_indicator + "_mean"] = data[amount_indicator], data[amount_indicator]
     data = data[data[amount_indicator] == data[amount_indicator]]
-    data_pv = data.groupby(time_p_ind).agg(
+    data_pv = data.groupby([time_p_ind, 'data_type']).agg(
         {amount_indicator + "_sum": "sum",
          amount_indicator + "_mean": "mean",
          customer_indicator: lambda x: list(np.unique(x))}).reset_index()
@@ -146,7 +148,8 @@ def pivoting_data_per_time_period(data,
     new_comer_data, churn_data = get_new_comer_churn_data(data, customer_indicator, amount_indicator, time_p_ind)
     top_100_data = data[data[customer_indicator].isin(top_100_customers)]
     worst_100_data = data[data[customer_indicator].isin(worst_100_customers)]
-    return data_pv, top_100_data, worst_100_data, predicted_time_period, new_comer_data, churn_data
+    return data_pv.query("data_type == 'actual'"), data_pv.query("data_type == 'prediction'"), \
+           top_100_data, worst_100_data, predicted_time_period, new_comer_data, churn_data
 
 
 def adding_filter_to_pane(added_filters, f_style):
@@ -185,7 +188,7 @@ Churn Customers of Time line with selected date from Time Line Chart
 
 
 def get_hover_data(data, time_indicator, time_period, number_of_graph):
-    value = sorted(list(data[time_indicator + '_per_' + time_period]))
+    value = sorted(list(data[time_indicator + '_per_' + time_period].unique()))
     return [{'customdata': str(value[-min(3, len(value))])}] * number_of_graph
 
 
@@ -207,7 +210,7 @@ def create_dashboard(customer_indicator, amount_indicator, directory,
         print(e)
         app.layout = html.Div()
         return app
-    data, top_100_data, worst_100_data, predicted_time_period, \
+    actual, prediction, top_100_data, worst_100_data, predicted_time_period, \
     new_comer_data, churn_data = pivoting_data_per_time_period(
                                                                 data,
                                                                 results,
@@ -226,7 +229,7 @@ def create_dashboard(customer_indicator, amount_indicator, directory,
     plot_ids = ['time_line_of_values', 'top_100_customer', 'worst_100_customer',
                 'churn_customer', 'new_comer_customer', 'churn_rate', 'new_comer_engage_rate']
     plot_sizes = [99, 24, 24, 24, 24, 24, 24]
-    hover_datas = get_hover_data(data, time_indicator, time_period, len(plot_ids))
+    hover_datas = get_hover_data(actual, time_indicator, time_period, len(plot_ids))
     plots = list(zip(plot_ids, plot_sizes, hover_datas))
     # adding filters
     pane_count = int(len(filters) / num_f_p) if int(len(filters) / num_f_p) == len(filters) / num_f_p else int(
@@ -264,7 +267,7 @@ def create_dashboard(customer_indicator, amount_indicator, directory,
             return {"data": trace,
                     "layout": go.Layout(height=600, title=" Churn Rate (%) per " + time_period)}
 
-    # New Comer Rati0
+    # New Comer Ratio
     """
     HoverData from clv time line selected date of customers who are newcomer of time line till the predicted time period
     """
@@ -373,18 +376,19 @@ def create_dashboard(customer_indicator, amount_indicator, directory,
         title = "SUM of " if sum_or_avg == 'sum' else "Average of "
         title += "CLV Prediction per " + time_period
         _prev_time_period = predicted_time_period - datetime.timedelta(days=convert_time_preiod_to_days(time_period))
-        if len(data) == 0:
+
+        if len(actual) == 0 and len(prediction) == 0:
             return {"data": [], "layout": go.Layout(height=600, title=title)}
         else:
-            trace = [go.Scatter(x=data[time_indicator + '_per_' + time_period],
-                                y=data[value_column],
+            trace = [go.Scatter(x=actual[time_indicator + '_per_' + time_period],
+                                y=actual[value_column],
                                 mode='markers+lines',
-                                customdata=data[time_indicator + '_per_' + time_period],
-                                name=value_column),
-                     go.Scatter(x=[_prev_time_period, _prev_time_period],
-                                y=[0, max(data[value_column])],
+                                customdata=actual[time_indicator + '_per_' + time_period],
+                                name=value_column + " Actual"),
+                     go.Scatter(x=prediction[time_indicator + '_per_' + time_period],
+                                y=prediction[value_column],
                                 mode='markers+lines',
-                                name='CLV Prediction Date Start')]
+                                name='CLV Prediction')]
             return {"data": trace,
                     "layout": go.Layout(height=600, title=title)}
 
@@ -421,7 +425,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-CI", "--customer_indicator", type=str,
                         help="""identifier of the customer (id)
-#
+##
                         """,
                         )
     parser.add_argument("-AI", "--amount_indicator", type=str,
@@ -460,14 +464,14 @@ if __name__ == '__main__':
                             query must at the format "SELECT++++*+++FROM++ab_test_table_+++"
                         """,
                         required=True)
-
     arguments = parser.parse_args()
-
     args = {
             'customer_indicator': arguments.customer_indicator,
             'amount_indicator': arguments.amount_indicator,
             'directory': arguments.export_path,
             'time_period': arguments.time_period,
-            'time_indicator': arguments.time_indicator}
+            'time_indicator': arguments.time_indicator,
+            'data_source': arguments.time_period,
+            'data_query_path': arguments.data_query_path}
     print(args)
     create_dashboard(**args)
