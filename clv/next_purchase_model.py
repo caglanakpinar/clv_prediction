@@ -201,15 +201,16 @@ class TrainLSTM:
     def prediction_date_add(self, data, pred_data, pred):
         max_date = max(data[self.time_indicator]) if len(pred_data) == 0 else max(pred_data[self.time_indicator])
         if self.time_period != 'hour':
-            _predicted_date = max_date + datetime.timedelta(minutes=pred)
+            _predicted_date = max_date + datetime.timedelta(minutes=int(round(pred)))
         if self.time_period != 'day':
-            _predicted_date = max_date + datetime.timedelta(hours=pred)
+            _predicted_date = max_date + datetime.timedelta(hours=int(round(pred)))
         if self.time_period not in ['day', 'hour']:
-            _predicted_date = max_date + datetime.timedelta(days=pred)
+            _predicted_date = max_date + datetime.timedelta(days=int(round(pred)))
         return _predicted_date
 
     def predicted_date_in_range_decision(self, start, end, _pred_data, _predicted_date, customer, _pred_actual, _pred):
         if _predicted_date < end:
+            print(_predicted_date)
             _pred_data = concat([_pred_data, DataFrame([{self.time_indicator: _predicted_date,
                                                          self.customer_indicator: customer,
                                                          'time_diff': _pred_actual,
@@ -252,7 +253,8 @@ class TrainLSTM:
             except Exception as e:
                 _predicted_date = end + datetime.timedelta(days=1)
         try:
-            _pred_data = _pred_data[_pred_data[self.time_indicator] >= start]
+            _pred_data = _pred_data[(_pred_data[self.time_indicator] >= start) &
+                                    (_pred_data[self.time_indicator] == _pred_data[self.time_indicator])]
         except Exception as e:
             print(e)
         prediction_data[customer] = _pred_data
@@ -265,13 +267,13 @@ class TrainLSTM:
         self.results = self.data[[self.time_indicator, 'time_diff', 'time_diff_norm', self.customer_indicator]]
         global prediction_data
         prediction_data = {}
-        execute_parallel_run(self.customers, self.prediction_per_customer, arguments=None, parallel=8)
+        # execute_parallel_run(self.customers, self.prediction_per_customer, arguments=None, parallel=8)
         print("merge predicted data ...")
         for c in self.customers:
             try:
+                self.prediction_per_customer(c)
                 self.results = concat([self.results, prediction_data[c]])
             except Exception as e:
-                time.sleep(2)
                 print(c)
         print("number of total predicted values")
         print(len(self.results))
