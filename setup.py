@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 
 setuptools.setup(
-    name="customer_lifetime_value_prediction",
+    name="clv_prediction",
     version="0.0.1",
     author="Caglan Akpinar",
     author_email="cakpinar23@gmail.com",
@@ -16,7 +16,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     keywords='CLV, Customer Lifetime Value, Lifetime Prediction',
     packages= find_packages(exclude='__pycache__'),
-    py_modules=['clv/docs', 'clv'],
+    py_modules=['clv', 'clv/docs'],
     install_requires=[
         "numpy >= 1.18.1",
         "pandas >= 0.25.3",
@@ -37,12 +37,11 @@ setuptools.setup(
         "random2 >= 1.0.1",
         "psycopg2 >= 2.8.5",
         "Keras >= 2.3.1"
-        "argparse"
-        "python-math"
-        "statsmodels >= 0.12.1"
-        "keras-tuner >= 1.0.2"
-        "multiprocessing"
-
+        "argparse",
+        "python-math",
+        "statsmodels >= 0.12.1",
+        "keras-tuner >= 1.0.2",
+        "multiprocess >= 0.70.9"
     ],
     url="https://github.com/caglanakpinar/clv_prediction",
     include_package_data=True,
@@ -51,5 +50,5 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3',
 )
