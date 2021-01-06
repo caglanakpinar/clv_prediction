@@ -385,41 +385,41 @@ Related to result_data.csv file, all previously calculated results are combined 
 <img width="1641" alt="Screen Shot 2021-01-05 at 22 22 31" src="https://user-images.githubusercontent.com/26736844/103690845-5ee28100-4fa6-11eb-9f38-f44a94791cc8.png">
 
 
-***2. Churn Customers Of Purchase TimeLine ***
+***2. Churn Customers Of Purchase TimeLine***
 
 According to the selected date from *CLV Prediction Time Line*, the customers who have purchased before the selected date but never had an order in prediction time periods are detected. 
 These are the churn customers of the selected date.
 
 <img width="373" alt="Screen Shot 2021-01-05 at 22 37 41" src="https://user-images.githubusercontent.com/26736844/103691245-eaf4a880-4fa6-11eb-808d-9a13f12db05f.png">
 
-***3. Newcomer Customers Of Purchase TimeLine ***
+***3. Newcomer Customers Of Purchase TimeLine***
 
 According to the selected date from *CLV Prediction Time Line*, the customers, who are newcomers at the selected date and haven`t purchased before the selected date, are detected. 
 These are the churn customers of the selected date.
 
 <img width="329" alt="Screen Shot 2021-01-05 at 22 38 19" src="https://user-images.githubusercontent.com/26736844/103691225-e4fec780-4fa6-11eb-839f-18567e14f9de.png">
 
-***4. Top 100 the Least Engaged Customers Of Sum Values per month ***
+***4. Top 100 the Least Engaged Customers Of Sum Values per month***
 
 The customers who have fewer purchase amounts than others of purchase amounts sum/mean values in the timeline. 
 These customers are able to be selected individually from the filter, *Worst Customer List*.
 
 <img width="400" alt="Screen Shot 2021-01-05 at 22 37 03" src="https://user-images.githubusercontent.com/26736844/103691256-f0ea8980-4fa6-11eb-82a4-9edf3866c768.png">
 
-***5. Top 100 the Most Engaged Customers Of Sum Values per month ***
+***5. Top 100 the Most Engaged Customers Of Sum Values per month***
 
 The customers who have more purchase amounts than others of purchase amount sum/mean values in the timeline. 
 These customers are able to be selected individually from the filter, *Top Customer List*.
 
 <img width="389" alt="Screen Shot 2021-01-05 at 22 36 11" src="https://user-images.githubusercontent.com/26736844/103690943-7d487c80-4fa6-11eb-9981-4ee890fac404.png">
 
-***6. Churn Rate and Newcomer Rate per month ***
+***6. Churn Rate and Newcomer Rate per month***
 
 These pie charts refer to Newcomer and Churn Rate of the Business According to selected date in *CLV Prediction Timeline*.
 
 <img width="761" alt="Screen Shot 2021-01-05 at 23 53 11" src="https://user-images.githubusercontent.com/26736844/103697747-678c8480-4fb1-11eb-8474-923cbde1b6fe.png">
 
-#### Scheduling CLV Peridiction
+#### Scheduling CLV Prediction
 
 CLV prediction process is able to be run periodically by using schedule services. 
 Both train and prediction models are allowed to be processed individually.  Available periods are; Mondays, Tuesdays,
