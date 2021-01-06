@@ -47,8 +47,9 @@ class CLV:
                            prediction process periodically. Supported schedule periods day, year, month, week, 2*week.
     """
     def __init__(self,
-                 customer_indicator,
-                 amount_indicator,
+                 customer_indicator=None,
+                 amount_indicator=None,
+                 time_indicator=None,
                  job=None,
                  date=None,
                  order_count=None,
@@ -56,20 +57,19 @@ class CLV:
                  data_query_path=None,
                  time_schedule=None,
                  time_period=None,
-                 time_indicator=None,
                  export_path=None,
                  connector=None):
 
-        self.job = job.lower()
-        self.time_period = time_period.lower()
+        self.job = job.lower() if job is not None else job
+        self.time_period = time_period.lower() if data_source is not None else data_source
         self.amount_indicator = amount_indicator
         self.order_count = order_count
         self.customer_indicator = customer_indicator
-        self.data_source = data_source.lower()
+        self.data_source = data_source.lower() if data_source is not None else data_source
         self.data_query_path = data_query_path
         self.data_query_path_raw = data_query_path
         self.time_indicator = time_indicator
-        self.time_schedule = time_schedule.lower()
+        self.time_schedule = time_schedule.lower() if time_schedule is not None else time_schedule
         self.export_path = export_path
         self.connector = connector
         self.result_columns = [customer_indicator, 'order_seq_num', time_indicator, amount_indicator, 'data_type']
