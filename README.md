@@ -413,5 +413,24 @@ These pie charts refers to Newcomer and Churn Rate of the Business According to 
 
 <img width="761" alt="Screen Shot 2021-01-05 at 23 53 11" src="https://user-images.githubusercontent.com/26736844/103697747-678c8480-4fb1-11eb-8474-923cbde1b6fe.png">
 
+#### Scheduling CLV Peridction
+
+CLV prediction process are able to be run periodically by using schedule services. 
+Both train and prediction model are allowed to be processed individually.  Available periods are; Mondays, Tuesdays,
+... Sundays, day, hour, week. It is possible to assign schedule period by *time_period* argument
+
+
+        from clv.executor import CLV
+        clv = CLV(customer_indicator=customer_indicator,
+                  amount_indicator=amount_indicator,
+                  date=date,
+                  order_count=order_count,
+                  data_source=data_source,
+                  data_query_path=data_query_path,
+                  time_period='hour',
+                  time_indicator=time_indicator,
+                  export_path=export_path,
+                  connector=connector)
+        results = clv.schedule_clv_prediction()
 
 
