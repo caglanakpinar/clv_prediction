@@ -235,42 +235,47 @@ Each model has unique aggregation in order to prepare data to create model.
 
 - ***Parameter Tuning ***
 
-    - Parameters of networks (LSTM NN & ! Dimensional Conv NN) are tuned via Keras Turner Library. However, *batch_size* and *epoch* are tunned individualy.
+    - Parameters of networks (LSTM NN & ! Dimensional Conv NN) are tuned via Keras Turner Library. However, *batch_size* and *epoch* are tuned individually.
     
-    - *epoch* hyper parameters are sorting as ascending and *batch_size* hyper parameters are sorting as descending. we aim here to capture the best of the minimum *epoch* and the best of the maximum *batch_size*.
+    - *epoch* hyper parameters are sorting as ascending and *batch_size* hyper parameters are sorting as descending. 
+      Each iteration sorted paramters are used and loss values are calculated.
+      We aim here to capture the best of the minimum *epoch* and the best of the maximum *batch_size*.
 
-    - *epoch* and *batch_size* are iteratively checking by loss values of last epoch by userin keras- tensorflow api history. This iteration will be process until the iteration is lower than *paramter_tuning_trials*.
+    - *epoch* and *batch_size* are iteratively checking by loss values of last epoch by using Keras- TensorFlow API history. 
+      This iteration will be processed until the iteration is lower than *parameter_tuning_trials*.
     
-    - If the last epoch of loss value is less than *accept_threshold_for_loss_diff*, than it is excepted as optimum *epoch* and *batch_size*
+    - If the last epoch of loss value is less than *accept_threshold_for_loss_diff*, then it is excepted as optimum *epoch* and *batch_size*.
 
 ![keras_tuner_image](https://user-images.githubusercontent.com/26736844/103485599-87cd0f80-4e08-11eb-80b6-b4b236e16f65.png)
 
     
 - ***Train***
 
-    - Next Purchase Model of train process is progressed via tensorflow - Keras.
+    - Next Purchase Model and Purchase Amount Model of the train process are progressed via tensorflow - Keras.
     
-    - It is an Recurrent NN, LSTM NN. 
+    - It is a Recurrent NN, LSTM NN. 
     
     - Trained model stored at *export_path* with *.json* format.
     
     - *.json* trained file has  a file name with *time_preiod*, name of the model, trained date (current date). 
     e.g; trained_purchase_amount_model_20210101_month.json
     
-    - Before initialize the train process previous stored model are checked which have been stored at *export_path* 
-    The most recent model of trained date are checking. Model name and *time_period* must be matched.
-    If the model has been trained before *time_period*, this trained *.json* file will be the current trained model and training process will be skiped.
-    e.g; recent model: trained_purchase_amount_model_20210101_month.json, model name: purchase_amount, time_period: month, current date 2020-01-30. This model trained 29 days before which is accepted range (accepted range 0 - 30 (one month)).
+    - Before initialize the training process previously-stored model are checked which have been stored at *export_path* 
+    The most recent trained must be picked. Model name and *time_period*  also must be matched.
+    e.g; recent model: trained_purchase_amount_model_20210101_month.json, model name: purchase_amount, time_period: month, 
+      current date 2020-01-30. This model trained 29 days before which is accepted range (accepted range 0 - 30 (one month)).
 
 - ***Prediction Process***
-    - First next purchases of dates are calculated related to prediction values from next purchase model per customer individualy. 
-    Next, purchase model will predicts time difference of next order. 
+    - First, the next purchase of dates is calculated related to prediction values from the next purchase model per customer individually. 
+    Next, the purchase model will predict the time difference of the next order. 
     By using time difference it is possible to find the exact date of the purchase. 
-    If the pusrchsae of date is in range between last purchase transaction date of the raw data and  last purchase transaction date + *time_period*.
+    If the purchase date is in the range between the last purchase transaction date of the raw data and the last purchase transaction date + *time_period*.
     
-    - After next purchased orders are predicted, the nest purchase of the values are predicted by the purchase amount mode for each use who has purchases related to next purchase prediction result data.
+    - After the next purchased orders are predicted, the nest purchase of the values are predicted by the purchase amount 
+      mode for each user who has purchases related to the next purchase prediction result data.
     
-    - Result data is stored at *export_path*. Once an previous result data stored not related to current time_preiod, but it is related to prevşous time_period*, it is merged with current result data.
+    - Result data is stored at *export_path*. Once a previous result data stored not related to current time_preiod, 
+      but it is related to prevşous time_period*, it is merged with current result data.
     
     - Result data file name: result_data_month.csv
 
@@ -316,7 +321,7 @@ Each model has unique aggregation in order to prepare data to create model.
 #### Collecting Prediction Result Data
 
 Once, prediction process has been initialized (job: 'prediction'), It can be collected via ***get_result_data***.
-This data will represented with raw data per customer of next purchase orders
+This data will be represented with raw data per customer of next purchase orders
 
 
         from clv.executor import CLV
@@ -345,7 +350,7 @@ This data will represented with raw data per customer of next purchase orders
 
 #### Dashboard for CLV Prediction 
 
-Here are examples of dashbord
+Here are examples of dashboard
 
 ![Screen Recording 2021-01-05 at 09 46 54 PM](https://user-images.githubusercontent.com/26736844/103687181-e9c07d00-4fa0-11eb-8e58-b9372c7e1542.gif)
 
@@ -375,49 +380,50 @@ Here are examples of dashbord
 
 ***1. CLV Prediction Time Line***
 
-Related to result_data.csv file, all previous calcualated results are combined and showed on line chart.
-
+Related to result_data.csv file, all previously calculated results are combined and showed in the line chart.
 
 <img width="1641" alt="Screen Shot 2021-01-05 at 22 22 31" src="https://user-images.githubusercontent.com/26736844/103690845-5ee28100-4fa6-11eb-9f38-f44a94791cc8.png">
 
 
-***2. Churn Customers Of Purchase Time Line ***
+***2. Churn Customers Of Purchase TimeLine ***
 
-According to selected date from *CLV Prediction Time Line*, the customers who have purchase before selected date but never had an order in prediction time periods are detected. 
+According to the selected date from *CLV Prediction Time Line*, the customers who have purchased before the selected date but never had an order in prediction time periods are detected. 
 These are the churn customers of the selected date.
 
 <img width="373" alt="Screen Shot 2021-01-05 at 22 37 41" src="https://user-images.githubusercontent.com/26736844/103691245-eaf4a880-4fa6-11eb-808d-9a13f12db05f.png">
 
-***3. Newcomer Customers Of Purchase Time Line ***
+***3. Newcomer Customers Of Purchase TimeLine ***
 
-According to selected date from *CLV Prediction Time Line*, the customers, who are newcomer at the selected date and haven`t purchased before selected date, are detected. 
+According to the selected date from *CLV Prediction Time Line*, the customers, who are newcomers at the selected date and haven`t purchased before the selected date, are detected. 
 These are the churn customers of the selected date.
 
 <img width="329" alt="Screen Shot 2021-01-05 at 22 38 19" src="https://user-images.githubusercontent.com/26736844/103691225-e4fec780-4fa6-11eb-839f-18567e14f9de.png">
 
 ***4. Top 100 the Least Engaged Customers Of Sum Values per month ***
 
-The customers who have less purchase amounts than others of purchase amounts sum/mean values in time line. Thse customer are able to be selected individually from the filter, *Worst Customer List*.
+The customers who have fewer purchase amounts than others of purchase amounts sum/mean values in the timeline. 
+These customers are able to be selected individually from the filter, *Worst Customer List*.
 
 <img width="400" alt="Screen Shot 2021-01-05 at 22 37 03" src="https://user-images.githubusercontent.com/26736844/103691256-f0ea8980-4fa6-11eb-82a4-9edf3866c768.png">
 
 ***5. Top 100 the Most Engaged Customers Of Sum Values per month ***
 
-The customers who have more purchase amounts than others of purchase amount sum/mean values in time line. Thse customer are able to be selected individually from the filter, *Top Customer List*.
+The customers who have more purchase amounts than others of purchase amount sum/mean values in the timeline. 
+These customers are able to be selected individually from the filter, *Top Customer List*.
 
 <img width="389" alt="Screen Shot 2021-01-05 at 22 36 11" src="https://user-images.githubusercontent.com/26736844/103690943-7d487c80-4fa6-11eb-9981-4ee890fac404.png">
 
 ***6. Churn Rate and Newcomer Rate per month ***
 
-These pie charts refers to Newcomer and Churn Rate of the Business According to selected date in *CLC PRediction Time Line*.
+These pie charts refer to Newcomer and Churn Rate of the Business According to selected date in *CLV Prediction Timeline*.
 
 <img width="761" alt="Screen Shot 2021-01-05 at 23 53 11" src="https://user-images.githubusercontent.com/26736844/103697747-678c8480-4fb1-11eb-8474-923cbde1b6fe.png">
 
-#### Scheduling CLV Peridction
+#### Scheduling CLV Peridiction
 
-CLV prediction process are able to be run periodically by using schedule services. 
-Both train and prediction model are allowed to be processed individually.  Available periods are; Mondays, Tuesdays,
-... Sundays, day, hour, week. It is possible to assign schedule period by *time_period* argument
+CLV prediction process is able to be run periodically by using schedule services. 
+Both train and prediction models are allowed to be processed individually.  Available periods are; Mondays, Tuesdays,
+... Sundays, day, hour, week. It is possible to assign a schedule period by *time_period* argument.
 
 
         from clv.executor import CLV
