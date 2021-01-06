@@ -210,7 +210,6 @@ class TrainLSTM:
 
     def predicted_date_in_range_decision(self, start, end, _pred_data, _predicted_date, customer, _pred_actual, _pred):
         if _predicted_date < end:
-            print(_predicted_date)
             _pred_data = concat([_pred_data, DataFrame([{self.time_indicator: _predicted_date,
                                                          self.customer_indicator: customer,
                                                          'time_diff': _pred_actual,
