@@ -2,8 +2,8 @@
 
 ---------------------------
 
- -- [![PyPI version](https://badge.fury.io/py/abtest.svg)](https://badge.fury.io/py/abtest)
--- [![GitHub license](https://img.shields.io/github/license/caglanakpinar/abtp)](https://github.com/caglanakpinar/abtp/blob/master/LICENSE)
+ -- [![PyPI version](https://badge.fury.io/py/clv-prediction.png)](https://badge.fury.io/py/clv-prediction)
+-- [![GitHub license](https://img.shields.io/github/license/caglanakpinar/clv-prediction)](https://github.com/caglanakpinar/clv-prediction/blob/master/LICENSE)
 
 ----------------------------
 
