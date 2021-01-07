@@ -233,7 +233,7 @@ Each model has unique aggregation in order to prepare data to create model.
  
  
 
-- ***Parameter Tuning ***
+- ***Parameter Tuning***
 
     - Parameters of networks (LSTM NN & ! Dimensional Conv NN) are tuned via Keras Turner Library. However, *batch_size* and *epoch* are tuned individually.
     
