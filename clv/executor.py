@@ -129,7 +129,7 @@ class CLV:
         Connection checks for given data_source, data_path, connection parameters.
         This will be stored at configs.yaml at docs folder.
         If it can read the data well, returns True
-        If data is directly imported from any file with .csv, .json of .yaml format returns True
+        If data is directly imported from any file with .csv, .json and .yaml format, returns True
         :return: True or False
         """
         config = conf('config')
