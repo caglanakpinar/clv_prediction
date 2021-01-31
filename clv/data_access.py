@@ -81,21 +81,22 @@ class GetData:
             try:
                 for sep in [',', ';', ':']:
 
-                    self.data = pd.read_csv(filepath_or_buffer=join(conf('data_main_path'), self.data_query_path),
+                    self.data = pd.read_csv(filepath_or_buffer=self.data_query_path,
                                             error_bad_lines=False,
                                             encoding="ISO-8859-1",
                                             sep=sep,
                                             nrows=self.nrows)
+                    print(self.data.head())
                     if len(self.data.columns) > 1:
                         break
             except Exception as e:
                 print(e)
 
         if self.data_source == 'json':
-            self.data = read_write_to_json(conf('directory'), self.data_query_path, None, is_writing=False)
+            self.data = read_write_to_json(self.data_query_path, None, is_writing=False)
 
         if self.data_source == 'yaml':
-            self.data = read_yaml(conf('data_main_path'), self.data_query_path)
+            self.data = read_yaml(self.data_query_path)
 
         if self.data_source in ('json', 'yaml', 'csv'):
             self.data = self.query(self.data)
