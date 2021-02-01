@@ -152,11 +152,15 @@ def order_count_decision(data, order_count, customer_indicator, directory):
                                      "zero_orders": (_total_unique_customers * rc) - _total_orders,
                                      "ratio": _total_orders / (_total_unique_customers * rc),
                                      'unique_customers': _total_unique_customers})
-            df = pd.DataFrame(total_orders).query("ratio >= @accepted_ratio_of_actual_order")
+            total_orders = pd.DataFrame(total_orders)
+            df = total_orders.query("ratio >= @accepted_ratio_of_actual_order")
             df = df.sort_values(by='ratio', ascending=False)
             df = df.sort_values(by='order_count', ascending=False)
-            order_count = list(df['order_count'])[0]
-            print("optimum order count :", order_count)
+            try:
+              order_count = list(df['order_count'])[0]
+            except Exception as e:
+              print(e)
+              order_count = list(total_orders['order_count'])[0]
         else:
             order_count = params['feature_count']
     return order_count
@@ -196,7 +200,6 @@ def calculate_time_diff(date, prev_date, time_period):
         return abs((date - prev_date).total_seconds()) / 60 / 60
     if time_period not in ['hour', 'day']:
         return abs((date - prev_date).total_seconds()) / 60 / 60 / 24
-
 
 
 def sampling(sample, sample_size):
