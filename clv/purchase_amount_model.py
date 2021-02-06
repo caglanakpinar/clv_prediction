@@ -253,7 +253,7 @@ class TrainConv1Dimension:
 
     def prediction_execute(self):
         print("number of users :", len(self.customers))
-        self.model_data['prediction_data'] = self.data[self.features + ["user_id"]]
+        self.model_data['prediction_data'] = self.data[self.features + [self.customer_indicator]]
         if self.model is not None:
             self.model = model_from_to_json(path=join(self.directory, self.model))
         if self.num_of_future_orders is not None:
