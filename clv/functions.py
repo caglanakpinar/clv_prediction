@@ -262,18 +262,18 @@ def add_predicted_values_as_column(data, pred):
 
 
 def get_prediction(data, number, model_num, model):
-    for num in range(0, number + 1):
+    for num in range(0, int(number) + 1):
         _pred_data = check_for_next_prediction(data, model_num)
         _pred = model.predict(_pred_data)[0]
         data = add_predicted_values_as_column(data, _pred)
     return data
 
 
-def get_predicted_data_readable_form(user, prediction, removing_columns, norm_data, customer_indicator):
+def get_predicted_data_readable_form(user, prediction, removing_columns, _user_min, _user_max, customer_indicator):
     removing_cols = list(range(removing_columns + 1))
     predictions = [{customer_indicator: user,
-                    "user_min": list(norm_data['user_min'])[0],
-                    "user_max": list(norm_data['user_max'])[0],
+                    "user_min": _user_min,
+                    "user_max": _user_max,
                     "pred_order_seq": col - removing_columns,
                     "prediction": list(prediction[col])[0]} for col in prediction.columns if col not in removing_cols]
     predictions = pd.DataFrame(predictions)
@@ -386,6 +386,10 @@ def check_model_exists(path, model_name, time_period):
 
 def model_path(directory, model_name, time_period):
     return join(directory, model_name + "_" + get_current_day() + "_" + time_period.replace(" ", "") + ".json")
+
+
+def weights_path(directory, model_name, time_period):
+    return join(directory, model_name + "_" + get_current_day() + "_" + time_period.replace(" ", "") + ".h5")
 
 
 def get_tuning_params(parameter_tuning, params):
