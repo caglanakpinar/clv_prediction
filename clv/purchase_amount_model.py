@@ -3,6 +3,7 @@ import os
 from itertools import product
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '4'
 import shutil
+import glob
 from tensorflow.keras.layers import Dense, LSTM, Input, BatchNormalization, Conv1D, MaxPooling1D, Dropout, Flatten
 from keras.regularizers import l1, l2, l1_l2
 from tensorflow.keras.optimizers import Adam
@@ -22,16 +23,19 @@ except Exception as e:
     from .utils import get_current_day
 
 
-def model_from_to_json(path=None, model=None, is_writing=False):
+def model_from_to_json(path=None, weights_path=None, model=None, is_writing=False):
     if is_writing:
         model_json = model.to_json()
         with open(path, "w") as json_file:
             json_file.write(model_json)
+        model.save_weights(weights_path)
     else:
         json_file = open(path, 'r')
         loaded_model_json = json_file.read()
         json_file.close()
-        return model_from_json(loaded_model_json)
+        model = model_from_json(loaded_model_json)
+        model.load_weights(weights_path)
+        return model
 
 
 def get_params(params, comb):
@@ -233,6 +237,8 @@ class TrainConv1Dimension:
         if save_model:
             model_from_to_json(path=model_path(self.directory,
                                                "trained_purchase_amount_model", self.time_period),
+                               weights_path = weights_path(self.directory,
+                                               "trained_purchase_amount_model", self.time_period),
                                model=self.model,
                                is_writing=True)
 
@@ -248,31 +254,105 @@ class TrainConv1Dimension:
             self.build_model()
             self.learning_process()
         else:
-            self.model = model_from_to_json(path=join(self.directory, self.model))
+            self.model = model_from_to_json(path=model_path(self.directory,
+                                                            "trained_purchase_amount_model", self.time_period),
+                                            weights_path=weights_path(self.directory,
+                                                                      "trained_purchase_amount_model", self.time_period))
             print("Previous model already exits in the given directory  '" + self.directory + "'.")
+
+    def prediction_per_customer(self, customer):
+        _prediction_data = pd.DataFrame(prediction_data[customer]['data'])
+        _number = prediction_data[customer]['number']
+        _user_min = prediction_data[customer]['user_min']
+        _user_max = prediction_data[customer]['user_max']
+        _prediction = get_prediction(_prediction_data,
+                                     _number,
+                                     self.model.input.shape[1],
+                                     self.model)
+
+        prediction_data[customer]['prediction'] = get_predicted_data_readable_form(customer,
+                                                                                   _prediction,
+                                                                                   self.model.input.shape[1] + 1,
+                                                                                   _user_min,
+                                                                                   _user_max,
+                                                                                   self.customer_indicator)
+
+    def rearrange_prediction_data(self):
+        self.model_data['prediction_data'] = pd.merge(self.model_data['prediction_data'],
+                                                      self.num_of_future_orders[[self.customer_indicator, 'order_seq_num']],
+                                                      on=self.customer_indicator, how='left')
+        self.model_data['prediction_data'] = self.model_data['prediction_data'].query("order_seq_num == order_seq_num")
+        self.model_data['prediction_data'] = self.model_data['prediction_data'].sort_values(by=self.customer_indicator)
+        self.customers = list(self.model_data['prediction_data'][self.model_data['prediction_data'].isin(
+            list(self.num_of_future_orders[self.customer_indicator].unique()))][self.customer_indicator].unique())
+
+    def get_user_of_historic_data(self, sample_customers):
+        _sample_p_data = self.model_data['prediction_data'][
+            self.model_data['prediction_data'][self.customer_indicator].isin(sample_customers)]
+        _c_min_max = np.array(self.c_min_max.sort_values(by=self.customer_indicator)[['user_min', 'user_max']]).tolist()
+        _numbers = list(_sample_p_data['order_seq_num'])
+        _historic_data = _sample_p_data.drop([self.customer_indicator, 'order_seq_num'], axis=1).to_dict('results')
+        _values = list(zip(sample_customers, _historic_data, _numbers, _c_min_max))
+        return {u[0]: {"data": [u[1]],
+                       "number": u[2],
+                       'user_min': u[3][0],
+                       'user_max': u[3][1]} for u in _values}
+
+    def parallel_prediction(self):
+        try:
+            os.mkdir(join(self.directory, "temp_purchase_amount_results", ""))
+        except Exception as e:
+            print(e)
+            print("recreating 'temp_purchase_amount_results' folder ...")
+            shutil.rmtree(join(self.directory, "temp_purchase_amount_results", ""))
+            os.mkdir(join(self.directory, "temp_purchase_amount_results", ""))
+
+        iters = int(len(self.customers) / 256) + 1
+        print("number of iters :", iters)
+        for i in range(iters):
+            print("main iteration :", str(i), " / ", str(iters))
+            _sample_customers = get_iter_sample(self.customers, i, iters, 256)
+            global prediction_data
+            prediction_data = self.get_user_of_historic_data(_sample_customers)
+            execute_parallel_run(_sample_customers, self.prediction_per_customer, arguments=None, parallel=8)
+            _result = pd.DataFrame()
+            for c in _sample_customers:
+                try:
+                    _result = concat([_result, prediction_data[c]['prediction']])
+                except Exception as e:
+                    print(c)
+            _result.to_csv(join(self.directory, "temp_purchase_amount_results", str(_sample_customers[0] + "_data.csv")),
+                           index=False)
+
+    def create_prediction_result_data(self):
+        print("merge predicted data ...")
+        _import_files = glob.glob(join(self.directory, "temp_purchase_amount_results", "*.csv"))
+        li = []
+        for f in _import_files:
+            try:
+                _df = pd.read_csv(f, index_col=None, header=0)
+                li.append(_df)
+            except Exception as e:
+                print(e)
+        self.results = concat(li, axis=0, ignore_index=True)
+        # shutil.rmtree(join(self.directory, "temp_purchase_amount_results", ""))
+        print(self.results.head())
 
     def prediction_execute(self):
         print("number of users :", len(self.customers))
         self.model_data['prediction_data'] = self.data[self.features + [self.customer_indicator]]
         if self.model is not None:
-            self.model = model_from_to_json(path=join(self.directory, self.model))
+            self.model = model_from_to_json(path=model_path(self.directory,
+                                                            "trained_purchase_amount_model", self.time_period),
+                                            weights_path=weights_path(self.directory,
+                                                                      "trained_purchase_amount_model", self.time_period))
+
         if self.num_of_future_orders is not None:
-            for u in self.num_of_future_orders.to_dict('results'):
-                _number, _user = u['order_seq_num'], u[self.customer_indicator]
-                _prediction_data = self.model_data['prediction_data'][
-                    self.model_data['prediction_data'][self.customer_indicator] == _user].drop(self.customer_indicator,
-                                                                                               axis=1)
-                _prediction = get_prediction(_prediction_data,
-                                             _number,
-                                             self.model.input.shape[1],
-                                             self.model)
-                prediction = get_predicted_data_readable_form(_user,
-                                                              _prediction,
-                                                              self.model.input.shape[1] + 1,
-                                                              self.c_min_max[
-                                                                  self.c_min_max[self.customer_indicator] == _user],
-                                                              self.customer_indicator)
-                self.results = pd.concat([self.results, prediction])
+            print(len(self.customers))
+            self.rearrange_prediction_data()
+            print(len(self.customers))
+            self.parallel_prediction()
+            self.create_prediction_result_data()
         else:
             self.results = merge_0_result_at_time_period(self.data,
                                                          self.max_date,

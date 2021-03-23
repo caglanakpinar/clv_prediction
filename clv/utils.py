@@ -75,10 +75,16 @@ def get_result_data_path(directory, time_period, max_date):
 
 
 def convert_str_to_day(x):
-    try:
-        return datetime.datetime.strptime(str(x)[0:10], "%Y-%m-%d")
-    except Exception as e:
-        return None
+    if len(x) == 10:
+        try:
+            return datetime.datetime.strptime(str(x)[0:10], "%Y-%m-%d")
+        except Exception as e:
+            return None
+    if len(x) == 19:
+        try:
+            return datetime.datetime.strptime(str(x)[0:19], "%Y-%m-%d %H:%M:%S")
+        except Exception as e:
+            return None
 
 
 def convert_feature(value):
@@ -114,8 +120,8 @@ def get_iter_sample(s_values, i, iters, cpus):
 def execute_parallel_run(values, executor, parallel=2, arguments=None):
     global process
     cpus = cpu_count()
-    if parallel > cpus * 4:
-        parallel = cpus * 4
+    if parallel < cpus * 32:
+        parallel = cpus * 32
     iters = int(len(values) / parallel) + 1
     print("number of iterations :", iters)
     for i in range(iters):
