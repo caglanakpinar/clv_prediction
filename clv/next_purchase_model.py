@@ -205,7 +205,6 @@ class TrainLSTM:
                                                             "trained_next_purchase_model", self.time_period),
                                             weights_path=weights_path(self.directory,
                                                                       "trained_next_purchase_model", self.time_period))
-            print(self.model)
             print("Previous model already exits in the given directory  '" + self.directory + "'.")
 
     def prediction_date_add(self, data, pred_data, pred):
@@ -227,9 +226,13 @@ class TrainLSTM:
         return _pred_data
 
     def calculate_prediction(self, data, _pred_data, user_min, user_max):
-        x = data_for_customer_prediction(data, _pred_data, self.params)
-        _pred = self.model.predict(x)[0][-1]
-        _pred_actual =  self.get_actual_value(_min=user_min, _max=user_max, _value=_pred)
+        try:
+            x = data_for_customer_prediction(data, _pred_data, self.params)
+            _pred = self.model.predict(x)[0][-1]
+            _pred_actual = self.get_actual_value(_min=user_min, _max=user_max, _value=_pred)
+        except Exception as e:
+            print(e)
+            _pred_actual, _pred = 0, 0
         return _pred_actual, _pred
 
     def prediction_per_customer(self,  customer):
