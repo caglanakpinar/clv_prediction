@@ -236,9 +236,9 @@ class TrainConv1Dimension:
 
         if save_model:
             model_from_to_json(path=model_path(self.directory,
-                                               "trained_next_purchase_model", self.time_period),
+                                               "trained_purchase_amount_model", self.time_period),
                                weights_path = weights_path(self.directory,
-                                               "trained_next_purchase_model", self.time_period),
+                                               "trained_purchase_amount_model", self.time_period),
                                model=self.model,
                                is_writing=True)
 
@@ -255,9 +255,9 @@ class TrainConv1Dimension:
             self.learning_process()
         else:
             self.model = model_from_to_json(path=model_path(self.directory,
-                                                            "trained_next_purchase_model", self.time_period),
+                                                            "trained_purchase_amount_model", self.time_period),
                                             weights_path=weights_path(self.directory,
-                                                                      "trained_next_purchase_model", self.time_period))
+                                                                      "trained_purchase_amount_model", self.time_period))
             print("Previous model already exits in the given directory  '" + self.directory + "'.")
 
     def prediction_per_customer(self, customer):
@@ -289,7 +289,6 @@ class TrainConv1Dimension:
     def get_user_of_historic_data(self, sample_customers):
         _sample_p_data = self.model_data['prediction_data'][
             self.model_data['prediction_data'][self.customer_indicator].isin(sample_customers)]
-        print(_sample_p_data.head())
         _c_min_max = np.array(self.c_min_max.sort_values(by=self.customer_indicator)[['user_min', 'user_max']]).tolist()
         _numbers = list(_sample_p_data['order_seq_num'])
         _historic_data = _sample_p_data.drop([self.customer_indicator, 'order_seq_num'], axis=1).to_dict('results')
@@ -344,9 +343,9 @@ class TrainConv1Dimension:
         self.model_data['prediction_data'] = self.data[self.features + [self.customer_indicator]]
         if self.model is not None:
             self.model = model_from_to_json(path=model_path(self.directory,
-                                                            "trained_next_purchase_model", self.time_period),
+                                                            "trained_purchase_amount_model", self.time_period),
                                             weights_path=weights_path(self.directory,
-                                                                      "trained_next_purchase_model", self.time_period))
+                                                                      "trained_purchase_amount_model", self.time_period))
 
         if self.num_of_future_orders is not None:
             print(len(self.customers))
