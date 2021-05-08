@@ -1,5 +1,47 @@
 import setuptools
 from setuptools import find_packages
+import re, platform
+
+search = re.search("ARM64", platform.uname().version)
+processor = ''
+if search is not None:
+    try:
+        processor = platform.uname().version[search.start(): search.end()]
+    except Exception as e:
+        print(e)
+
+install_requires_list = [
+        "numpy >= 1.18.1",
+        "pandas >= 0.25.3",
+        "scipy >= 1.4.1 ",
+        "PyYAML",
+        "schedule >= 0.6.0",
+        "multiprocess >= 0.70.9",
+        "google-cloud-bigquery",
+        "mysql-connector-python",
+        "plotly >=  4.5.0",
+        "dash-html-components >= 1.0.2",
+        "dash-core-components >=  1.8.0",
+        "dash >= 1.9.0",
+        "threaded >= 4.0.8",
+        "pytest-shutil >= 1.7.0",
+        "python-dateutil >= 2.8.1",
+        "random2 >= 1.0.1",
+        "psycopg2 >= 2.8.5",
+        "argparse",
+        "python-math",
+        "statsmodels >= 0.12.1",
+        "keras-tuner >= 1.0.2",
+        "multiprocess >= 0.70.9",
+        "tensorflow >= 2.2.0",
+        "Keras >= 2.3.1"
+    ]
+
+if processor == 'ARM64':
+    install_requires_list = install_requires_list[:-2]
+    print(" *** ARM64 is detected! ***")
+    print("   Please install tensorflow manually with instractions at https://github.com/apple/tensorflow_macos")
+    print("   Please install Keras >= 2.3.1 at pip install Keras")
 
 
 with open("README.md", "r") as fh:
@@ -17,32 +59,7 @@ setuptools.setup(
     keywords='CLV, Customer Lifetime Value, Lifetime Prediction',
     packages= find_packages(exclude='__pycache__'),
     py_modules=['clv', 'clv/docs'],
-    install_requires=[
-        "numpy >= 1.18.1",
-        "pandas >= 0.25.3",
-        "scipy >= 1.4.1 ",
-        "tensorflow >= 2.2.0",
-        "PyYAML",
-        "schedule >= 0.6.0",
-        "multiprocess >= 0.70.9",
-        "google-cloud-bigquery",
-        "mysql-connector-python",
-        "plotly >=  4.5.0",
-        "dash-html-components >= 1.0.2",
-        "dash-core-components >=  1.8.0",
-        "dash >= 1.9.0",
-        "threaded >= 4.0.8",
-        "pytest-shutil >= 1.7.0",
-        "python-dateutil >= 2.8.1",
-        "random2 >= 1.0.1",
-        "psycopg2 >= 2.8.5",
-        "Keras >= 2.3.1"
-        "argparse",
-        "python-math",
-        "statsmodels >= 0.12.1",
-        "keras-tuner >= 1.0.2",
-        "multiprocess >= 0.70.9"
-    ],
+    install_requires=install_requires_list,
     url="https://github.com/caglanakpinar/clv_prediction",
     include_package_data=True,
     classifiers=[
