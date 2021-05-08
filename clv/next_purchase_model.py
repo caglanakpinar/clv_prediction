@@ -86,7 +86,7 @@ class TrainLSTM:
         self.hp = HyperParameters()
         self.model_data = {}
         self.input, self.model = None, None
-        self.model = check_model_exists(self.directory, "trained_next_purchase_model", self.time_period)
+        self.prev_model_date = check_model_exists(self.directory, "trained_next_purchase_model", self.time_period)
         self.result = None, None
         self.residuals, self.anomaly = [], []
         self.customers = list(self.data[customer_indicator].unique())
@@ -184,9 +184,13 @@ class TrainLSTM:
                            shuffle=True)
         if save_model:
             model_from_to_json(path=model_path(self.directory,
-                                               "trained_next_purchase_model", self.time_period),
-                               weights_path = weights_path(self.directory,
-                                               "trained_next_purchase_model", self.time_period),
+                                               "trained_next_purchase_model",
+                                               get_current_day(),
+                                               self.time_period),
+                               weights_path=weights_path(self.directory,
+                                                         "trained_next_purchase_model",
+                                                         get_current_day(),
+                                                         self.time_period),
                                model=self.model,
                                is_writing=True)
 
@@ -195,16 +199,21 @@ class TrainLSTM:
 
     def train_execute(self):
         print("*"*5, "Next purchase train model process ", "*"*5)
-        if self.model is None:
+        if self.prev_model_date is None:
             self.data_preparation()
             self.parameter_tuning()
             self.build_model()
             self.learning_process()
         else:
             self.model = model_from_to_json(path=model_path(self.directory,
-                                                            "trained_next_purchase_model", self.time_period),
+                                                            "trained_next_purchase_model",
+                                                            self.prev_model_date,
+                                                            self.time_period),
                                             weights_path=weights_path(self.directory,
-                                                                      "trained_next_purchase_model", self.time_period))
+                                                                      "trained_next_purchase_model",
+                                                                      self.prev_model_date,
+                                                                      self.time_period))
+            print(self.model)
             print("Previous model already exits in the given directory  '" + self.directory + "'.")
 
     def prediction_date_add(self, data, pred_data, pred):
@@ -226,13 +235,9 @@ class TrainLSTM:
         return _pred_data
 
     def calculate_prediction(self, data, _pred_data, user_min, user_max):
-        try:
-            x = data_for_customer_prediction(data, _pred_data, self.params)
-            _pred = self.model.predict(x)[0][-1]
-            _pred_actual = self.get_actual_value(_min=user_min, _max=user_max, _value=_pred)
-        except Exception as e:
-            print(e)
-            _pred_actual, _pred = 0, 0
+        x = data_for_customer_prediction(data, _pred_data, self.params)
+        _pred = self.model.predict(x)[0][-1]
+        _pred_actual =  self.get_actual_value(_min=user_min, _max=user_max, _value=_pred)
         return _pred_actual, _pred
 
     def prediction_per_customer(self,  customer):
@@ -333,11 +338,16 @@ class TrainLSTM:
     def prediction_execute(self):
         print("*"*5, "PREDICTION", 5*"*")
         print("number of users :", len(self.customers))
-        if self.model is not None:
+        if self.model is None:
+            _model_date = self.prev_model_date if self.prev_model_date is not None else get_current_day()
             self.model = model_from_to_json(path=model_path(self.directory,
-                                                            "trained_next_purchase_model", self.time_period),
+                                                            "trained_next_purchase_model",
+                                                            _model_date,
+                                                            self.time_period),
                                             weights_path=weights_path(self.directory,
-                                                                      "trained_next_purchase_model", self.time_period))
+                                                                      "trained_next_purchase_model",
+                                                                      _model_date,
+                                                                      self.time_period))
         self.results = self.data[[self.time_indicator, 'time_diff', 'time_diff_norm', self.customer_indicator]]
         self.create_prediction_data()
         self.parallel_prediction()
@@ -420,11 +430,12 @@ class TrainLSTM:
         tuned parameters are stored at 'test_parameters.yaml.' in given 'export_path' argument.
         """
 
+        # existing model for 'purchase_amount' that means p. tuning was applied for both models.
         if check_for_existing_parameters(self.directory, 'purchase_amount') is not None:
             _params = read_yaml(self.directory, "test_parameters.yaml")
             _params['next_purchase'] = self.params
         else:
-            print("Non of parameter tuning for both Model has been observed.")
+            print("None of parameter tuning for both Model has been observed.")
             _params = {'next_purchase': self.params}
         write_yaml(self.directory, "test_parameters.yaml", _params, ignoring_aliases=True)
 
