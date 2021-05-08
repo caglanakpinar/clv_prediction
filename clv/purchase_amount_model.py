@@ -95,8 +95,8 @@ class TrainConv1Dimension:
                                            directory=self.directory)
         self.params['feature_count'] = self.y
         self.hp = HyperParameters()
-        self.model = check_model_exists(self.directory, "trained_purchase_amount_model", self.time_period)
-        self.input = None
+        self.input, self.model = None, None
+        self.prev_model_date = check_model_exists(self.directory, "trained_purchase_amount_model", self.time_period)
         self.model_data = {}
         self.result = None
         self.residuals, self.anomaly = [], []
@@ -236,9 +236,10 @@ class TrainConv1Dimension:
 
         if save_model:
             model_from_to_json(path=model_path(self.directory,
-                                               "trained_purchase_amount_model", self.time_period),
-                               weights_path = weights_path(self.directory,
-                                               "trained_purchase_amount_model", self.time_period),
+                                               "trained_purchase_amount_model", get_current_day(), self.time_period),
+                               weights_path=weights_path(self.directory,
+                                                         "trained_purchase_amount_model",
+                                                         get_current_day(), self.time_period),
                                model=self.model,
                                is_writing=True)
 
@@ -248,16 +249,20 @@ class TrainConv1Dimension:
     def train_execute(self):
         print("*" * 5, " Purchase Amount train model process ", "*" * 5)
         print(self.model)
-        if self.model is None:
+        if self.prev_model_date is None:  # previous accepted date for the model file is not found
             self.data_preparation()
             self.parameter_tuning()
             self.build_model()
             self.learning_process()
         else:
             self.model = model_from_to_json(path=model_path(self.directory,
-                                                            "trained_purchase_amount_model", self.time_period),
+                                                            "trained_purchase_amount_model",
+                                                            self.prev_model_date,
+                                                            self.time_period),
                                             weights_path=weights_path(self.directory,
-                                                                      "trained_purchase_amount_model", self.time_period))
+                                                                      "trained_purchase_amount_model",
+                                                                      self.prev_model_date,
+                                                                      self.time_period))
             print("Previous model already exits in the given directory  '" + self.directory + "'.")
 
     def prediction_per_customer(self, customer):
@@ -341,11 +346,12 @@ class TrainConv1Dimension:
     def prediction_execute(self):
         print("number of users :", len(self.customers))
         self.model_data['prediction_data'] = self.data[self.features + [self.customer_indicator]]
-        if self.model is not None:
+        if self.model is None:
+            _model_date = self.prev_model_date if self.prev_model_date is not None else get_current_day()
             self.model = model_from_to_json(path=model_path(self.directory,
-                                                            "trained_purchase_amount_model", self.time_period),
+                                                            "trained_purchase_amount_model", _model_date, self.time_period),
                                             weights_path=weights_path(self.directory,
-                                                                      "trained_purchase_amount_model", self.time_period))
+                                                                      "trained_purchase_amount_model", _model_date, self.time_period))
 
         if self.num_of_future_orders is not None:
             print(len(self.customers))

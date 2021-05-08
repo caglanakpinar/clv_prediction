@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from math import sqrt
 import random
+import glob
 from os import listdir
 from os.path import dirname
 from dateutil.parser import parse
@@ -372,24 +373,30 @@ def check_model_exists(path, model_name, time_period):
     current_date = datetime.datetime.strptime(get_current_day(replace=False), "%Y-%m-%d")
     _prev_model_day_diff = 0
     day_range_for_model_training = convert_time_preiod_to_days(time_period)
-    prev_model = None
+    prev_model_date = None
+    time_diff = 10000000000
     for m in listdir(dirname(join(path, ""))):
         if "_".join(m.split("_")[:-2]) == model_name:
             _date_str = m.split("_")[-2]
             _date_str = "-".join([_date_str[0:4], _date_str[4:6], _date_str[6:]])
             _date = datetime.datetime.strptime(_date_str, "%Y-%m-%d")
-            if abs((_date - current_date).total_seconds()) / 60 / 60 / 24 < day_range_for_model_training:
+            _time_diff = abs((_date - current_date).total_seconds()) / 60 / 60 / 24
+            if _time_diff < day_range_for_model_training:
                 if m.split("_")[-1].split(".")[0] == time_period:
-                    prev_model = m
-    return prev_model
+                    if _time_diff < time_diff:
+                        prev_model_date = _date_str.replace("-", "")
+                        time_diff = _time_diff
+    if prev_model_date is not None:
+        print("previous last model trained :", prev_model_date, ", for ", model_name)
+    return prev_model_date
 
 
-def model_path(directory, model_name, time_period):
-    return join(directory, model_name + "_" + get_current_day() + "_" + time_period.replace(" ", "") + ".json")
+def model_path(directory, model_name, date, time_period):
+    return join(directory, model_name + "_" + date + "_" + time_period.replace(" ", "") + ".json")
 
 
-def weights_path(directory, model_name, time_period):
-    return join(directory, model_name + "_" + get_current_day() + "_" + time_period.replace(" ", "") + ".h5")
+def weights_path(directory, model_name, date, time_period):
+    return join(directory, model_name + "_" + date + "_" + time_period.replace(" ", "") + ".h5")
 
 
 def get_tuning_params(parameter_tuning, params):
@@ -446,21 +453,26 @@ def get_tuning_params(parameter_tuning, params):
     return hyper_params
 
 
-def get_results(directory, time_period):
-    results = pd.DataFrame()
-    result_files = [f for f in listdir(dirname(join(directory, ""))) if f.split("_")[0] == "results"]
-    parsed_date = [parse(i.split("_")[2]) for i in result_files]
+def detect_prev_file(files, parsed_date, time_period):
     detected_file = None
     if len(parsed_date) != 0:
-        current_date = min([parse(i.split("_")[2]) for i in result_files])
+        current_date = min([parse(i.split("_")[2]) for i in files])
         date = current_date - datetime.timedelta(days=convert_time_preiod_to_days(time_period))
         detected_file = None
-        for f in result_files:
+        for f in files:
             f_split = f.split("_")
             if f_split[1] == time_period:
                 if parse(f_split[3].split(".")[0]) >= date:
                     date = parse(f_split[3].split(".")[0])
                     detected_file = f
+    return detected_file
+
+
+def get_results(directory, time_period):
+    results = pd.DataFrame()
+    result_files = [f for f in listdir(dirname(join(directory, ""))) if f.split("_")[0] == "results"]
+    parsed_date = [parse(i.split("_")[2]) for i in result_files]
+    detected_file = detect_prev_file(result_files, parsed_date, time_period)
     if detected_file is not None:
         results = pd.read_csv(join(directory, detected_file))
     return results
