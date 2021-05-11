@@ -75,16 +75,10 @@ def get_result_data_path(directory, time_period, max_date):
 
 
 def convert_str_to_day(x):
-    if len(x) == 10:
-        try:
-            return datetime.datetime.strptime(str(x)[0:10], "%Y-%m-%d")
-        except Exception as e:
-            return None
-    if len(x) == 19:
-        try:
-            return datetime.datetime.strptime(str(x)[0:19], "%Y-%m-%d %H:%M:%S")
-        except Exception as e:
-            return None
+    try:
+        return datetime.datetime.strptime(str(x)[0:10], "%Y-%m-%d")
+    except Exception as e:
+        return None
 
 
 def convert_feature(value):
@@ -115,6 +109,31 @@ def get_iter_sample(s_values, i, iters, cpus):
         return s_values[(i * cpus): ((i+1) * cpus)]
     else:
         return s_values[(i * cpus):]
+
+
+def current_date_to_day():
+    """
+    recent date of converting to datetime from isoformat.
+    :return: datetime
+    """
+    return datetime.datetime.strptime(str(datetime.datetime.now())[0:19], '%Y-%m-%d')
+
+
+def convert_str_to_hour(date):
+    """
+    string date is converting to datetime and grabbing hour from it.
+    :param date: datetime format; %Y-%m-%d %H:%M:%S
+    :return: hour [0 - 24)
+    """
+    return datetime.datetime.strptime(str(date)[0:10], "%Y-%m-%d")
+
+
+def get_time_indicator(data, time_indicator, time_period):
+    if time_period == 'hour':
+        data[time_indicator] = data[time_indicator].apply(lambda x: convert_str_to_hour(x))
+    else:
+        data[time_indicator] = data[time_indicator].apply(lambda x: convert_str_to_hour(x))
+    return data
 
 
 def execute_parallel_run(values, executor, parallel=2, arguments=None):

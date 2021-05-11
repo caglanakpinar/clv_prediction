@@ -262,7 +262,8 @@ class CLV:
         result data can be collected from clv_predicted.purchase_amount.results
         """
         if self.clv_predicted is not None:
-            self.results = self.clv_predicted['purchase_amount'].results
+            self.results = pd.concat([self.clv_predicted['purchase_amount'].results,
+                                      self.clv_predicted['newcomers'].results])
 
     def check_for_result_data_from_previous_progresses(self):
         """

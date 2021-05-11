@@ -18,6 +18,48 @@ except Exception as e:
     from .configs import accepted_ratio_of_actual_order
 
 
+def data_manipulation_nc(date,
+                         order_count,
+                         amount_indicator,
+                         time_indicator,
+                         data_source,
+                         data_query_path,
+                         customer_indicator,
+                         time_period,
+                         directory):
+    data_process = GetData(data_source=data_source,
+                           data_query_path=data_query_path,
+                           time_indicator=time_indicator,
+                           feature=amount_indicator,
+                           date=date)
+    data_process.data_execute()
+    print("data size :", len(data_process.data))
+    data = data_process.data
+    data[time_indicator] = data[time_indicator].apply(lambda x: convert_str_to_day(x))
+    data = data.sort_values(by=[customer_indicator, time_indicator], ascending=True)
+    if order_count is None:
+        order_count = int(read_yaml(directory, "test_parameters.yaml")['purchase_amount']['feature_count'])
+
+    new_comers = data.groupby(customer_indicator).agg({time_indicator: "count"}).reset_index().rename(
+        columns={time_indicator: "order_count"}).query("order_count <= @order_count")
+    new_comers = list(new_comers[customer_indicator].unique())
+    data = data[data[customer_indicator].isin(new_comers)]
+    average_amount = np.mean(data[data[amount_indicator] == data[amount_indicator]][amount_indicator])
+    data = get_time_indicator(data, time_indicator, time_period)
+    data['order_count'] = 1
+    data = data.groupby(time_indicator).agg({"order_count": "sum"}).reset_index()
+    min_max_columns = ["min_order_count", "max_order_count"]
+    for i in min_max_columns:
+        data[i] = min(data["order_count"]) if i.split("_")[0] == 'min' else max(data["order_count"])
+    data["order_count"] = data.apply(lambda row: min_max_norm(row["order_count"],
+                                                              row['min_order_count'],
+                                                              row['max_order_count']), axis=1)
+    min_max = pd.DataFrame([{i: list(data[i])[0] for i in min_max_columns}])
+    return data.drop(min_max_columns,
+                     axis=1).fillna(0).sort_values(by=time_indicator,
+                                                   ascending=True), "order_count", average_amount, min_max
+
+
 def data_manipulation_np(date,
                          time_indicator,
                          data_source,
