@@ -107,7 +107,7 @@
     tunned parameters (test_parameters.yaml), schedule service arguments (schedule_service.yaml), result data with predicted values per user per predicted order (.csv format) are willing to store at given path. When prediction is initialized, Nex Purchase Model will create folder 'temp_next_purchase_results' and 
     Purchase Amount Model will create folder 'temp_purchase_amount_results' in order to import results as .csv format
     
-    ***time_period :*** A period of time which is willing to predict. Supported time periods month, week, 2*week, quarter, 6*month (Required).
+    ***time_period :*** A period of time which is willing to predict. Supported time periods month, week, '2*week', quarter, '6*month' (Required).
     
     ***time_schedule :*** A period of time which handles for running clv_prediction train or prediction process periodically. Supported schedule periods day, year, month, week, 2*week.
     
