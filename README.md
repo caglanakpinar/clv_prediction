@@ -36,7 +36,7 @@
 - **Prediction Of NewComers CLV Model**
     
     Newcomers are not likely predictable as Engaged users. They probably not have stabilized transactions pattern or they will not have a fitted train model unless they have enough transactions.
-    At this point, rather than predicting the value of each transaction, predicting the amount of transaction will be more predictable.
+    At this point, rather than predicting the value of each transaction, predicting the amount of transaction will be more convinient.
     By using the historical total purchases per time period (daily), the next time period of total purchase count is able to be predicted.
     Assuming that Purchase Amount of Newcomers are Normal Distributed (Hypothesis Test).
     In that case, purchase Amount prediction per newcomer is going to be the Mean of Purchase Amounts.
