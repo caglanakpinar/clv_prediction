@@ -57,7 +57,7 @@
 
 - **CLV Prediction Process Pipeline**
 
-![Untitled](https://user-images.githubusercontent.com/26736844/117892551-a153fb80-b2c1-11eb-94f9-be004141ccb6.png)
+![Untitled](https://user-images.githubusercontent.com/26736844/118328794-da34e000-b50e-11eb-8a7f-3a10373f8461.png)
 
 
 ##### Key Features
