@@ -251,6 +251,14 @@ Each model has unique aggregation in order to prepare data to create model.
 Detection of order count parameters relies on detecting the minimum number of order count per customer which covers the maximum number of customers from the data set.
 *Customers who have order count lower than than the calculated order count parameters are NewComers*.
 
+- ***Why do we need order count as a feature at NewComers CLV Model?*** 
+
+    -   It is a crucial parameter for NewComers Model;
+        
+        -   Users who have an order count less than ** order_count ** are not included in Combined of Next Purchase - Purchase Amount Models.
+        
+        -   NewComers are individually predicted according to a dependent value is **order_count**.
+
 - Main concept of Newcomers is for predicting orders count daily. 
     
 - Feature value is going to be total number of order count for all NewComers.
@@ -259,15 +267,15 @@ Detection of order count parameters relies on detecting the minimum number of or
         
 - Regarding of *lahead* paramter of LSTM model, data set is shaped just like below;
     
-| customers     | lag 3  |lag 2  |lag 1  |y      | 
-| -------------:| ------:|------:|------:|------:| 
-| 2021-05-01    | 25     |5      |10     |20     | 
-| 2021-05-02    | 5      |10     |20     |30     | 
-| 2021-05-03    | 10     |20     |30     |40     | 
-| 2021-05-04    | 20     |30     |40     |60     | 
-| 2021-05-05    | 30     |40     |60     |70     | 
-| 2021-05-06    | 40     |60     |70     |90     | 
-| 2021-05-07    | 60     |70     |90     |100    | 
+| customers     | lag 3  |lag 2  |lag 1  |y  (total order count of Newcomers)    | 
+| -------------:| ------:|------:|------:|--------------------------------------:| 
+| 2021-05-01    | 25     |5      |10     |20                                     | 
+| 2021-05-02    | 5      |10     |20     |30                                     | 
+| 2021-05-03    | 10     |20     |30     |40                                     | 
+| 2021-05-04    | 20     |30     |40     |60                                     | 
+| 2021-05-05    | 30     |40     |60     |70                                     | 
+| 2021-05-06    | 40     |60     |70     |90                                     | 
+| 2021-05-07    | 60     |70     |90     |100                                    | 
 
     
 - When model data has been prepared per customer, it is splitted according to split ratio into the train and test data set (train_x, train_y, test_x, test_y). 
