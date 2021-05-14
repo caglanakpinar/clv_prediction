@@ -272,7 +272,12 @@ Detection of order count parameters relies on detecting the minimum number of or
     
 - When model data has been prepared per customer, it is splitted according to split ratio into the train and test data set (train_x, train_y, test_x, test_y). 
 
-- LSTM model will be implemented for the data just like above
+- LSTM model will be implemented for the data just like above.
+
+- Prediction process is calculated sequentially per day. Each day model has been regenerated (store .json format) with updated coefficient matrix (stored as .h5 format). 
+LSTM allows us to predict next step values regarding your lags. While we are predicting further prediction, 
+models of coefficients must be updated and the previous prediction values must be merged just like actual values. 
+But, just like the recent prediction and model, the Tuned parameters are will also be used for further future days of predictions.
     
     
 
