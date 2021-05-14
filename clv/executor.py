@@ -172,7 +172,6 @@ class CLV:
                 - trained_next_purchase_model
                 - trained_purchase_amount_model
                 - trained_newcomers_model
-                - trained_monthly_model
 
             if all models are stored into the export_path, prediction process are able to be calculated.
         """
