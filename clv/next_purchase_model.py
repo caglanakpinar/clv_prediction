@@ -218,13 +218,7 @@ class TrainLSTM:
 
     def prediction_date_add(self, data, pred_data, pred):
         max_date = max(data[self.time_indicator]) if len(pred_data) == 0 else max(pred_data[self.time_indicator])
-        if self.time_period != 'hour':
-            _predicted_date = max_date + datetime.timedelta(minutes=int(round(pred)))
-        if self.time_period != 'day':
-            _predicted_date = max_date + datetime.timedelta(hours=int(round(pred)))
-        if self.time_period not in ['day', 'hour']:
-            _predicted_date = max_date + datetime.timedelta(days=int(round(pred)))
-        return _predicted_date
+        return max_date + datetime.timedelta(days=int(round(pred)))
 
     def predicted_date_in_range_decision(self, end, _pred_data, _predicted_date, customer, _pred_actual, _pred):
         if _predicted_date < end:
@@ -237,7 +231,7 @@ class TrainLSTM:
     def calculate_prediction(self, data, _pred_data, user_min, user_max):
         x = data_for_customer_prediction(data, _pred_data, self.params)
         _pred = self.model.predict(x)[0][-1]
-        _pred_actual =  self.get_actual_value(_min=user_min, _max=user_max, _value=_pred)
+        _pred_actual = self.get_actual_value(_min=user_min, _max=user_max, _value=_pred)
         return _pred_actual, _pred
 
     def prediction_per_customer(self,  customer):
@@ -277,6 +271,8 @@ class TrainLSTM:
                 except Exception as e:
                     print(e)
             prediction_data[customer] = _pred_data
+        self.temp_data[customer] = None
+        del data, user_max, user_min, _pred_data
 
     def create_prediction_data(self):
         self.temp_data = self.data.groupby(self.customer_indicator).agg(
@@ -300,10 +296,10 @@ class TrainLSTM:
             shutil.rmtree(join(self.directory, "temp_next_purchase_results", ""))
             os.mkdir(join(self.directory, "temp_next_purchase_results"))
 
-        iters = int(len(self.customers) / 256) + 1
+        iters = int(len(self.customers) / 1024) + 1
         for i in range(iters):
             print("main iteration :", str(i), " / ", str(iters))
-            _sample_customers = get_iter_sample(self.customers, i, iters, 256)
+            _sample_customers = get_iter_sample(self.customers, i, iters, 1024)
             global prediction_data
             prediction_data = {}
             execute_parallel_run(_sample_customers, self.prediction_per_customer, arguments=None, parallel=8)
@@ -315,6 +311,7 @@ class TrainLSTM:
                     print(c)
             _result.to_csv(join(self.directory, "temp_next_purchase_results", str(_sample_customers[0] + "_data.csv")),
                            index=False)
+            del _result
 
     def create_prediction_result_data(self):
         print("merge predicted data ...")

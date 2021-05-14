@@ -33,19 +33,6 @@ def read_write_to_json(directory, filename, data, is_writing):
         return data
 
 
-def get_day_part(hour):
-    if 0 <= hour < 7:
-        return 'night'
-    if 7 <= hour < 12:
-        return 'morning'
-    if 12 <= hour < 17:
-        return 'afternoon'
-    if 17 <= hour < 21:
-        return 'evening1'
-    if 21 <= hour < 24:
-        return 'evening2'
-
-
 def model_path(comb, group, model):
     return "_".join(["_".join([str(i[0]) + "*" + str(i[1]) for i in zip(group, comb)]), model]) + ".json"
 
@@ -119,34 +106,26 @@ def current_date_to_day():
     return datetime.datetime.strptime(str(datetime.datetime.now())[0:19], '%Y-%m-%d')
 
 
-def convert_str_to_hour(date):
-    """
-    string date is converting to datetime and grabbing hour from it.
-    :param date: datetime format; %Y-%m-%d %H:%M:%S
-    :return: hour [0 - 24)
-    """
-    return datetime.datetime.strptime(str(date)[0:10], "%Y-%m-%d")
-
-
-def get_time_indicator(data, time_indicator, time_period):
-    if time_period == 'hour':
-        data[time_indicator] = data[time_indicator].apply(lambda x: convert_str_to_hour(x))
-    else:
-        data[time_indicator] = data[time_indicator].apply(lambda x: convert_str_to_hour(x))
-    return data
-
-
 def execute_parallel_run(values, executor, parallel=2, arguments=None):
+    """
+    main concept of parallelize the processes. It checks the cpu count and multiplies with 4.
+    On each iteration it triggers cpu * 4 threads sequentially.
+    :param values: list of values in order to trigger thread.
+    :param executor: function in order to call
+    :param parallel: number of thread
+    :param arguments: arguments for the function
+    :return:
+    """
     global process
     cpus = cpu_count()
-    if parallel < cpus * 32:
-        parallel = cpus * 32
+    if parallel < cpus * 4:
+        parallel = cpus * 4
     iters = int(len(values) / parallel) + 1
     print("number of iterations :", iters)
     for i in range(iters):
-        print("iteration :", i)
+        if i % 2 == 0:
+            print("iteration :", i)
         _sample_values = get_iter_sample(values, i, iters, parallel)
-        all_processes = []
         for v in _sample_values:
             if arguments:
                 process = threading.Thread(target=executor, args=(v, arguments, ))
@@ -155,6 +134,7 @@ def execute_parallel_run(values, executor, parallel=2, arguments=None):
             process.deamon = True
             process.start()
         process.join()
+    del process
     return "done !!!"
 
 

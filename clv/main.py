@@ -65,6 +65,13 @@ def main(job='train',
         next_purchase.train_execute()
     if job == 'prediction':
         next_purchase.prediction_execute()
+    if job == 'train_prediction':
+        next_purchase.train_execute()
+        next_purchase.prediction_execute()
+
+    predicted_orders = next_purchase.results
+    raw_data = next_purchase.data
+    del next_purchase
 
     purchase_amount = TrainConv1Dimension(
         date=date,
@@ -75,13 +82,19 @@ def main(job='train',
         time_period=time_period,
         directory=export_path,
         customer_indicator=customer_indicator,
-        predicted_orders=next_purchase.results,
+        predicted_orders=predicted_orders,
         amount_indicator=amount_indicator)
 
     if job == 'train':
         purchase_amount.train_execute()
     if job == 'prediction':
         purchase_amount.prediction_execute()
+    if job == 'train_prediction':
+        purchase_amount.train_execute()
+        purchase_amount.prediction_execute()
+
+    engaged_customers_results = purchase_amount.results
+    del purchase_amount
 
     # newcomers of CLV models train and prediction process
     newcomers = TrainLSTMNewComers(
@@ -93,15 +106,23 @@ def main(job='train',
         time_period=time_period,
         directory=export_path,
         customer_indicator=customer_indicator,
-        engaged_customers_results=purchase_amount.results,
+        engaged_customers_results=engaged_customers_results,
         amount_indicator=amount_indicator)
 
     if job == 'train':
         newcomers.train_execute()
     if job == 'prediction':
         newcomers.prediction_execute()
+    if job == 'train_prediction':
+        newcomers.train_execute()
+        newcomers.prediction_execute()
 
-    return {"next_purchase": next_purchase, "purchase_amount": purchase_amount, "newcomers": newcomers}
+    newcomers_clv = newcomers.results
+    del newcomers
+
+    return {"next_purchase": {'data': raw_data},
+            "purchase_amount": {'results': engaged_customers_results},
+            "newcomers": {'results': newcomers_clv}}
 
 
 if __name__ == '__main__':
@@ -141,7 +162,7 @@ if __name__ == '__main__':
                         required=True)
     parser.add_argument("-TI", "--time_indicator", type=str,
                         help="""
-                        This can only be applied with date. It can be hour, day, week, week_part, quarter, year, month.
+                        This can only be applied with date. It can be week, week_part, quarter, year, month.
                         Individually time indicator checks the date part is significantly
                         a individual group for data set or not.
                         If it is uses time_indicator as a  group

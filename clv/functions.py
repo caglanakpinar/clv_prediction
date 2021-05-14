@@ -25,7 +25,6 @@ def data_manipulation_nc(date,
                          data_source,
                          data_query_path,
                          customer_indicator,
-                         time_period,
                          directory):
     data_process = GetData(data_source=data_source,
                            data_query_path=data_query_path,
@@ -45,7 +44,6 @@ def data_manipulation_nc(date,
     new_comers = list(new_comers[customer_indicator].unique())
     data = data[data[customer_indicator].isin(new_comers)]
     average_amount = np.mean(data[data[amount_indicator] == data[amount_indicator]][amount_indicator])
-    data = get_time_indicator(data, time_indicator, time_period)
     data['order_count'] = 1
     data = data.groupby(time_indicator).agg({"order_count": "sum"}).reset_index()
     min_max_columns = ["min_order_count", "max_order_count"]
@@ -235,14 +233,9 @@ def pivoting_orders_sequence(data, customer_indicator, feature):
 
 
 def calculate_time_diff(date, prev_date, time_period):
-    date = datetime.datetime.strptime(str(date)[0:19], '%Y-%m-%d %H:%M:%S')
-    prev_date = datetime.datetime.strptime(str(prev_date)[0:19], '%Y-%m-%d %H:%M:%S')
-    if time_period == 'hour':
-        return abs((date - prev_date).total_seconds()) / 60
-    if time_period == 'day':
-        return abs((date - prev_date).total_seconds()) / 60 / 60
-    if time_period not in ['hour', 'day']:
-        return abs((date - prev_date).total_seconds()) / 60 / 60 / 24
+    date = datetime.datetime.strptime(str(date)[0:10], '%Y-%m-%d')
+    prev_date = datetime.datetime.strptime(str(prev_date)[0:10], '%Y-%m-%d')
+    return abs((date - prev_date).total_seconds()) / 60 / 60 / 24
 
 
 def sampling(sample, sample_size):
@@ -395,10 +388,6 @@ def arrange__data_for_model(df, f, parameters, is_prediction=False):
 
 
 def convert_time_preiod_to_days(time_period):
-    if time_period == 'day':
-        return 1
-    if time_period == 'year':
-        return 365
     if time_period == 'month':
         return 30
     if time_period == 'week':
@@ -409,6 +398,8 @@ def convert_time_preiod_to_days(time_period):
         return 60
     if time_period == 'quarter':
         return 90
+    if time_period == '6*month':
+        return 180
 
 
 def check_model_exists(path, model_name, time_period):

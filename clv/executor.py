@@ -7,7 +7,6 @@ try:
     from data_access import GetData
     from utils import get_folder_path, write_yaml, read_yaml
     from configs import conf
-    from scheduler_service import create_job
     from dashboard import create_dahboard
     from functions import check_for_previous_predicted_clv_results
 except Exception as e:
@@ -15,7 +14,6 @@ except Exception as e:
     from .data_access import GetData
     from .utils import get_folder_path, write_yaml, read_yaml
     from .configs import conf
-    from .scheduler_service import create_job
     from .dashboard import create_dashboard
     from .functions import check_for_previous_predicted_clv_results, check_model_exists
     from .functions import check_for_previous_predicted_clv_results
@@ -38,13 +36,11 @@ class CLV:
      connector          :  if there is a connection parameters as user, pasword, host port, this allows us to assign it
                            as dictionary format (e.g {"user":  , "pw":  *}).
      export_path        :  Export path where the outputs are stored. created models (.json format),
-                           tunned parameters (test_parameters.yaml), schedule service arguments (schedule_service.yaml),
+                           tuned parameters (test_parameters.yaml).
                            result data with predicted values per user per predicted order
                            (.csv format) are willing to store at given path.
      time_period        :  A period of time which is willing to predict.
-                           Supported time periods month, hour, week, 2*week (Required).
-     time_schedule      :  A period of time which handles for running clv_prediction train or
-                           prediction process periodically. Supported schedule periods day, year, month, week, 2*week.
+                           Supported time periods 6*month, quarter, month, week, 2*week, '2*month'(Required).
     """
     def __init__(self,
                  customer_indicator=None,
@@ -102,27 +98,15 @@ class CLV:
                                     "amount_indicator", "time_indicator", "export_path"]
         self.clv_predicted = None
         self.path = get_folder_path()
+        self.model_count = 3
 
     def query_string_change(self):
         """
-        When query with SQL syntax, it is more accurate to sent query string as argument with coverşng spaces with "+"
+        When query with SQL syntax, it is more accurate to sent query string as argument with coverting spaces with "+"
         character.
         """
         if self.data_source in ['mysql', 'postgresql', 'awsredshift', 'googlebigquery']:
             self.data_query_path = self.data_query_path.replace("\r", " ").replace("\n", " ").replace(" ", "+")
-
-    def create_schedule_file(self):
-        """
-        When scheduling process has been initialized, there will be a file 'schedule.yaml' at the given 'export_path'.
-        This .yaml file is updated every each periodic iteration.
-        Each iteration date argument is updated according to number of the iteration and time_period argument.
-        E.g. date is 2020-01-01 03:00, time_period = 'hour', iteration : 3
-        The current date  is goşng to be 2020-01-01 06:00
-        """
-        write_yaml(self.export_path, 'schedule_' + self.job + '.yaml',
-                   {'arguments': self.arguments,
-                    'time_schedule': self.time_schedule,
-                    'iteration': 0})
 
     def get_connector(self):
         """
@@ -171,12 +155,12 @@ class CLV:
         """
         When clv_prediction is triggered, valid time period must be checked.
         Here are the valid time periods that platform is supporting;
-            - "day", "year", "month", "week", "2*week", '2*month', "quarter"
+            - "day", "year", "month", "week", "2*week", '6*month',  "quarter"
         """
         if self.time_period is None:
             return True
         else:
-            if self.time_period in ["day", "year", "month", "week", "2*week", '2*month', "quarter"]:
+            if self.time_period in [ "month", "week", "2*week", '6*month',  "quarter", '2*month']:
                 return True
             else: return False
 
@@ -184,30 +168,24 @@ class CLV:
         """
         When the platform is triggered for prediction, first, trained model for related time_period and time
         must be check. If the current trained models are not valid for this prediction process, it won`t be started.
-        """
-        if self.job == 'prediction':
-            model_files = check_model_exists(self.export_path, "trained_next_purchase_model", self.time_period)
-            if model_files is not None:
-                if len(check_model_exists(self.export_path, "trained_next_purchase_model", self.time_period)) != 0:
-                    return True
-                else: return False
-            else: return False
-        else: return True
+            Checking models;
+                - trained_next_purchase_model
+                - trained_purchase_amount_model
+                - trained_newcomers_model
+                - trained_monthly_model
 
-    def check_for_time_schedule(self):
+            if all models are stored into the export_path, prediction process are able to be calculated.
         """
-        Time schedule periods must be valid periods that are supporting from the platform.
-        Here are the valid periods;
-            - "mondays", "tuesdays", "wednesdays", "thursdays",
-            - "fridays", "saturdays", "sundays", "day", "hour", "week"
-        """
-        if self.time_schedule is None:
-            return True
+        accept = False
+        if self.job == 'prediction':
+            models = [check_model_exists(self.export_path, m, self.time_period)
+                      for m in ["trained_next_purchase_model", "trained_purchase_amount_model",
+                                "trained_newcomers_model"]]
+            if len([1 for model in models if len(model) != 0]) == self.model_count:
+                accept = True
         else:
-            if self.time_schedule in ["mondays", "tuesdays", "wednesdays", "thursdays",
-                                      "fridays", "saturdays", "sundays", "day", "hour", "week"]:
-                return True
-            else: return False
+            accept = True
+        return accept
 
     def clv_prediction(self):
         """
@@ -240,7 +218,7 @@ class CLV:
                     print(" - ".join(self.mandetory_arguments))
             else:
                 print("optional time periods are :")
-                print("day", "year", "month", "week", "2*week", '2*month', "hour", "quarter")
+                print("month", "week", "2*week", '2*month', "quarter", '6*month')
         else:
             print("pls check for data source connection / path / query.")
 
@@ -290,26 +268,6 @@ class CLV:
         self.check_for_result_data()
         self.check_for_result_data_from_previous_progresses()
         return self.results if self.clv_predicted is None else pd.concat([self.raw_data, self.results])
-
-    def schedule_clv_prediction(self):
-        if self.get_connector():
-            if self.check_for_time_schedule():
-                if self.check_for_mandetory_arguments():
-                    self.create_schedule_file()
-                    process = threading.Thread(target=create_job,
-                                               kwargs={'arguments': self.arguments,
-                                                       'time_schedule': self.time_schedule})
-                    process.daemon = True
-                    process.start()
-                else:
-                    print("check for the required parameters to initialize A/B Test:")
-                    print(" - ".join(self.mandetory_arguments))
-
-            else:
-                print("optional schedule time periods are :")
-                print("Mondays - .. - Sundays", "Daily", "week", "hour")
-        else:
-            print("pls check for data source connection / path / query.")
 
     def show_dashboard(self):
         """

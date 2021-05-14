@@ -19,13 +19,29 @@
     
 - **Prediction of Next Purchase (Frequency) per Customer Model**
 
-    Each customer of historical purchases of date differences is calculated. There will be accepted patterns related to customers ' behaviors. Some Users might have a pattern of every Monday. Some will have Mondays -Wednesdays- Fridays. there must be an individual predictive model for each customer, and this must be the Time Series model per each customer of historical frequency. However, it is not an efficient way and there will be a computational cost here. In that case, Deep Learning can handle this problem with LSTM NN (check next_purchase_model.py). There must be a model that each customer of frequency values are able to be predicted.
+    Each customer of historical purchases of date differences is calculated. 
+    There will be accepted patterns related to customers ' behaviors. 
+    Some Users might have a pattern of every Monday. 
+    Some will have Mondays -Wednesdays- Fridays. 
+    There must be an individual predictive model for each customer, and this must be the Time Series model per each customer of historical frequency. 
+    However, it is not an efficient way and there will be a computational cost here. In that case, Deep Learning can handle this problem with LSTM NN (check next_purchase_model.py). 
+    There must be a model that each customer of frequency values are able to be predicted.
     
 - **Prediction Of Customer Value (Value) per Customer Model**
 
-    Customer future values of prediction are also crucial to reach the final CLV calculation. Once frequency values are calculated per customer, by historical users' of purchase values can be predicted via using Deep Learning. At this process, there is a built-in network (check purchase_amount.py) which is created by using 1 Dimensional Convolutional LSTM NN. 
+    Customer future values of prediction are also crucial to reach the final CLV calculation. 
+    Once frequency values are calculated per customer, by historical users' of purchase values can be predicted via using Deep Learning. 
+    At this process, there is a built-in network (check purchase_amount.py) which is created by using 1 Dimensional Convolutional LSTM NN. 
     
-- **Combining Of Next Purchase Model & Purchase Amount Prediction Model**
+- **Prediction Of NewComers CLV Model**
+    
+    Newcomers are not likely predictable as Engaged users. They probably not have stabilized transactions pattern or they will not have a fitted train model unless they have enough transactions.
+    At this point, rather than predicting the value of each transaction, predicting the amount of transaction will be more predictable.
+    By using the historical total purchases per time period (daily), the next time period of total purchase count is able to be predicted.
+    Assuming that Purchase Amount of Newcomers are Normal Distributed (Hypothesis Test).
+    In that case, purchase Amount prediction per newcomer is going to be the Mean of Purchase Amounts.
+    
+- **Combining Of Next Purchase Model & Purchase Amount Prediction Model & NewComers Prediction Model**
 
     Without predicting the frequency of users, we can not be sure when the customer will have a purchase. 
     So, by using the next purchase model, customers of future purchase dates have to be predicted. 
@@ -36,10 +52,12 @@
     This time period must be assigned when the process is initialized. The time period will have a range between the last transaction date of the dataset and the last transaction date + time period.
     It can be detected the users' purchases of dates and the next process will be predicting each purchase of values by using the Purchase Amount model.
     
+    After combining Of Next Purchase Model & Purchase Amount Prediction Model is done, NewComers of Predictions are merging the results.
+    
 
 - **CLV Prediction Process Pipeline**
 
-![draw_clv_prediction_process](https://user-images.githubusercontent.com/26736844/102719986-5c273100-4302-11eb-97ef-c86153336473.png)
+![Untitled](https://user-images.githubusercontent.com/26736844/117892551-a153fb80-b2c1-11eb-94f9-be004141ccb6.png)
 
 
 ##### Key Features
@@ -47,25 +65,26 @@
 -   Allows you to predict your business of customers values individually.
 -   Predicts customers of next purchase dates.
 -   Predicts customers of next purchase amounts.
+-   Predicts newcomers of next purchase amounts.
 -   Dashboard for visualization predicted values.
--   Schedule training pr prediction processes periodically.
+
 
 
 ##### Running Platform
 
 - **CLV Prediction Parameters**
     
-    ***job :*** Train, Prediction. train process is related to creating a model; 
+    ***job :*** Train, Prediction, Train&Prediction. train process is related to creating a model; 
     the next steps are going to be the Next Purchase Model and Purchase Amount Model. 
-    Each model of the hyper parameter tuning process will be initialized before the model has been initialized. 
+    Each model of the hyper parameter tuning process will be initialized before models have been initialized. 
     Once, the hyperparameter has been progressed tunned network parameters are stored in **test_paramters.yaml** where it is in ***export_path***. 
-    When a model has been run repeatedly (or periodically), the model has been check whether it has been already built during the ***time_period. 
+    When a model has been run repeatedly (or periodically), the model has been checked whether it has been already built during the ***time_period. 
     If there are stored models in ***export_path***, the latest model is imported and move on to the next process without a run for building the model.
     When the ***prediction** process is triggered, first, the next purchase per customer is predicted then, the purchase amount is predicted related to the next purchase prediction.
     
     ***order_count :*** It allows us to create a feature set of the purchase amount model. 
     (Check ***Why do we need order count as a feature at Purchase Amount Model?*** for details). 
-    if it is not assigned (it is not a required argument in order to initialize the clv prediction), the platform handles it to decide the optimum order count.
+    if it is not assigned (it is not a required argument in order to initialize the clv prediction), the platform handles it to decide the optimum order count. Order Count also affects the detection of NewComers.
     
     ***customer_indicator :*** This parameter indicates which column represents a unique customer identifier on given data.
     
@@ -85,9 +104,10 @@
     ***connector :*** if there is a connection parameters as user, pasword, host port, this allows us to assign it as dictionary format (e.g {"user": ***, "pw": ****}).
         
     ***export_path :*** Export path where the outputs are stored. created models (.json format), 
-    tunned parameters (test_parameters.yaml), schedule service arguments (schedule_service.yaml), result data with predicted values per user per predicted order (.csv format) are willing to store at given path.
+    tunned parameters (test_parameters.yaml), schedule service arguments (schedule_service.yaml), result data with predicted values per user per predicted order (.csv format) are willing to store at given path. When prediction is initialized, Nex Purchase Model will create folder 'temp_next_purchase_results' and 
+    Purchase Amount Model will create folder 'temp_purchase_amount_results' in order to import results as .csv format
     
-    ***time_period :*** A period of time which is willing to predict. Supported time periods month, hour, week, 2*week (Required).
+    ***time_period :*** A period of time which is willing to predict. Supported time periods month, week, 2*week, quarter, 6*month (Required).
     
     ***time_schedule :*** A period of time which handles for running clv_prediction train or prediction process periodically. Supported schedule periods day, year, month, week, 2*week.
     
@@ -141,17 +161,11 @@ Each model has unique aggregation in order to prepare data to create model.
 
 ***1. Next Purchase Model Data Preparation***
     
-- Time difference of each order per customer is calculated. time diference is calcualted realted *time_preiod*. 
-    
-    ***a.*** time_period = hour, time_difference = minute
-    
-    ***b.*** time_period = day, time_difference = hour
-    
-    ***c.*** time_period = week, month, 2*week, time_difference = day
+- Time difference of each order per customer is calculated as day diffrence of orders per user.
     
 - Normalized each time difference values related to Min-Max Normalization Method. Each customer of Min-Max Normalization individually.
         
-- Regarding of *lahead* paramter of LSTM model, data set is shaped per customer. 
+- Regarding of *lahead* parameter of LSTM model, data set is shaped per customer. 
     
 - Iterativelly each customer of data set is collected individually. the process is parallelized according to CPU count.
     
@@ -177,7 +191,7 @@ Each model has unique aggregation in order to prepare data to create model.
     
 - *order_count* parameter refers us for the model of the feature count.
     
-- previous orders of purchase amounts of each customer is collected from fow data
+- previous orders of purchase amounts of each customer is collected from fow data.
         
 - Regarding of *lahead* paramter of LSTM model, data set is shaped per customer. 
     
@@ -203,7 +217,7 @@ Each model has unique aggregation in order to prepare data to create model.
         
         -   At the purchase amount model features are sequential orders.
         
-        -   For instance if we assign order count as 5, user_1, user_2, user_3, user_4 have 100, 101, 300, 2 orders.
+        -   For instance if we assign order count as 5, time_period.user_1, user_2, user_3, user_4 have 100, 101, 300, 2 orders.
         
             The data set will be;
             
@@ -231,7 +245,36 @@ Each model has unique aggregation in order to prepare data to create model.
 | user_6        | 12,6    | 30,6   | 12,6   | 30,6   | 12,6           |
 
  
+***3. NewComers Model Data Preparation***
  
+- *order_count* parameter is calculated as feature count on Purchase Amount Train Process. 
+Detection of order count parameters relies on detecting the minimum number of order count per customer which covers the maximum number of customers from the data set.
+*Customers who have order count lower than than the calculated order count parameters are NewComers*.
+
+- Main concept of Newcomers is for predicting orders count daily. 
+    
+- Feature value is going to be total number of order count for all NewComers.
+    
+- Normalized each order count values related to Min-Max Normalization Method per day.
+        
+- Regarding of *lahead* paramter of LSTM model, data set is shaped just like below;
+    
+| customers     | lag 3  |lag 2  |lag 1  |y      | 
+| -------------:| ------:|------:|------:|------:| 
+| 2021-05-01    | 25     |5      |10     |20     | 
+| 2021-05-02    | 5      |10     |20     |30     | 
+| 2021-05-03    | 10     |20     |30     |40     | 
+| 2021-05-04    | 20     |30     |40     |60     | 
+| 2021-05-05    | 30     |40     |60     |70     | 
+| 2021-05-06    | 40     |60     |70     |90     | 
+| 2021-05-07    | 60     |70     |90     |100    | 
+
+    
+- When model data has been prepared per customer, it is splitted according to split ratio into the train and test data set (train_x, train_y, test_x, test_y). 
+
+- LSTM model will be implemented for the data just like above
+    
+    
 
 - ***Parameter Tuning***
 
@@ -246,12 +289,14 @@ Each model has unique aggregation in order to prepare data to create model.
     
     - If the last epoch of loss value is less than *accept_threshold_for_loss_diff*, then it is excepted as optimum *epoch* and *batch_size*.
 
-![keras_tuner_image](https://user-images.githubusercontent.com/26736844/103485599-87cd0f80-4e08-11eb-80b6-b4b236e16f65.png)
+![parameter_tuning](https://user-images.githubusercontent.com/26736844/118011611-e9722d00-b358-11eb-8b02-f1d12d390a5b.png)
 
     
 - ***Train***
+    
+    **job == 'train'**
 
-    - Next Purchase Model and Purchase Amount Model of the train process are progressed via tensorflow - Keras.
+    - Next Purchase Model, Purchase Amount Model and NewComer Model of the train process are progressed via tensorflow - Keras.
     
     - It is a Recurrent NN, LSTM NN. 
     
@@ -266,18 +311,32 @@ Each model has unique aggregation in order to prepare data to create model.
       current date 2020-01-30. This model trained 29 days before which is accepted range (accepted range 0 - 30 (one month)).
 
 - ***Prediction Process***
-    - First, the next purchase of dates is calculated related to prediction values from the next purchase model per customer individually. 
+
+    **job == 'prediction'**
+    
+    - First, the next purchase of dates are calculated related to prediction values from the next purchase model per customer individually. 
     Next, the purchase model will predict the time difference of the next order. 
     By using time difference it is possible to find the exact date of the purchase. 
     If the purchase date is in the range between the last purchase transaction date of the raw data and the last purchase transaction date + *time_period*.
     
-    - After the next purchased orders are predicted, the nest purchase of the values are predicted by the purchase amount 
+    - After the next purchased orders are predicted, the next purchase of the values are predicted by the purchase amount 
       mode for each user who has purchases related to the next purchase prediction result data.
+      
+    - NewComers of Predictions are not dependent just like Nex Purchase Amount and Next Purchase Processes. 
+    However, In order to determine NewComer, it uses **feature count (optimum order count)** parameter that has been detected when Purchase Amount Model is built. 
+    NewComers are customers who have an order count less than **feature count (optimum order count)**. NewComers of the total number of order count is predicted for ClV Time Period per day. Next, the Average Payment Amount is assigned as the predicted Payment Amount value for NewComers and multiplied with the predicted order count. 
+    Next, the result of the multiplied payment amount is merged to the Purchase Amount model of results.
     
     - Result data is stored at *export_path*. Once a previous result data stored not related to current time_preiod, 
-      but it is related to prevşous time_period*, it is merged with current result data.
+      but it is related to previous *time_period*, it is merged with current result data.
     
     - Result data file name: result_data_month.csv
+    
+- ***Train-Prediction Process***
+
+    **job == 'train_prediction'**
+    
+    - Each model process is trained then predicted sequentially. At the end 3 models have been generalized, 3 models of parameters tunning have been applied and 3 models of predictions are calculated. 
 
 
 #### Running CLV Prediction 
@@ -286,7 +345,7 @@ Each model has unique aggregation in order to prepare data to create model.
         amount_indicator = "transaction_value"
         time_indicator = "days"
         time_period = 'month'
-        job = "train" # prediction
+        job = "train" # prediction or train_prediction
         date = '2021-01-01'
         order_count = 15
         data_source = "postgresql"
@@ -320,8 +379,8 @@ Each model has unique aggregation in order to prepare data to create model.
         
 #### Collecting Prediction Result Data
 
-Once, prediction process has been initialized (job: 'prediction'), It can be collected via ***get_result_data***.
-This data will be represented with raw data per customer of next purchase orders
+Once, prediction process has been initialized (job: 'prediction' or 'train_prediction'), It can be collected via ***get_result_data***.
+This data will be represented with raw data per customer of next purchase orders.
 
 
         from clv.executor import CLV
@@ -337,14 +396,19 @@ This data will be represented with raw data per customer of next purchase orders
                   connector=connector)
         results = clv.get_result_data()
       
-| customers     | Last 5  |Last 4  |Last 3  |Last 2  |Last Order (y)  |
-| -------------:| -------:|-------:|-------:|-------:|---------------:| 
-| user_1        | 10,4    | 13,4   | 18,4   | 11,4   | 15,4           |          
-| user_2        | 50,8    | 52,8   | 54,8   | 56,8   | 58,8           |      
-| user_3        | 30,7    | 25,7   | 15,7   | 10,7   | 8,7            |      
-| user_4        | 20,2    | 23.5   | 26,2   | 27,2   | 29,2           |      
-| user_5        | 1,4     | 1,4    | 1,4    | 1,4    | 1,4            |      
-| user_6        | 12,6    | 30,6   | 12,6   | 30,6   | 12,6           |      
+| customers |data_type   |time_indicator  |amount_indicator  |
+| ---------:|-----------:|---------------:|-----------------:| 
+| user_1    | actual     | 2021-01-07     | 10,4             | 
+| user_1    | actual     | 2021-01-14     | 15,4             | 
+| user_1    | actual     | 2021-01-28     | 20,4             | 
+| user_1    | prediction | 2021-02-05     | 25,4             |  
+| user_1    | prediction | 2021-02-06     | 30,8             |      
+| user_2    | prediction | 2021-02-05     | 8,7              |      
+| user_3    | prediction | 2021-02-05     | 29,2             |      
+| user_4    | prediction | 2021-02-05     | 1,4              |      
+| user_4    | prediction | 2021-02-06     | 18,6             |      
+| newcomers | prediction | 2021-02-05     | 12,6             | 
+| newcomers | prediction | 2021-02-06     | 12,6             | 
 
 
 
@@ -372,9 +436,6 @@ Here are examples of dashboard
                   connector=connector)
         clv.show_dashboard()
         
-
-    
-    
 
 - ***Dashboard of Components***
 
@@ -419,24 +480,6 @@ These pie charts refer to Newcomer and Churn Rate of the Business According to s
 
 <img width="761" alt="Screen Shot 2021-01-05 at 23 53 11" src="https://user-images.githubusercontent.com/26736844/103697747-678c8480-4fb1-11eb-8474-923cbde1b6fe.png">
 
-#### Scheduling CLV Prediction
 
-CLV prediction process is able to be run periodically by using schedule services. 
-Both train and prediction models are allowed to be processed individually.  Available periods are; Mondays, Tuesdays,
-... Sundays, day, hour, week. It is possible to assign a schedule period by *time_period* argument.
-
-
-        from clv.executor import CLV
-        clv = CLV(customer_indicator=customer_indicator,
-                  amount_indicator=amount_indicator,
-                  date=date,
-                  order_count=order_count,
-                  data_source=data_source,
-                  data_query_path=data_query_path,
-                  time_period='hour',
-                  time_indicator=time_indicator,
-                  export_path=export_path,
-                  connector=connector)
-        results = clv.schedule_clv_prediction()
 
 

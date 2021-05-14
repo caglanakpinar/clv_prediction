@@ -4,7 +4,6 @@ import os
 import shutil
 from itertools import product
 import glob
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '4'
 
 from tensorflow.keras.layers import Dense, LSTM, Input, BatchNormalization
@@ -84,7 +83,6 @@ class TrainLSTMNewComers:
                                                                  data_source=data_source,
                                                                  data_query_path=data_query_path,
                                                                  customer_indicator=customer_indicator,
-                                                                 time_period=time_period,
                                                                  directory=directory)
 
         self.hp = HyperParameters()
@@ -93,7 +91,7 @@ class TrainLSTMNewComers:
         self.prev_model_date = check_model_exists(self.directory, "trained_newcomers_model", self.time_period)
         self.residuals, self.anomaly = [], []
         self.results = DataFrame()
-        self.get_actual_value = lambda _min, _max, _value: ((_max - _min) * _value) + _min
+        self.get_actual_value = lambda _min, _max, _value: ((_max - _min) * _value) + _min if _value >= 0 else _min
         self.max_date = max(self.data[self.time_indicator])
         self.future_date = self.max_date + datetime.timedelta(days=convert_time_preiod_to_days(self.time_period))
         self.model_data = {"x_train": None, "y_train": None, "x_test": None, "y_test": None}
@@ -136,22 +134,24 @@ class TrainLSTMNewComers:
         self.model = Model(inputs=self.input, outputs=lstm)
         self.model.compile(loss='mae', optimizer=Adam(lr=self.params['lr']), metrics=['mae'])
 
-    def learning_process(self, save_model=True, history=False):
+    def learning_process(self, save_model=True, history=False, show_epochs=True):
+        verbose = 1 if show_epochs else 0
         if history:
             history = self.model.fit(self.model_data['x_train'],
                                      self.model_data['y_train'],
                                      batch_size=self.params['batch_size'],
                                      epochs=int(self.params['epochs']),
-                                     verbose=1,
+                                     verbose=1,  # verbose = 1 if there if history = True
                                      validation_data=(self.model_data['x_test'], self.model_data['y_test']),
                                      shuffle=True)
         else:
-            print("*" * 5, "Fit Newcomers CLV Model", "*" * 5)
+            if save_model:
+                print("*"*5, "Fit Newcomers CLV Model", "*"*5)
             self.model.fit(self.model_data['x_train'],
                            self.model_data['y_train'],
                            batch_size=self.params['batch_size'],
                            epochs=int(self.params['epochs']),
-                           verbose=1,
+                           verbose=verbose,
                            validation_data=(self.model_data['x_test'], self.model_data['y_test']),
                            shuffle=True)
         if save_model:
@@ -170,7 +170,7 @@ class TrainLSTMNewComers:
             return history
 
     def train_execute(self):
-        print("*" * 5, "Newcomer CLV Prediction train model process ", "*" * 5)
+        print("*"*5, "Newcomer CLV Prediction train model process ", "*"*5)
         if self.prev_model_date is None:
             self.data_preparation()
             self.parameter_tuning()
@@ -185,11 +185,10 @@ class TrainLSTMNewComers:
                                                                       "trained_newcomers_model",
                                                                       self.prev_model_date,
                                                                       self.time_period))
-            print(
-                "Previous model already exits in arrange__data_for_model the given directory  '" + self.directory + "'.")
+            print("Previous model already exits in arrange__data_for_model the given directory  '" + self.directory + "'.")
 
     def prediction_execute(self):
-        print("*" * 5, "PREDICTION", 5 * "*")
+        print("*"*5, "PREDICTION", 5*"*")
         if self.model is None:
             _model_date = self.prev_model_date if self.prev_model_date is not None else get_current_day()
             self.model = model_from_to_json(path=model_path(self.directory,
@@ -203,8 +202,12 @@ class TrainLSTMNewComers:
         # daily calculations, day by day
         while self.max_date < self.future_date:
             print("date :", self.max_date)
+            self.model_data = arrange__data_for_model(self.data, [self.features], self.params)
+            self.build_model()
+            self.learning_process(save_model=False, history=False, show_epochs=False)
             x = arrange__data_for_model(self.data, [self.features], self.params, is_prediction=True)
             _pred = pd.DataFrame([{self.time_indicator: self.max_date, "order_count": self.model.predict(x)[0][-1]}])
+            print(_pred)
             self.data, self.results = pd.concat([self.data, _pred]), pd.concat([self.results, _pred])
             self.max_date += datetime.timedelta(days=1)
         for i in ['min_' + self.features, 'max_' + self.features]:
