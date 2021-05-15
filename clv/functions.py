@@ -36,26 +36,13 @@ def data_manipulation_nc(date,
     data = data_process.data
     data[time_indicator] = data[time_indicator].apply(lambda x: convert_str_to_day(x))
     data = data.sort_values(by=[customer_indicator, time_indicator], ascending=True)
-    if order_count is None:
-        order_count = int(read_yaml(directory, "test_parameters.yaml")['purchase_amount']['feature_count'])
 
-    new_comers = data.groupby(customer_indicator).agg({time_indicator: "count"}).reset_index().rename(
-        columns={time_indicator: "order_count"}).query("order_count <= @order_count")
-    new_comers = list(new_comers[customer_indicator].unique())
-    data = data[data[customer_indicator].isin(new_comers)]
+    # list of newcomer users
+    newcomers = find_newcomers_with_order_count(data, directory, order_count, customer_indicator, time_indicator)
+    # this value will be assigned when prediction process is initialized
     average_amount = np.mean(data[data[amount_indicator] == data[amount_indicator]][amount_indicator])
-    data['order_count'] = 1
-    data = data.groupby(time_indicator).agg({"order_count": "sum"}).reset_index()
-    min_max_columns = ["min_order_count", "max_order_count"]
-    for i in min_max_columns:
-        data[i] = min(data["order_count"]) if i.split("_")[0] == 'min' else max(data["order_count"])
-    data["order_count"] = data.apply(lambda row: min_max_norm(row["order_count"],
-                                                              row['min_order_count'],
-                                                              row['max_order_count']), axis=1)
-    min_max = pd.DataFrame([{i: list(data[i])[0] for i in min_max_columns}])
-    return data.drop(min_max_columns,
-                     axis=1).fillna(0).sort_values(by=time_indicator,
-                                                   ascending=True), "order_count", average_amount, min_max
+    data, min_max = order_count_normalization(data, time_indicator)
+    return data, "order_count", average_amount, min_max
 
 
 def data_manipulation_np(date,
@@ -205,6 +192,48 @@ def order_count_decision(data, order_count, customer_indicator, directory):
         else:
             order_count = params['feature_count']
     return order_count
+
+
+def order_count_normalization(data, time_indicator):
+    """
+    Min-Max Normalization is applied for order_count per day.
+    :param data: data-frame withou order_count columns
+    :param time_indicator: time_indicator
+    :return: data-frame daily order_count (newcomers), min_max value of order count (data-frame)
+    """
+    # order_cont per day
+    data['order_count'] = 1
+    data = data.groupby(time_indicator).agg({"order_count": "sum"}).reset_index()
+    # min-max normalization for order count per day
+    min_max_columns = ["min_order_count", "max_order_count"]
+    for i in min_max_columns:
+        data[i] = min(data["order_count"]) if i.split("_")[0] == 'min' else max(data["order_count"])
+    data["order_count"] = data.apply(lambda row: min_max_norm(row["order_count"],
+                                                              row['min_order_count'],
+                                                              row['max_order_count']), axis=1)
+    min_max = pd.DataFrame([{i: list(data[i])[0] for i in min_max_columns}])
+    data = data.drop(min_max_columns,
+                     axis=1).fillna(0).sort_values(by=time_indicator,
+                                                   ascending=True)
+    return data, min_max
+
+
+def find_newcomers_with_order_count(data, directory, order_count, customer_indicator, time_indicator):
+    """
+    By using feature_order_count value which is found
+    while purchase amount model s processed is used in order to decide newcomer users
+    :param data: raw data
+    :param directory: path where test_parameters.yaml is stored with tuned Model Parameters
+    :param customer_indicator: customer_indicator
+    :param time_indicator: time_indicator
+    :return: list of users (newcomers)
+    """
+    if order_count is None:
+        order_count = int(read_yaml(directory, "test_parameters.yaml")['purchase_amount']['feature_count'])
+    new_comers = data.groupby(customer_indicator).agg({time_indicator: "count"}).reset_index().rename(
+        columns={time_indicator: "order_count"}).query("order_count <= @order_count")
+    new_comers = list(new_comers[customer_indicator].unique())
+    return new_comers
 
 
 def min_max_norm(value, _min, _max):
