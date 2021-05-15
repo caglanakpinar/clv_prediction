@@ -160,7 +160,7 @@ class CLV:
         if self.time_period is None:
             return True
         else:
-            if self.time_period in [ "month", "week", "2*week", '6*month',  "quarter", '2*month']:
+            if self.time_period in ["month", "week", "2*week", '6*month',  "quarter", '2*month']:
                 return True
             else: return False
 
@@ -228,7 +228,7 @@ class CLV:
         However, order_seq_num must be created.
         """
         if self.clv_predicted is not None:
-            self.raw_data = self.clv_predicted['next_purchase'].data
+            self.raw_data = self.clv_predicted['next_purchase']['data']
             self.raw_data['data_type'] = 'actual'
             self.raw_data['order_seq_num'] = self.raw_data.sort_values(by=self.sorting_columns).groupby(
                 [self.customer_indicator]).cumcount() + 1
@@ -239,8 +239,8 @@ class CLV:
         result data can be collected from clv_predicted.purchase_amount.results
         """
         if self.clv_predicted is not None:
-            self.results = pd.concat([self.clv_predicted['purchase_amount'].results,
-                                      self.clv_predicted['newcomers'].results])
+            self.results = pd.concat([self.clv_predicted['purchase_amount']['results'],
+                                      self.clv_predicted['newcomers']['results']])
 
     def check_for_result_data_from_previous_progresses(self):
         """
