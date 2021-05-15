@@ -6,6 +6,9 @@ from itertools import product
 import glob
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '4'
 
+import tensorflow as tf
+sess = tf.compat.v1.Session()
+
 from tensorflow.keras.layers import Dense, LSTM, Input, BatchNormalization
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.initializers import Ones
@@ -64,6 +67,7 @@ class TrainLSTMNewComers:
                  engaged_customers_results=pd.DataFrame(),
                  customer_indicator=None,
                  amount_indicator=None):
+        self.sess = tf.compat.v1.Session()
         self.directory = directory
         self.customer_indicator = customer_indicator
         self.time_indicator = time_indicator
@@ -118,7 +122,22 @@ class TrainLSTMNewComers:
                       metrics=['mae'])
         return model
 
-    def build_model(self):
+    def init_tf(self):
+        self.sess.close()
+        import tensorflow as tf
+        self.sess = tf.compat.v1.Session()
+
+        from tensorflow.keras.layers import Dense, LSTM, Input, BatchNormalization
+        from tensorflow.keras.optimizers import Adam
+        from tensorflow.keras.initializers import Ones
+        from tensorflow.keras.models import Model
+        from tensorflow.keras.models import model_from_json
+        from kerastuner.tuners import RandomSearch
+        from kerastuner.engine.hyperparameters import HyperParameters
+
+    def build_model(self, prediction=False):
+        if prediction:
+            self.init_tf()
         self.input = Input(shape=(self.model_data['x_train'].shape[1], 1))
         # LSTM layer
         lstm = LSTM(self.params['units'],
@@ -203,13 +222,13 @@ class TrainLSTMNewComers:
         while self.max_date < self.future_date:
             print("date :", self.max_date)
             self.model_data = arrange__data_for_model(self.data, [self.features], self.params)
-            self.build_model()
+            self.build_model(prediction=True)
             self.learning_process(save_model=False, history=False, show_epochs=False)
             x = arrange__data_for_model(self.data, [self.features], self.params, is_prediction=True)
             _pred = pd.DataFrame([{self.time_indicator: self.max_date, "order_count": self.model.predict(x)[0][-1]}])
-            print(_pred)
             self.data, self.results = pd.concat([self.data, _pred]), pd.concat([self.results, _pred])
             self.max_date += datetime.timedelta(days=1)
+            del self.model_data, x, self.model
         for i in ['min_' + self.features, 'max_' + self.features]:
             self.results[i] = self.min_max[i]
         self.results[self.features] = self.results.apply(
