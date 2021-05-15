@@ -27,8 +27,10 @@ def hyper_conf(var):
     config = read_params(abspath(__file__).split("configs.py")[0])
     return {'purchase_amount_hyper': config['models']['purchase_amount']['hyper_params'],
             'next_purchase_hyper': config['models']['next_purchase']['hyper_params'],
+            'newcomers_hyper': config['models']['newcomers']['hyper_params'],
             'purchase_amount': config['models']['purchase_amount']['params'],
-            'next_purchase': config['models']['next_purchase']['params']
+            'next_purchase': config['models']['next_purchase']['params'],
+            'newcomers': config['models']['newcomers']['params']
             }[var]
 
 

@@ -312,11 +312,11 @@ class TrainConv1Dimension:
             shutil.rmtree(join(self.directory, "temp_purchase_amount_results", ""))
             os.mkdir(join(self.directory, "temp_purchase_amount_results", ""))
 
-        iters = int(len(self.customers) / 256) + 1
+        iters = int(len(self.customers) / 128) + 1
         print("number of iters :", iters)
         for i in range(iters):
             print("main iteration :", str(i), " / ", str(iters))
-            _sample_customers = get_iter_sample(self.customers, i, iters, 256)
+            _sample_customers = get_iter_sample(self.customers, i, iters, 128)
             global prediction_data
             prediction_data = self.get_user_of_historic_data(_sample_customers)
             execute_parallel_run(_sample_customers, self.prediction_per_customer, arguments=None, parallel=8)
@@ -340,7 +340,10 @@ class TrainConv1Dimension:
             except Exception as e:
                 print(e)
         self.results = concat(li, axis=0, ignore_index=True)
-        # shutil.rmtree(join(self.directory, "temp_purchase_amount_results", ""))
+        try:
+            shutil.rmtree(join(self.directory, "temp_purchase_amount_results", ""))
+        except Exception as e:
+            print(e)
         print(self.results.head())
 
     def prediction_execute(self):
@@ -354,9 +357,7 @@ class TrainConv1Dimension:
                                                                       "trained_purchase_amount_model", _model_date, self.time_period))
 
         if self.num_of_future_orders is not None:
-            print(len(self.customers))
             self.rearrange_prediction_data()
-            print(len(self.customers))
             self.parallel_prediction()
             self.create_prediction_result_data()
         else:
@@ -377,9 +378,6 @@ class TrainConv1Dimension:
                                                                 self.time_indicator,
                                                                 self.customer_indicator,
                                                                 )
-        self.results.to_csv(get_result_data_path(self.directory, self.time_period, self.max_date), index=False)
-        print("lifetime value :")
-        print(self.results.head())
 
     def initialize_keras_tuner(self):
         """

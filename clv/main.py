@@ -3,9 +3,11 @@ import argparse
 try:
     from next_purchase_model import TrainLSTM
     from purchase_amount_model import TrainConv1Dimension
+    from newcomers import TrainLSTMNewComers
 except Exception as e:
     from .next_purchase_model import TrainLSTM
     from .purchase_amount_model import TrainConv1Dimension
+    from .newcomers import TrainLSTMNewComers
 
 
 def main(job='train',
@@ -47,39 +49,80 @@ def main(job='train',
                          'time_indicator': time_indicator,
                          'export_path': export_path}
           )
+
+    # engaged customers of CLV models train and prediction process
     next_purchase = TrainLSTM(
-                              date=date,
-                              time_indicator=time_indicator,
-                              order_count=order_count,
-                              data_source=data_source,
-                              data_query_path=data_query_path,
-                              time_period=time_period,
-                              directory=export_path,
-                              customer_indicator=customer_indicator,
-                              amount_indicator=amount_indicator)
+        date=date,
+        time_indicator=time_indicator,
+        order_count=order_count,
+        data_source=data_source,
+        data_query_path=data_query_path,
+        time_period=time_period,
+        directory=export_path,
+        customer_indicator=customer_indicator,
+        amount_indicator=amount_indicator)
     if job == 'train':
         next_purchase.train_execute()
     if job == 'prediction':
         next_purchase.prediction_execute()
+    if job == 'train_prediction':
+        next_purchase.train_execute()
+        next_purchase.prediction_execute()
+
+    predicted_orders = next_purchase.results
+    raw_data = next_purchase.data
+    del next_purchase
 
     purchase_amount = TrainConv1Dimension(
-                                          date=date,
-                                          time_indicator=time_indicator,
-                                          order_count=order_count,
-                                          data_source=data_source,
-                                          data_query_path=data_query_path,
-                                          time_period=time_period,
-                                          directory=export_path,
-                                          customer_indicator=customer_indicator,
-                                          predicted_orders=next_purchase.results,
-                                          amount_indicator=amount_indicator)
+        date=date,
+        time_indicator=time_indicator,
+        order_count=order_count,
+        data_source=data_source,
+        data_query_path=data_query_path,
+        time_period=time_period,
+        directory=export_path,
+        customer_indicator=customer_indicator,
+        predicted_orders=predicted_orders,
+        amount_indicator=amount_indicator)
 
     if job == 'train':
         purchase_amount.train_execute()
     if job == 'prediction':
         purchase_amount.prediction_execute()
+    if job == 'train_prediction':
+        purchase_amount.train_execute()
+        purchase_amount.prediction_execute()
 
-    return {"next_purchase": next_purchase, "purchase_amount": purchase_amount}
+    engaged_customers_results = purchase_amount.results
+    del purchase_amount
+
+    # newcomers of CLV models train and prediction process
+    newcomers = TrainLSTMNewComers(
+        date=date,
+        time_indicator=time_indicator,
+        order_count=order_count,
+        data_source=data_source,
+        data_query_path=data_query_path,
+        time_period=time_period,
+        directory=export_path,
+        customer_indicator=customer_indicator,
+        engaged_customers_results=engaged_customers_results,
+        amount_indicator=amount_indicator)
+
+    if job == 'train':
+        newcomers.train_execute()
+    if job == 'prediction':
+        newcomers.prediction_execute()
+    if job == 'train_prediction':
+        newcomers.train_execute()
+        newcomers.prediction_execute()
+
+    newcomers_clv = newcomers.results
+    del newcomers
+
+    return {"next_purchase": {'data': raw_data},
+            "purchase_amount": {'results': engaged_customers_results},
+            "newcomers": {'results': newcomers_clv}}
 
 
 if __name__ == '__main__':
@@ -96,7 +139,7 @@ if __name__ == '__main__':
                         )
     parser.add_argument("-CI", "--customer_indicator", type=str,
                         help="""identifier of the customer (id)
-    
+
                         """,
                         )
     parser.add_argument("-AI", "--amount_indicator", type=str,
@@ -119,7 +162,7 @@ if __name__ == '__main__':
                         required=True)
     parser.add_argument("-TI", "--time_indicator", type=str,
                         help="""
-                        This can only be applied with date. It can be hour, day, week, week_part, quarter, year, month.
+                        This can only be applied with date. It can be week, week_part, quarter, year, month.
                         Individually time indicator checks the date part is significantly
                         a individual group for data set or not.
                         If it is uses time_indicator as a  group

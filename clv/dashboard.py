@@ -48,11 +48,9 @@ def get_filters(results, customer_indicator, amount_indicator):
 
 
 def decide_time_period(date, time_period):
-    if time_period == 'hour':
-        return datetime.datetime.strptime(str(date)[0:16], "%Y-%m-%d %H")
     if time_period == 'day':
         return datetime.datetime.strptime(str(date)[0:10], "%Y-%m-%d")
-    if time_period == 'month':
+    if time_period in ['month', '2*month', 'quarter', '6*month']:
         return datetime.datetime.strptime(str(date)[0:7], "%Y-%m")
     if time_period == 'year':
         return datetime.datetime.strptime(str(date)[0:4], "%Y")
@@ -435,7 +433,7 @@ if __name__ == '__main__':
                         )
     parser.add_argument("-TI", "--time_indicator", type=str,
                         help="""
-                        This can only be applied with date. It can be hour, day, week, week_part, quarter, year, month.
+                        This can only be applied with date. It can be only day..
                         Individually time indicator checks the date part is significantly
                         a individual group for data set or not.
                         If it is uses time_indicator as a  group

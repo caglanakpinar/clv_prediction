@@ -18,6 +18,33 @@ except Exception as e:
     from .configs import accepted_ratio_of_actual_order
 
 
+def data_manipulation_nc(date,
+                         order_count,
+                         amount_indicator,
+                         time_indicator,
+                         data_source,
+                         data_query_path,
+                         customer_indicator,
+                         directory):
+    data_process = GetData(data_source=data_source,
+                           data_query_path=data_query_path,
+                           time_indicator=time_indicator,
+                           feature=amount_indicator,
+                           date=date)
+    data_process.data_execute()
+    print("data size :", len(data_process.data))
+    data = data_process.data
+    data[time_indicator] = data[time_indicator].apply(lambda x: convert_str_to_day(x))
+    data = data.sort_values(by=[customer_indicator, time_indicator], ascending=True)
+
+    # list of newcomer users
+    newcomers = find_newcomers_with_order_count(data, directory, order_count, customer_indicator, time_indicator)
+    # this value will be assigned when prediction process is initialized
+    average_amount = np.mean(data[data[amount_indicator] == data[amount_indicator]][amount_indicator])
+    data, min_max = order_count_normalization(data, time_indicator)
+    return data, "order_count", average_amount, min_max
+
+
 def data_manipulation_np(date,
                          time_indicator,
                          data_source,
@@ -167,6 +194,48 @@ def order_count_decision(data, order_count, customer_indicator, directory):
     return order_count
 
 
+def order_count_normalization(data, time_indicator):
+    """
+    Min-Max Normalization is applied for order_count per day.
+    :param data: data-frame withou order_count columns
+    :param time_indicator: time_indicator
+    :return: data-frame daily order_count (newcomers), min_max value of order count (data-frame)
+    """
+    # order_cont per day
+    data['order_count'] = 1
+    data = data.groupby(time_indicator).agg({"order_count": "sum"}).reset_index()
+    # min-max normalization for order count per day
+    min_max_columns = ["min_order_count", "max_order_count"]
+    for i in min_max_columns:
+        data[i] = min(data["order_count"]) if i.split("_")[0] == 'min' else max(data["order_count"])
+    data["order_count"] = data.apply(lambda row: min_max_norm(row["order_count"],
+                                                              row['min_order_count'],
+                                                              row['max_order_count']), axis=1)
+    min_max = pd.DataFrame([{i: list(data[i])[0] for i in min_max_columns}])
+    data = data.drop(min_max_columns,
+                     axis=1).fillna(0).sort_values(by=time_indicator,
+                                                   ascending=True)
+    return data, min_max
+
+
+def find_newcomers_with_order_count(data, directory, order_count, customer_indicator, time_indicator):
+    """
+    By using feature_order_count value which is found
+    while purchase amount model s processed is used in order to decide newcomer users
+    :param data: raw data
+    :param directory: path where test_parameters.yaml is stored with tuned Model Parameters
+    :param customer_indicator: customer_indicator
+    :param time_indicator: time_indicator
+    :return: list of users (newcomers)
+    """
+    if order_count is None:
+        order_count = int(read_yaml(directory, "test_parameters.yaml")['purchase_amount']['feature_count'])
+    new_comers = data.groupby(customer_indicator).agg({time_indicator: "count"}).reset_index().rename(
+        columns={time_indicator: "order_count"}).query("order_count <= @order_count")
+    new_comers = list(new_comers[customer_indicator].unique())
+    return new_comers
+
+
 def min_max_norm(value, _min, _max):
     if abs(_max - _min) != 0:
         return (value - _min) / abs(_max - _min)
@@ -193,14 +262,9 @@ def pivoting_orders_sequence(data, customer_indicator, feature):
 
 
 def calculate_time_diff(date, prev_date, time_period):
-    date = datetime.datetime.strptime(str(date)[0:19], '%Y-%m-%d %H:%M:%S')
-    prev_date = datetime.datetime.strptime(str(prev_date)[0:19], '%Y-%m-%d %H:%M:%S')
-    if time_period == 'hour':
-        return abs((date - prev_date).total_seconds()) / 60
-    if time_period == 'day':
-        return abs((date - prev_date).total_seconds()) / 60 / 60
-    if time_period not in ['hour', 'day']:
-        return abs((date - prev_date).total_seconds()) / 60 / 60 / 24
+    date = datetime.datetime.strptime(str(date)[0:10], '%Y-%m-%d')
+    prev_date = datetime.datetime.strptime(str(prev_date)[0:10], '%Y-%m-%d')
+    return abs((date - prev_date).total_seconds()) / 60 / 60 / 24
 
 
 def sampling(sample, sample_size):
@@ -353,10 +417,6 @@ def arrange__data_for_model(df, f, parameters, is_prediction=False):
 
 
 def convert_time_preiod_to_days(time_period):
-    if time_period == 'day':
-        return 1
-    if time_period == 'year':
-        return 365
     if time_period == 'month':
         return 30
     if time_period == 'week':
@@ -367,6 +427,8 @@ def convert_time_preiod_to_days(time_period):
         return 60
     if time_period == 'quarter':
         return 90
+    if time_period == '6*month':
+        return 180
 
 
 def check_model_exists(path, model_name, time_period):
