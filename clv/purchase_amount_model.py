@@ -340,7 +340,10 @@ class TrainConv1Dimension:
             except Exception as e:
                 print(e)
         self.results = concat(li, axis=0, ignore_index=True)
-        # shutil.rmtree(join(self.directory, "temp_purchase_amount_results", ""))
+        try:
+            shutil.rmtree(join(self.directory, "temp_purchase_amount_results", ""))
+        except Exception as e:
+            print(e)
         print(self.results.head())
 
     def prediction_execute(self):
