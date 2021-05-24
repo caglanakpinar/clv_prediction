@@ -4,7 +4,7 @@ import os
 import shutil
 from itertools import product
 import glob
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '4'
+
 
 from tensorflow.keras.layers import Dense, LSTM, Input, BatchNormalization
 from tensorflow.keras.optimizers import Adam
@@ -24,7 +24,7 @@ except Exception as e:
     from .data_access import *
 
 
-def model_from_to_json(path=None, weights_path=None, model=None, is_writing=False):
+def model_from_to_json(path=None, weights_path=None, model=None, is_writing=False, lr=None):
     if is_writing:
         model_json = model.to_json()
         with open(path, "w") as json_file:
@@ -35,7 +35,11 @@ def model_from_to_json(path=None, weights_path=None, model=None, is_writing=Fals
         loaded_model_json = json_file.read()
         json_file.close()
         model = model_from_json(loaded_model_json)
-        model.load_weights(weights_path)
+        try:
+            model.load_weights(weights_path)
+        except Exception as e:
+            model.load_weights(weights_path)
+            model.compile(loss='mae', optimizer=Adam(lr=lr), metrics=['mae'])
         return model
 
 
@@ -67,7 +71,9 @@ class TrainLSTM:
         self.customer_indicator = customer_indicator
         self.time_indicator = time_indicator
         self.amount_indicator = amount_indicator
-        self.params = hyper_conf('next_purchase')
+        self.params = hyper_conf('next_purchase') \
+            if check_for_existing_parameters(self.directory,'next_purchase') is None else \
+            check_for_existing_parameters(self.directory, 'next_purchase')
         self.hyper_params = get_tuning_params(hyper_conf('next_purchase_hyper'), self.params)
         self.optimized_parameters = {}
         self._p = None
@@ -212,8 +218,7 @@ class TrainLSTM:
                                             weights_path=weights_path(self.directory,
                                                                       "trained_next_purchase_model",
                                                                       self.prev_model_date,
-                                                                      self.time_period))
-            print(self.model)
+                                                                      self.time_period), lr=self.params['lr'])
             print("Previous model already exits in the given directory  '" + self.directory + "'.")
 
     def prediction_date_add(self, data, pred_data, pred):
@@ -296,13 +301,13 @@ class TrainLSTM:
             shutil.rmtree(join(self.directory, "temp_next_purchase_results", ""))
             os.mkdir(join(self.directory, "temp_next_purchase_results"))
 
-        iters = int(len(self.customers) / 1024) + 1
+        iters = int(len(self.customers) / 128) + 1
         for i in range(iters):
             print("main iteration :", str(i), " / ", str(iters))
-            _sample_customers = get_iter_sample(self.customers, i, iters, 1024)
+            _sample_customers = get_iter_sample(self.customers, i, iters, 128)
             global prediction_data
             prediction_data = {}
-            execute_parallel_run(_sample_customers, self.prediction_per_customer, arguments=None, parallel=8)
+            execute_parallel_run(_sample_customers, self.prediction_per_customer, arguments=None, parallel=4)
             _result = pd.DataFrame()
             for c in _sample_customers:
                 try:
@@ -325,7 +330,6 @@ class TrainLSTM:
                 print(e)
         self.results = concat(li, axis=0, ignore_index=True)
         self.results[self.time_indicator] = self.results[self.time_indicator].apply(lambda x: convert_str_to_day(x))
-        print(self.results.head())
         shutil.rmtree(join(self.directory, "temp_next_purchase_results", ""))
         self.results = self.results[(self.results[self.time_indicator] > self.max_date) &
                                     (self.results[self.time_indicator] < self.future_date)]
@@ -344,7 +348,7 @@ class TrainLSTM:
                                             weights_path=weights_path(self.directory,
                                                                       "trained_next_purchase_model",
                                                                       _model_date,
-                                                                      self.time_period))
+                                                                      self.time_period), lr=self.params['lr'])
         self.results = self.data[[self.time_indicator, 'time_diff', 'time_diff_norm', self.customer_indicator]]
         self.create_prediction_data()
         self.parallel_prediction()
@@ -442,9 +446,9 @@ class TrainLSTM:
             self.batch_size_and_epoch_tuning()
             self.remove_keras_tuner_folder()
             self.update_tuned_parameter_file()
-
         else:
             self.params = check_for_existing_parameters(self.directory, 'next_purchase')
+
 
 
 

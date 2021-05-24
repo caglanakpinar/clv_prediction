@@ -72,7 +72,9 @@ class TrainLSTMNewComers:
         self.customer_indicator = customer_indicator
         self.time_indicator = time_indicator
         self.amount_indicator = amount_indicator
-        self.params = hyper_conf('newcomers')
+        self.params = hyper_conf('newcomers') \
+            if check_for_existing_parameters(self.directory,'newcomers') is None else \
+            check_for_existing_parameters(self.directory, 'newcomers')
         self.hyper_params = get_tuning_params(hyper_conf('newcomers_hyper'), self.params)
         self.optimized_parameters = {}
         self._p = None
