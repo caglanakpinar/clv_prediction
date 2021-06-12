@@ -310,7 +310,12 @@ def data_for_customer_prediction(data, prediction_data, params):
         for i, c in enumerate(x.columns):
             x[c] = x[c].shift(i * shift_day)  # every each same days of shifted
     to_drop = max((params['tsteps'] - 1), (params['lahead'] - 1))
-    return reshape_3(x[to_drop:].values)
+    if len(x.iloc[to_drop:]) < params['lag']:
+        additional_historic_data = x.iloc[0:abs(params['lag'] - len(x.iloc[to_drop:]))]
+        x = pd.concat([additional_historic_data, x.iloc[to_drop:]])
+        return reshape_3(x.values)
+    else:
+        return reshape_3(x.iloc[to_drop:].values)
 
 
 def check_for_next_prediction(data, model_num):
@@ -382,22 +387,22 @@ reshape_2 = lambda x: x.reshape((x.shape[0], 1))
 
 def split_data(Y, X, params):
     split_size = int(params['split_ratio'] * len(X))
-    x_train = reshape_3(X[:split_size].values)
-    y_train = reshape_2(Y[:split_size].values)
-    x_test = reshape_3(X[split_size:].values)
-    y_test = reshape_2(Y[split_size:].values)
+    x_train = reshape_3(X.iloc[:split_size].values)
+    y_train = reshape_2(Y.iloc[:split_size].values)
+    x_test = reshape_3(X.iloc[split_size:].values)
+    y_test = reshape_2(Y.iloc[split_size:].values)
     return {'x_train': x_train, 'y_train': y_train, 'x_test': x_test, 'y_test': y_test}
 
 
 def drop_calculation(df, parameters, is_prediction=False):
     data_count = len(df)
     to_drop = max((parameters['tsteps'] - 1), (parameters['lahead'] - 1))
-    df = df[to_drop:]
+    df = df.iloc[to_drop:]
     if not is_prediction:
         if df.shape[0] > parameters['batch_size']:
             to_drop = df.shape[0] % parameters['batch_size']
         if to_drop > 0:
-            df = df[:-1 * to_drop]
+            df = df.iloc[:-1 * to_drop]
     return df
 
 
@@ -406,6 +411,7 @@ def arrange__data_for_model(df, f, parameters, is_prediction=False):
         y = df[f].rolling(window=parameters['tsteps'], center=False).mean()
     except Exception as e:
         print(df[f].head())
+
     x = pd.DataFrame(np.repeat(df[f].values, repeats=parameters['lag'], axis=1))
     shift_day = int(parameters['lahead'] / parameters['lag'])
     if parameters['lahead'] > 1:
@@ -594,7 +600,7 @@ class OptimumLagDecision:
         self.lag_range = list(range(1, 4))
         self.train, self.test, self.prediction = [], [], []
         self.model = None
-        self.best_lag = 1
+        self.best_lag = params['lag']
         self.min_rmse = 1000000000000
 
     def collect_data(self):

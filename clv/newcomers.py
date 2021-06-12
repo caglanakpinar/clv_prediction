@@ -72,7 +72,9 @@ class TrainLSTMNewComers:
         self.customer_indicator = customer_indicator
         self.time_indicator = time_indicator
         self.amount_indicator = amount_indicator
-        self.params = hyper_conf('newcomers')
+        self.params = hyper_conf('newcomers') \
+            if check_for_existing_parameters(self.directory,'newcomers') is None else \
+            check_for_existing_parameters(self.directory, 'newcomers')
         self.hyper_params = get_tuning_params(hyper_conf('newcomers_hyper'), self.params)
         self.optimized_parameters = {}
         self._p = None
@@ -237,7 +239,8 @@ class TrainLSTMNewComers:
                                               _value=row[self.features]), axis=1)
         self.results[self.amount_indicator] = self.results[self.features] * self.average_amount
         self.results[self.customer_indicator] = "newcomers"
-
+        self.results['data_type'] = "prediction"
+        self.results = self.results[['data_type', self.customer_indicator, self.time_indicator, self.amount_indicator]]
         print("result file : ", get_result_data_path(self.directory, self.time_period, self.max_date))
         pd.concat([self.results, self.engaged_customers_results]).to_csv(
             get_result_data_path(self.directory, self.time_period, self.max_date), index=False)

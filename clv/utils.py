@@ -1,9 +1,11 @@
+import os, inspect
 import yaml
 import json
 import datetime
 from os.path import join, abspath
 from multiprocessing import cpu_count
 import threading
+import subprocess
 
 
 def read_yaml(directory, filename):
@@ -118,12 +120,12 @@ def execute_parallel_run(values, executor, parallel=2, arguments=None):
     """
     global process
     cpus = cpu_count()
-    if parallel < cpus * 4:
-        parallel = cpus * 4
+    if parallel < cpus * 16:
+        parallel = cpus * 16
     iters = int(len(values) / parallel) + 1
     print("number of iterations :", iters)
     for i in range(iters):
-        if i % 2 == 0:
+        if i % 10 == 0:
             print("iteration :", i)
         _sample_values = get_iter_sample(values, i, iters, parallel)
         for v in _sample_values:
@@ -136,6 +138,25 @@ def execute_parallel_run(values, executor, parallel=2, arguments=None):
         process.join()
     del process
     return "done !!!"
+
+
+def abspath_for_sample_data():
+    """
+    get customer_analytics path. Ex: ....../customer_analytics
+    :return: current folder path
+    """
+    currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    base_name = os.path.basename(currentdir)
+    while base_name != 'clv':
+        currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+        base_name = os.path.basename(currentdir)
+    return currentdir
+
+
+def sample_size_calculation():
+    cpus = cpu_count()
+    return 1250 * cpus
+
 
 
 

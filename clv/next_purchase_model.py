@@ -3,8 +3,9 @@ from pandas import DataFrame, concat
 import os
 import shutil
 from itertools import product
-import glob
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '4'
+import subprocess
+from psutil import virtual_memory
+
 
 from tensorflow.keras.layers import Dense, LSTM, Input, BatchNormalization
 from tensorflow.keras.optimizers import Adam
@@ -18,13 +19,15 @@ try:
     from functions import *
     from configs import hyper_conf, accept_threshold_for_loss_diff, parameter_tuning_trials
     from data_access import *
+    from utils import abspath_for_sample_data
 except Exception as e:
     from .functions import *
     from .configs import hyper_conf, accept_threshold_for_loss_diff, parameter_tuning_trials
     from .data_access import *
+    from .utils import abspath_for_sample_data
 
 
-def model_from_to_json(path=None, weights_path=None, model=None, is_writing=False):
+def model_from_to_json(path=None, weights_path=None, model=None, is_writing=False, lr=None):
     if is_writing:
         model_json = model.to_json()
         with open(path, "w") as json_file:
@@ -35,7 +38,11 @@ def model_from_to_json(path=None, weights_path=None, model=None, is_writing=Fals
         loaded_model_json = json_file.read()
         json_file.close()
         model = model_from_json(loaded_model_json)
-        model.load_weights(weights_path)
+        try:
+            model.load_weights(weights_path)
+        except Exception as e:
+            model.load_weights(weights_path)
+            model.compile(loss='mae', optimizer=Adam(lr=lr), metrics=['mae'])
         return model
 
 
@@ -67,7 +74,9 @@ class TrainLSTM:
         self.customer_indicator = customer_indicator
         self.time_indicator = time_indicator
         self.amount_indicator = amount_indicator
-        self.params = hyper_conf('next_purchase')
+        self.params = hyper_conf('next_purchase') \
+            if check_for_existing_parameters(self.directory,'next_purchase') is None else \
+            check_for_existing_parameters(self.directory, 'next_purchase')
         self.hyper_params = get_tuning_params(hyper_conf('next_purchase_hyper'), self.params)
         self.optimized_parameters = {}
         self._p = None
@@ -212,80 +221,12 @@ class TrainLSTM:
                                             weights_path=weights_path(self.directory,
                                                                       "trained_next_purchase_model",
                                                                       self.prev_model_date,
-                                                                      self.time_period))
-            print(self.model)
+                                                                      self.time_period), lr=self.params['lr'])
             print("Previous model already exits in the given directory  '" + self.directory + "'.")
 
-    def prediction_date_add(self, data, pred_data, pred):
-        max_date = max(data[self.time_indicator]) if len(pred_data) == 0 else max(pred_data[self.time_indicator])
-        return max_date + datetime.timedelta(days=int(round(pred)))
-
-    def predicted_date_in_range_decision(self, end, _pred_data, _predicted_date, customer, _pred_actual, _pred):
-        if _predicted_date < end:
-            _pred_data = concat([_pred_data, DataFrame([{self.time_indicator: _predicted_date,
-                                                         self.customer_indicator: customer,
-                                                         'time_diff': _pred_actual,
-                                                         'time_diff_norm': _pred}])])
-        return _pred_data
-
-    def calculate_prediction(self, data, _pred_data, user_min, user_max):
-        x = data_for_customer_prediction(data, _pred_data, self.params)
-        _pred = self.model.predict(x)[0][-1]
-        _pred_actual = self.get_actual_value(_min=user_min, _max=user_max, _value=_pred)
-        return _pred_actual, _pred
-
-    def prediction_per_customer(self,  customer):
-        warnings.simplefilter("ignore")
-        user_min = self.temp_data[customer]['user_min']
-        user_max = self.temp_data[customer]['user_max']
-        data = pd.DataFrame(self.temp_data[customer]['customer_transactions']
-                            ).rename(columns={0: self.time_indicator,
-                                              1: self.amount_indicator,
-                                              2: 'time_diff_norm',
-                                              3: 'time_diff'})
-        _pred_data, prediction_data[customer] = DataFrame(), DataFrame()
-        _predicted_date = self.future_date - datetime.timedelta(days=1)
-        _pred_actual, _pred = self.calculate_prediction(data, _pred_data, user_min, user_max)
-        if self.max_date < self.prediction_date_add(data, pd.DataFrame(), (_pred_actual * 3) + 0.05):
-            while self.max_date < _predicted_date < self.future_date:
-                try:
-                    _pred_actual, _pred = self.calculate_prediction(data, _pred_data, user_min, user_max)
-                    if int(round(_pred_actual)) != 0:
-                        _predicted_date = self.prediction_date_add(data, _pred_data, _pred_actual)
-                        _pred_data = self.predicted_date_in_range_decision(self.future_date,
-                                                                           _pred_data,
-                                                                           _predicted_date,
-                                                                           customer,
-                                                                           _pred_actual,
-                                                                           _pred)
-                    else:
-                        _predicted_date = self.future_date + datetime.timedelta(days=1)
-                except Exception as e:
-                    _predicted_date = self.future_date + datetime.timedelta(days=1)
-
-            if len(_pred_data) != 0:
-                try:
-                    _pred_data = _pred_data[(_pred_data[self.time_indicator] >= self.max_date) &
-                                            (_pred_data[self.time_indicator] < self.future_date) &
-                                            (_pred_data[self.time_indicator] == _pred_data[self.time_indicator])]
-                except Exception as e:
-                    print(e)
-            prediction_data[customer] = _pred_data
-        self.temp_data[customer] = None
-        del data, user_max, user_min, _pred_data
-
-    def create_prediction_data(self):
-        self.temp_data = self.data.groupby(self.customer_indicator).agg(
-            {self.time_indicator: lambda x: list(x),
-             self.amount_indicator: lambda x: list(x),
-             "time_diff_norm": lambda x: list(x), 'time_diff': lambda x: list(x)}).reset_index()
-        self.temp_data['customer_transactions'] = self.temp_data.apply(
-            lambda row: list(zip(row[self.time_indicator], row[self.amount_indicator],
-                                 row['time_diff_norm'], row['time_diff'])), axis=1)
-        self.temp_data = self.temp_data.drop([self.time_indicator, self.amount_indicator], axis=1)
-        self.temp_data = pd.merge(self.temp_data, self.c_min_max, on=self.customer_indicator, how='left')
-        self.temp_data = {i[1]: i[0] for i in zip(self.temp_data.set_index(self.customer_indicator).to_dict('results'),
-                                                  list(self.temp_data[self.customer_indicator]))}
+    def create_prediction_data(self, customers, _directory):
+        self.temp_data = self.data[self.data[self.customer_indicator].isin(customers)]
+        self.temp_data.to_csv(_directory, index=False)
 
     def parallel_prediction(self):
         try:
@@ -296,22 +237,36 @@ class TrainLSTM:
             shutil.rmtree(join(self.directory, "temp_next_purchase_results", ""))
             os.mkdir(join(self.directory, "temp_next_purchase_results"))
 
-        iters = int(len(self.customers) / 1024) + 1
-        for i in range(iters):
-            print("main iteration :", str(i), " / ", str(iters))
-            _sample_customers = get_iter_sample(self.customers, i, iters, 1024)
-            global prediction_data
-            prediction_data = {}
-            execute_parallel_run(_sample_customers, self.prediction_per_customer, arguments=None, parallel=8)
-            _result = pd.DataFrame()
-            for c in _sample_customers:
-                try:
-                    _result = concat([_result, prediction_data[c]])
-                except Exception as e:
-                    print(c)
-            _result.to_csv(join(self.directory, "temp_next_purchase_results", str(_sample_customers[0] + "_data.csv")),
-                           index=False)
-            del _result
+
+        try:
+            os.mkdir(join(self.directory, "temp_next_purchase_inputs"))
+        except Exception as e:
+            print(e)
+            print("recreating 'temp_next_purchase_inputs' folder ...")
+            shutil.rmtree(join(self.directory, "temp_next_purchase_inputs", ""))
+            os.mkdir(join(self.directory, "temp_next_purchase_inputs"))
+
+        cpus = cpu_count() * int((virtual_memory().total / 1000000000) * 4)
+        communicates = [i for i in range(cpus) if i % cpu_count() == 0] + [cpus - 1]
+        _sample_size = int(len(self.customers) / cpus) + 1
+        _sub_processes = []
+        for i in range(cpus):
+            print("main iteration :", str(i), " / ", str(cpus))
+            _sample_customers = get_iter_sample(self.customers, i, cpus, _sample_size)
+            if len(_sample_customers) != 0:
+                _directory = join(self.directory, "temp_next_purchase_inputs",
+                                  "prediction_inputs_" + _sample_customers[0] + ".csv")
+                self.create_prediction_data(_sample_customers, _directory)
+                cmd = """python {0}/next_purchase_prediction.py -P {1} -MD {2} -FD {3} -TP {4} -D {5} -IND {6}
+                """.format(abspath_for_sample_data(), _directory, str(self.max_date)[0:10],
+                           str(self.future_date)[0:10], self.time_period, self.directory,
+                           "*".join([self.customer_indicator, self.amount_indicator, self.time_indicator]))
+                _p = subprocess.Popen(cmd, shell=True)
+                _sub_processes.append(_p)
+                if i != 0 and i in communicates:
+                    [p.communicate() for p in _sub_processes]
+                    print("done!")
+                    _sub_processes = []
 
     def create_prediction_result_data(self):
         print("merge predicted data ...")
@@ -325,7 +280,6 @@ class TrainLSTM:
                 print(e)
         self.results = concat(li, axis=0, ignore_index=True)
         self.results[self.time_indicator] = self.results[self.time_indicator].apply(lambda x: convert_str_to_day(x))
-        print(self.results.head())
         shutil.rmtree(join(self.directory, "temp_next_purchase_results", ""))
         self.results = self.results[(self.results[self.time_indicator] > self.max_date) &
                                     (self.results[self.time_indicator] < self.future_date)]
@@ -344,9 +298,8 @@ class TrainLSTM:
                                             weights_path=weights_path(self.directory,
                                                                       "trained_next_purchase_model",
                                                                       _model_date,
-                                                                      self.time_period))
+                                                                      self.time_period), lr=self.params['lr'])
         self.results = self.data[[self.time_indicator, 'time_diff', 'time_diff_norm', self.customer_indicator]]
-        self.create_prediction_data()
         self.parallel_prediction()
         self.create_prediction_result_data()
 
@@ -442,9 +395,9 @@ class TrainLSTM:
             self.batch_size_and_epoch_tuning()
             self.remove_keras_tuner_folder()
             self.update_tuned_parameter_file()
-
         else:
             self.params = check_for_existing_parameters(self.directory, 'next_purchase')
+
 
 
 

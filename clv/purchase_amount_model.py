@@ -5,7 +5,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '4'
 import shutil
 import glob
 from tensorflow.keras.layers import Dense, LSTM, Input, BatchNormalization, Conv1D, MaxPooling1D, Dropout, Flatten
-from keras.regularizers import l1, l2, l1_l2
+from tensorflow.keras.regularizers import l1, l2, l1_l2
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import Model
 from tensorflow.keras.models import model_from_json
@@ -23,7 +23,7 @@ except Exception as e:
     from .utils import get_current_day
 
 
-def model_from_to_json(path=None, weights_path=None, model=None, is_writing=False):
+def model_from_to_json(path=None, weights_path=None, model=None, is_writing=False, lr=None):
     if is_writing:
         model_json = model.to_json()
         with open(path, "w") as json_file:
@@ -34,7 +34,11 @@ def model_from_to_json(path=None, weights_path=None, model=None, is_writing=Fals
         loaded_model_json = json_file.read()
         json_file.close()
         model = model_from_json(loaded_model_json)
-        model.load_weights(weights_path)
+        try:
+            model.load_weights(weights_path)
+        except Exception as e:
+            model.load_weights(weights_path)
+            model.compile(loss='mae', optimizer=Adam(lr=lr), metrics=['mae'])
         return model
 
 
@@ -79,7 +83,9 @@ class TrainConv1Dimension:
         self.order_count = order_count
         self.time_period = time_period
         self.amount_indicator = amount_indicator
-        self.params = hyper_conf('purchase_amount')
+        self.params = hyper_conf('purchase_amount') \
+            if check_for_existing_parameters(self.directory,'purchase_amount') is None else \
+            check_for_existing_parameters(self.directory, 'purchase_amount')
         self.hyper_params = get_tuning_params(hyper_conf('purchase_amount_hyper'), self.params)
         self.optimized_parameters = {}
         self._p = None
@@ -262,7 +268,7 @@ class TrainConv1Dimension:
                                             weights_path=weights_path(self.directory,
                                                                       "trained_purchase_amount_model",
                                                                       self.prev_model_date,
-                                                                      self.time_period))
+                                                                      self.time_period), lr=self.params['lr'])
             print("Previous model already exits in the given directory  '" + self.directory + "'.")
 
     def prediction_per_customer(self, customer):
@@ -354,7 +360,9 @@ class TrainConv1Dimension:
             self.model = model_from_to_json(path=model_path(self.directory,
                                                             "trained_purchase_amount_model", _model_date, self.time_period),
                                             weights_path=weights_path(self.directory,
-                                                                      "trained_purchase_amount_model", _model_date, self.time_period))
+                                                                      "trained_purchase_amount_model",
+                                                                      _model_date, self.time_period),
+                                            lr=self.params['lr'])
 
         if self.num_of_future_orders is not None:
             self.rearrange_prediction_data()
