@@ -239,7 +239,8 @@ class TrainLSTMNewComers:
                                               _value=row[self.features]), axis=1)
         self.results[self.amount_indicator] = self.results[self.features] * self.average_amount
         self.results[self.customer_indicator] = "newcomers"
-
+        self.results['data_type'] = "prediction"
+        self.results = self.results[['data_type', self.customer_indicator, self.time_indicator, self.amount_indicator]]
         print("result file : ", get_result_data_path(self.directory, self.time_period, self.max_date))
         pd.concat([self.results, self.engaged_customers_results]).to_csv(
             get_result_data_path(self.directory, self.time_period, self.max_date), index=False)
