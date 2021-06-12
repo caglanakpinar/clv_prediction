@@ -310,7 +310,12 @@ def data_for_customer_prediction(data, prediction_data, params):
         for i, c in enumerate(x.columns):
             x[c] = x[c].shift(i * shift_day)  # every each same days of shifted
     to_drop = max((params['tsteps'] - 1), (params['lahead'] - 1))
-    return reshape_3(x.iloc[to_drop:].values)
+    if len(x.iloc[to_drop:]) < params['lag']:
+        additional_historic_data = x.iloc[0:abs(params['lag'] - len(x.iloc[to_drop:]))]
+        x = pd.concat([additional_historic_data, x.iloc[to_drop:]])
+        return reshape_3(x.values)
+    else:
+        return reshape_3(x.iloc[to_drop:].values)
 
 
 def check_for_next_prediction(data, model_num):
