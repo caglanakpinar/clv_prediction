@@ -315,13 +315,13 @@ class TrainLSTM:
         self.hyper_params, self.optimum_batch_size = batch_size_hp_ranges(client_sample_sizes=self.client_sample_sizes,
                                                                           num_of_customers=len(self.customers),
                                                                           hyper_params=self.hyper_params)
+        kwargs = {'directory': self.directory}
         tuner = RandomSearch(
             self.build_parameter_tuning_model,
             max_trials=parameter_tuning_trials,
             hyperparameters=self.hp,
             allow_new_entries=True,
-            direcory=self.directory,
-            objective='loss')
+            objective='loss', **kwargs)
         tuner.search(x=self.model_data['x_train'],
                      y=self.model_data['y_train'],
                      epochs=5,
