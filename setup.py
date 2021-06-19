@@ -35,7 +35,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="clv_prediction",
-    version="0.1.4",
+    version="0.1.5",
     author="Caglan Akpinar",
     author_email="cakpinar23@gmail.com",
     description="clv prediction applying with deep learning",
