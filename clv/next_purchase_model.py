@@ -281,8 +281,11 @@ class TrainLSTM:
         self.results = concat(li, axis=0, ignore_index=True)
         self.results[self.time_indicator] = self.results[self.time_indicator].apply(lambda x: convert_str_to_day(x))
         shutil.rmtree(join(self.directory, "temp_next_purchase_results", ""))
+        shutil.rmtree(join(self.directory, "temp_next_purchase_inputs", ""))
         self.results = self.results[(self.results[self.time_indicator] > self.max_date) &
                                     (self.results[self.time_indicator] < self.future_date)]
+
+
         print(self.results.head())
         print("number of predicted customers :", len(self.results[self.customer_indicator].unique()))
 
@@ -317,6 +320,7 @@ class TrainLSTM:
             max_trials=parameter_tuning_trials,
             hyperparameters=self.hp,
             allow_new_entries=True,
+            direcory=self.directory,
             objective='loss')
         tuner.search(x=self.model_data['x_train'],
                      y=self.model_data['y_train'],
@@ -369,9 +373,7 @@ class TrainLSTM:
         """
 
         try:
-            shutil.rmtree(
-                join(abspath(__file__).split("next_purchase_model.py")[0].split("clv")[0][:-1], "clv_prediction",
-                     "untitled_project"))
+            shutil.rmtree(join(self.directory, "untitled_project"))
         except Exception as e:
             print(" Parameter Tuning Keras Turner dummy files have already removed!!")
 

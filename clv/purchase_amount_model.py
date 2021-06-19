@@ -280,7 +280,7 @@ class TrainConv1Dimension:
                                      _number,
                                      self.model.input.shape[1],
                                      self.model)
-
+        prediction_data[customer] = {}
         prediction_data[customer]['prediction'] = get_predicted_data_readable_form(customer,
                                                                                    _prediction,
                                                                                    self.model.input.shape[1] + 1,
@@ -397,6 +397,7 @@ class TrainConv1Dimension:
         tuner = RandomSearch(
             self.build_parameter_tuning_model,
             max_trials=parameter_tuning_trials,
+            directory=self.directory,
             hyperparameters=self.hp,
             allow_new_entries=True,
             objective='loss')
@@ -451,9 +452,7 @@ class TrainConv1Dimension:
         """
 
         try:
-            shutil.rmtree(
-                join(abspath(__file__).split("purchase_amount_model.py")[0].split("clv")[0][:-1], "clv_prediction",
-                     "untitled_project"))
+            shutil.rmtree(join(self.directory, "untitled_project"))
         except Exception as e:
             print(" Parameter Tuning Keras Turner dummy files have already removed!!")
 
