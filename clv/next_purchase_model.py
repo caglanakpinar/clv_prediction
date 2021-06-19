@@ -225,11 +225,33 @@ class TrainLSTM:
             print("Previous model already exits in the given directory  '" + self.directory + "'.")
 
     def create_prediction_data(self, customers, _directory):
+        """
+        import data with .csv format to the 'temp_next_purchase_inputs'. with given batch.
+        Example of directory and data:
+            data:
+                customer_indicator | amount_indicator | time_indicator
+                ------------------------------------------------------
+                   cust_1          |   20.3           |  2021-06-05
+                   .......         |   .....          |   .....
+                   cust_2          |   30.3           |  2021-06-08
+                   .......         |   .....          |   .....
+                   cust_3          |   30.3           |  2021-06-10
+
+
+            directory : <self.directory>/temp_next_purchase_inputs/prediction_inputs_cust_1.csv
+        """
         self.temp_data = self.data[self.data[self.customer_indicator].isin(customers)]
         self.temp_data.to_csv(_directory, index=False)
 
     def parallel_prediction(self):
-        try:
+        """
+        *** Parallel Prediction Process ***
+            1. Create input folder: 'temp_next_purchase_inputs'
+            2. Create result folder for the prediction: 'temp_next_purchase_results'
+            3. split users (split number of user count related customer_indicator parameter) and run each batch sequentially.
+            3. Parallel process is running on 'next_purchase_prediction.py'. Check related .py file for details.
+        """
+        try: # create input folder
             os.mkdir(join(self.directory, "temp_next_purchase_results"))
         except Exception as e:
             print(e)
@@ -238,14 +260,14 @@ class TrainLSTM:
             os.mkdir(join(self.directory, "temp_next_purchase_results"))
 
 
-        try:
+        try: # create output folder for the results
             os.mkdir(join(self.directory, "temp_next_purchase_inputs"))
         except Exception as e:
             print(e)
             print("recreating 'temp_next_purchase_inputs' folder ...")
             shutil.rmtree(join(self.directory, "temp_next_purchase_inputs", ""))
             os.mkdir(join(self.directory, "temp_next_purchase_inputs"))
-
+        # check cpu count and available memory in order to optimize batch sizes
         cpus = cpu_count() * int((virtual_memory().total / 1000000000) * 4)
         communicates = [i for i in range(cpus) if i % cpu_count() == 0] + [cpus - 1]
         _sample_size = int(len(self.customers) / cpus) + 1
@@ -254,7 +276,8 @@ class TrainLSTM:
             print("main iteration :", str(i), " / ", str(cpus))
             _sample_customers = get_iter_sample(self.customers, i, cpus, _sample_size)
             if len(_sample_customers) != 0:
-                _directory = join(self.directory, "temp_next_purchase_inputs",
+                _directory = join(self.directory,
+                                  "temp_next_purchase_inputs",
                                   "prediction_inputs_" + _sample_customers[0] + ".csv")
                 self.create_prediction_data(_sample_customers, _directory)
                 cmd = """python {0}/next_purchase_prediction.py -P {1} -MD {2} -FD {3} -TP {4} -D {5} -IND {6}
@@ -269,10 +292,14 @@ class TrainLSTM:
                     _sub_processes = []
 
     def create_prediction_result_data(self):
+        """
+        after the parallel process prediction, results are stored in the folder 'temp_next_purchase_results'.
+        Now, it is time to merge them
+        """
         print("merge predicted data ...")
         _import_files = glob.glob(join(self.directory, "temp_next_purchase_results", "*.csv"))
         li = []
-        for f in _import_files:
+        for f in _import_files: # merge all result files
             try:
                 _df = pd.read_csv(f, index_col=None, header=0)
                 li.append(_df)
@@ -280,17 +307,24 @@ class TrainLSTM:
                 print(e)
         self.results = concat(li, axis=0, ignore_index=True)
         self.results[self.time_indicator] = self.results[self.time_indicator].apply(lambda x: convert_str_to_day(x))
+        # remove temp folders
         shutil.rmtree(join(self.directory, "temp_next_purchase_results", ""))
+        shutil.rmtree(join(self.directory, "temp_next_purchase_inputs", ""))
+        # filter the dates related to selected time period
         self.results = self.results[(self.results[self.time_indicator] > self.max_date) &
                                     (self.results[self.time_indicator] < self.future_date)]
         print(self.results.head())
         print("number of predicted customers :", len(self.results[self.customer_indicator].unique()))
 
     def prediction_execute(self):
+        """
+        This process is running sequentially for each customer and predicts next order of timestamp
+        """
         print("*"*5, "PREDICTION", 5*"*")
         print("number of users :", len(self.customers))
         if self.model is None:
             _model_date = self.prev_model_date if self.prev_model_date is not None else get_current_day()
+            # import trained model from temp. directory folder
             self.model = model_from_to_json(path=model_path(self.directory,
                                                             "trained_next_purchase_model",
                                                             _model_date,
@@ -300,8 +334,8 @@ class TrainLSTM:
                                                                       _model_date,
                                                                       self.time_period), lr=self.params['lr'])
         self.results = self.data[[self.time_indicator, 'time_diff', 'time_diff_norm', self.customer_indicator]]
-        self.parallel_prediction()
-        self.create_prediction_result_data()
+        self.parallel_prediction() # this process will be triggered via next_purchase_prediction.py
+        self.create_prediction_result_data() # merge all result data
 
     def initialize_keras_tuner(self):
         """
@@ -312,12 +346,13 @@ class TrainLSTM:
         self.hyper_params, self.optimum_batch_size = batch_size_hp_ranges(client_sample_sizes=self.client_sample_sizes,
                                                                           num_of_customers=len(self.customers),
                                                                           hyper_params=self.hyper_params)
+        kwargs = {'directory': self.directory}
         tuner = RandomSearch(
             self.build_parameter_tuning_model,
             max_trials=parameter_tuning_trials,
             hyperparameters=self.hp,
             allow_new_entries=True,
-            objective='loss')
+            objective='loss', **kwargs)
         tuner.search(x=self.model_data['x_train'],
                      y=self.model_data['y_train'],
                      epochs=5,
@@ -369,9 +404,7 @@ class TrainLSTM:
         """
 
         try:
-            shutil.rmtree(
-                join(abspath(__file__).split("next_purchase_model.py")[0].split("clv")[0][:-1], "clv_prediction",
-                     "untitled_project"))
+            shutil.rmtree(join(self.directory, "untitled_project"))
         except Exception as e:
             print(" Parameter Tuning Keras Turner dummy files have already removed!!")
 

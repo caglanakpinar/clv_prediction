@@ -250,13 +250,14 @@ class TrainLSTMNewComers:
         Parameter tuning process is triggered via Keras-Turner Library.
         However, batch_size and epoch parameters of optimization are created individually.
         """
-
+        kwargs = {'directory': self.directory}
         tuner = RandomSearch(
             self.build_parameter_tuning_model,
             max_trials=parameter_tuning_trials,
+            directory=self.directory,
             hyperparameters=self.hp,
             allow_new_entries=True,
-            objective='loss')
+            objective='loss', **kwargs)
         tuner.search(x=self.model_data['x_train'],
                      y=self.model_data['y_train'],
                      epochs=5,
@@ -306,11 +307,8 @@ class TrainLSTMNewComers:
         removing keras tuner file. while you need to update the parameters it will affect rerun the parameter tuning.
         It won`t start unless the folder has been removed.
         """
-
         try:
-            shutil.rmtree(
-                join(abspath(__file__).split("newcomers.py")[0].split("clv")[0][:-1], "clv_prediction",
-                     "untitled_project"))
+            shutil.rmtree(join(self.directory, "untitled_project"))
         except Exception as e:
             print(" Parameter Tuning Keras Turner dummy files have already removed!!")
 
