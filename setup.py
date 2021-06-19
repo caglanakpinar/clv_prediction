@@ -1,14 +1,5 @@
 import setuptools
 from setuptools import find_packages
-import re, platform
-
-search = re.search("ARM64", platform.uname().version)
-processor = ''
-if search is not None:
-    try:
-        processor = platform.uname().version[search.start(): search.end()]
-    except Exception as e:
-        print(e)
 
 install_requires_list = [
         "numpy >= 1.18.1",
@@ -37,12 +28,6 @@ install_requires_list = [
         "Keras >= 2.3.1"
     ]
 
-if processor == 'ARM64':
-    install_requires_list = install_requires_list[:-2]
-    print(" *** ARM64 is detected! ***")
-    print("   Please install tensorflow manually with instractions at https://github.com/apple/tensorflow_macos")
-    print("   Please install Keras >= 2.3.1 at pip install Keras")
-
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -50,7 +35,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="clv_prediction",
-    version="0.1.2",
+    version="0.1.3",
     author="Caglan Akpinar",
     author_email="cakpinar23@gmail.com",
     description="clv prediction applying with deep learning",
