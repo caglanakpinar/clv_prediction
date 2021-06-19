@@ -393,14 +393,13 @@ class TrainConv1Dimension:
         However, batch_size and epoch parameters of optimization are created individually.
         :return:
         """
-
+        kwargs = {'directory': self.directory}
         tuner = RandomSearch(
             self.build_parameter_tuning_model,
             max_trials=parameter_tuning_trials,
-            directory=self.directory,
             hyperparameters=self.hp,
             allow_new_entries=True,
-            objective='loss')
+            objective='loss', **kwargs)
         tuner.search(x=self.model_data['x_train'],
                      y=self.model_data['y_train'],
                      epochs=5,

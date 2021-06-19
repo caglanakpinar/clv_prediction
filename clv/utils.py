@@ -137,7 +137,7 @@ def execute_parallel_run(values, executor, parallel=2, arguments=None):
             process.start()
         process.join()
     del process
-    return "done !!!"
+    return ""
 
 
 def abspath_for_sample_data():
