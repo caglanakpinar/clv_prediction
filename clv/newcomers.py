@@ -1,5 +1,5 @@
 import warnings
-from pandas import DataFrame, concat
+import pandas as pd
 import os
 import shutil
 from itertools import product
@@ -96,7 +96,7 @@ class TrainLSTMNewComers:
         self.input, self.model = None, None
         self.prev_model_date = check_model_exists(self.directory, "trained_newcomers_model", self.time_period)
         self.residuals, self.anomaly = [], []
-        self.results = DataFrame()
+        self.results = pd.DataFrame()
         self.get_actual_value = lambda _min, _max, _value: ((_max - _min) * _value) + _min if _value >= 0 else _min
         self.max_date = max(self.data[self.time_indicator])
         self.future_date = self.max_date + datetime.timedelta(days=convert_time_preiod_to_days(self.time_period))
