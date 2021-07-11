@@ -254,7 +254,6 @@ class TrainLSTMNewComers:
         tuner = RandomSearch(
             self.build_parameter_tuning_model,
             max_trials=parameter_tuning_trials,
-            directory=self.directory,
             hyperparameters=self.hp,
             allow_new_entries=True,
             objective='loss', **kwargs)
