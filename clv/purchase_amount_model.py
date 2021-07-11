@@ -84,7 +84,7 @@ class TrainConv1Dimension:
         self.time_period = time_period
         self.amount_indicator = amount_indicator
         self.params = hyper_conf('purchase_amount') \
-            if check_for_existing_parameters(self.directory,'purchase_amount') is None else \
+            if check_for_existing_parameters(self.directory, 'purchase_amount') is None else \
             check_for_existing_parameters(self.directory, 'purchase_amount')
         self.hyper_params = get_tuning_params(hyper_conf('purchase_amount_hyper'), self.params)
         self.optimized_parameters = {}
