@@ -18,7 +18,7 @@ install_requires_list = [
         "pytest-shutil >= 1.7.0",
         "python-dateutil >= 2.8.1",
         "random2 >= 1.0.1",
-        "psycopg2 >= 2.8.5",
+        "psycopg2-binary",
         "argparse",
         "python-math",
         "statsmodels >= 0.12.1",
@@ -35,7 +35,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="clv_prediction",
-    version="0.1.6",
+    version="0.1.7",
     author="Caglan Akpinar",
     author_email="cakpinar23@gmail.com",
     description="clv prediction applying with deep learning",
