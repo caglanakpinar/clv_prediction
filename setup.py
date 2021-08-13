@@ -2,6 +2,7 @@ import setuptools
 from setuptools import find_packages
 
 install_requires_list = [
+        "psutil",
         "numpy >= 1.18.1",
         "pandas >= 0.25.3",
         "scipy >= 1.4.1 ",
