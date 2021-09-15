@@ -7,6 +7,18 @@
 
 ----------------------------
 
+### How to install for Apple M1 MACOS?
+
+You can download end install via pip. You also need **miniforge3** environment rather than other conda environments such as **anaconda**. This is crucial in order to install **tensorflow**.
+    
+[clv_prediction_arm64-0.1.8.tar.gz](https://github.com/caglanakpinar/clv_prediction/files/7172452/clv_prediction_arm64-0.1.8.tar.gz)
+    
+Before installation, here are the requirements that must be installed individually;
+    
+- **psycopg2-binary**
+- **tensorflow-metal :** via https://developer.apple.com/metal/tensorflow-plugin/ you can check the instructions and is able to be installed with a few steps.
+- **statsmodels==0.10.2** It is only can be supported version 0.10.2
+
 ##### How it works?
 
 - **Main Concept**
