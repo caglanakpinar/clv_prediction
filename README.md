@@ -16,8 +16,8 @@ You can download end install via pip. You also need **miniforge3** environment r
 Before installation, here are the requirements that must be installed individually;
     
 - **psycopg2-binary**
-- **tensorflow-metal :** via https://developer.apple.com/metal/tensorflow-plugin/ you can check the instructions and it is able to be installed with a few steps.
-- **statsmodels==0.10.2** It is only can be supported version 0.10.2
+- **tensorflow-metal :** via https://developer.apple.com/metal/tensorflow-plugin/ you can check the instructions and it is able to be installed with a few steps. Please install tensorflow individually.
+- **statsmodels :** Use **conda install -c conda-forge statsmodels** and install individually
 
 ##### How it works?
 
