@@ -1,5 +1,6 @@
+from os.path import abspath, join
+
 import yaml
-from os.path import join, abspath
 
 
 def read_config(directory):
