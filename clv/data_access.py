@@ -82,7 +82,6 @@ class GetData:
                 for sep in [',', ';', ':']:
 
                     self.data = pd.read_csv(filepath_or_buffer=self.data_query_path,
-                                            error_bad_lines=False,
                                             encoding="ISO-8859-1",
                                             sep=sep,
                                             nrows=self.nrows)
@@ -94,6 +93,9 @@ class GetData:
 
         if self.data_source == 'json':
             self.data = read_write_to_json(self.data_query_path, None, is_writing=False)
+
+        if self.data_source == 'parquet':
+            self.data = pd.read_parquet(self.data_query_path)
 
         if self.data_source == 'yaml':
             self.data = read_yaml(self.data_query_path)
