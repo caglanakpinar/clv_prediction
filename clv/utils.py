@@ -1,11 +1,13 @@
-import os, inspect
-import yaml
-import json
 import datetime
-from os.path import join, abspath
-from multiprocessing import cpu_count
-import threading
+import inspect
+import json
+import os
 import subprocess
+import threading
+from multiprocessing import cpu_count
+from os.path import abspath, join
+
+import yaml
 
 
 def read_yaml(directory, filename):

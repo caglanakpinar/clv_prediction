@@ -1,21 +1,22 @@
+import argparse
+import datetime
+import webbrowser
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import plotly.graph_objs as go
-import pandas as pd
 import numpy as np
-import datetime
-import webbrowser
-import argparse
+import pandas as pd
+import plotly.graph_objs as go
 
 try:
     from .data_access import GetData
-    from .utils import convert_date
     from .functions import convert_time_preiod_to_days, get_results
+    from .utils import convert_date
 except Exception as e:
     from data_access import GetData
-    from utils import convert_date
     from functions import convert_time_preiod_to_days, get_results
+    from utils import convert_date
 
 
 def get_raw_data(time_indicator, amount_indicator, data_source, data_query_path):
