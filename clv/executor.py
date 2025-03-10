@@ -139,7 +139,7 @@ class CLV:
         """
         config = conf("config")
         try:
-            if self.data_source not in ["csv", "json"]:
+            if self.data_source not in ["csv", "json", "parquet"]:
                 for i in config["db_connection"]:
                     if i != "data_source":
                         config["db_connection"][i] = self.connector[i]
@@ -158,7 +158,7 @@ class CLV:
             return True
         except Exception as e:
             print(e)
-            if self.data_source not in ["csv", "json"]:
+            if self.data_source not in ["csv", "json", "parquet"]:
                 for i in config["db_connection"]:
                     if i is not "data_source":
                         config["db_connection"][i] = None
