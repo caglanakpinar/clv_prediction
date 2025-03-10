@@ -21,6 +21,7 @@ pyarrow = "^19.0.1"
 statsmodels = "^0.14.4"
 keras-tuner = "^1.4.7"
 dash = "^2.18.2"
+google = "^3.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
