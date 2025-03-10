@@ -16,9 +16,9 @@ def read_yaml(directory, filename):
 
 def write_yaml(directory, filename, data, ignoring_aliases=False):
     if ignoring_aliases:
-        yaml.Dumper.ignore_aliases = lambda *args : True
+        yaml.Dumper.ignore_aliases = lambda *args: True
 
-    with open(join(directory, "", filename), 'w') as file:
+    with open(join(directory, "", filename), "w") as file:
         if ignoring_aliases:
             yaml.dump(data, file, default_flow_style=False)
         else:
@@ -27,7 +27,7 @@ def write_yaml(directory, filename, data, ignoring_aliases=False):
 
 def read_write_to_json(directory, filename, data, is_writing):
     if is_writing:
-        with open(join(directory, "", filename), 'w') as file:
+        with open(join(directory, "", filename), "w") as file:
             json.dump(data, file)
     else:
         with open(join(directory, "", filename), "r") as file:
@@ -36,17 +36,22 @@ def read_write_to_json(directory, filename, data, is_writing):
 
 
 def model_path(comb, group, model):
-    return "_".join(["_".join([str(i[0]) + "*" + str(i[1]) for i in zip(group, comb)]), model]) + ".json"
+    return (
+        "_".join(
+            ["_".join([str(i[0]) + "*" + str(i[1]) for i in zip(group, comb)]), model]
+        )
+        + ".json"
+    )
 
 
 def convert_date(date):
-    if date not in ['', None]:
+    if date not in ["", None]:
         if len(date) == 0:
-            format_str = '%Y-%m-%d'
+            format_str = "%Y-%m-%d"
         if len(date) == 16:
-            format_str = '%Y-%m-%d %H:%M'
+            format_str = "%Y-%m-%d %H:%M"
         if len(date) > 16:
-            format_str = '%Y-%m-%d %H:%M:%S.%f'
+            format_str = "%Y-%m-%d %H:%M:%S.%f"
         if not str:
             date = datetime.datetime.strptime(date, format_str)
     else:
@@ -55,12 +60,24 @@ def convert_date(date):
 
 
 def get_current_day(replace=True):
-    return str(datetime.datetime.now())[0:10].replace("-", "") if replace else str(datetime.datetime.now())[0:10]
+    return (
+        str(datetime.datetime.now())[0:10].replace("-", "")
+        if replace
+        else str(datetime.datetime.now())[0:10]
+    )
 
 
 def get_result_data_path(directory, time_period, max_date):
-    return join(directory, "results_" + time_period + "_" +
-                str(max_date)[0:10].replace("-", "") + "_" + get_current_day() + ".csv")
+    return join(
+        directory,
+        "results_"
+        + time_period
+        + "_"
+        + str(max_date)[0:10].replace("-", "")
+        + "_"
+        + get_current_day()
+        + ".csv",
+    )
 
 
 def convert_str_to_day(x):
@@ -95,9 +112,9 @@ def check_for_existing_parameters(directory, model):
 
 def get_iter_sample(s_values, i, iters, cpus):
     if i != iters - 1:
-        return s_values[(i * cpus): ((i+1) * cpus)]
+        return s_values[(i * cpus) : ((i + 1) * cpus)]
     else:
-        return s_values[(i * cpus):]
+        return s_values[(i * cpus) :]
 
 
 def current_date_to_day():
@@ -105,7 +122,7 @@ def current_date_to_day():
     recent date of converting to datetime from isoformat.
     :return: datetime
     """
-    return datetime.datetime.strptime(str(datetime.datetime.now())[0:19], '%Y-%m-%d')
+    return datetime.datetime.strptime(str(datetime.datetime.now())[0:19], "%Y-%m-%d")
 
 
 def execute_parallel_run(values, executor, parallel=2, arguments=None):
@@ -130,7 +147,13 @@ def execute_parallel_run(values, executor, parallel=2, arguments=None):
         _sample_values = get_iter_sample(values, i, iters, parallel)
         for v in _sample_values:
             if arguments:
-                process = threading.Thread(target=executor, args=(v, arguments, ))
+                process = threading.Thread(
+                    target=executor,
+                    args=(
+                        v,
+                        arguments,
+                    ),
+                )
             else:
                 process = threading.Thread(target=executor, args=(v,))
             process.deamon = True
@@ -145,10 +168,14 @@ def abspath_for_sample_data():
     get customer_analytics path. Ex: ....../customer_analytics
     :return: current folder path
     """
-    currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    currentdir = os.path.dirname(
+        os.path.abspath(inspect.getfile(inspect.currentframe()))
+    )
     base_name = os.path.basename(currentdir)
-    while base_name != 'clv':
-        currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    while base_name != "clv":
+        currentdir = os.path.dirname(
+            os.path.abspath(inspect.getfile(inspect.currentframe()))
+        )
         base_name = os.path.basename(currentdir)
     return currentdir
 
@@ -156,9 +183,3 @@ def abspath_for_sample_data():
 def sample_size_calculation():
     cpus = cpu_count()
     return 1250 * cpus
-
-
-
-
-
-

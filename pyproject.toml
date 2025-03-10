@@ -25,6 +25,7 @@ dash = "^2.18.2"
 
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^4.3.5"
+pre-commit = "^4.1.0"
 
 [build-system]
 requires = ["poetry-core"]
