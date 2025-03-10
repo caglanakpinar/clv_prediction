@@ -4,7 +4,7 @@ from pandas import DataFrame, concat
 import os
 import shutil
 
-from tensorflow.keras.models import model_from_json
+from keras import models
 
 try:
     from functions import *
@@ -26,7 +26,7 @@ def model_from_to_json(path=None, weights_path=None, model=None, is_writing=Fals
         json_file = open(path, 'r')
         loaded_model_json = json_file.read()
         json_file.close()
-        model = model_from_json(loaded_model_json)
+        model = models.model_from_json(loaded_model_json)
         try:
             model.load_weights(weights_path)
         except Exception as e:

@@ -9,11 +9,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '4'
 import tensorflow as tf
 sess = tf.compat.v1.Session()
 
-from tensorflow.keras.layers import Dense, LSTM, Input, BatchNormalization
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.initializers import Ones
-from tensorflow.keras.models import Model
-from tensorflow.keras.models import model_from_json
+from keras import layers, optimizers, initializers, models, Input, Model
 from kerastuner.tuners import RandomSearch
 from kerastuner.engine.hyperparameters import HyperParameters
 
@@ -37,7 +33,7 @@ def model_from_to_json(path=None, weights_path=None, model=None, is_writing=Fals
         json_file = open(path, 'r')
         loaded_model_json = json_file.read()
         json_file.close()
-        model = model_from_json(loaded_model_json)
+        model = models.model_from_json(loaded_model_json)
         model.load_weights(weights_path)
         return model
 
@@ -109,18 +105,18 @@ class TrainLSTMNewComers:
 
     def build_parameter_tuning_model(self, hp):
         self.input = Input(shape=(self.model_data['x_train'].shape[1], 1))
-        lstm = LSTM(int(hp.Choice('units', self.hyper_params['units'])),
-                    bias_initializer=Ones(),
-                    kernel_initializer=Ones(),
+        lstm = layers.LSTM(int(hp.Choice('units', self.hyper_params['units'])),
+                    bias_initializer=initializers.Ones(),
+                    kernel_initializer=initializers.Ones(),
                     use_bias=False,
                     activation=hp.Choice('activation', self.hyper_params['activation']),
                     dropout=0.1
                     )(self.input)
-        lstm = BatchNormalization()(lstm)
-        lstm = Dense(1)(lstm)
+        lstm = layers.BatchNormalization()(lstm)
+        lstm = layers.Dense(1)(lstm)
         model = Model(inputs=self.input, outputs=lstm)
         model.compile(loss='mae',
-                      optimizer=Adam(lr=hp.Choice('lr', self.hyper_params['lr'])),
+                      optimizer=optimizers.Adam(lr=hp.Choice('lr', self.hyper_params['lr'])),
                       metrics=['mae'])
         return model
 
@@ -129,11 +125,7 @@ class TrainLSTMNewComers:
         import tensorflow as tf
         self.sess = tf.compat.v1.Session()
 
-        from tensorflow.keras.layers import Dense, LSTM, Input, BatchNormalization
-        from tensorflow.keras.optimizers import Adam
-        from tensorflow.keras.initializers import Ones
-        from tensorflow.keras.models import Model
-        from tensorflow.keras.models import model_from_json
+        from keras import layers, optimizers, initializers, models, Input, Model
         from kerastuner.tuners import RandomSearch
         from kerastuner.engine.hyperparameters import HyperParameters
 
@@ -142,18 +134,18 @@ class TrainLSTMNewComers:
             self.init_tf()
         self.input = Input(shape=(self.model_data['x_train'].shape[1], 1))
         # LSTM layer
-        lstm = LSTM(self.params['units'],
+        lstm = layers.LSTM(self.params['units'],
                     batch_size=self.params['batch_size'],
-                    bias_initializer=Ones(),
-                    kernel_initializer=Ones(),
+                    bias_initializer=initializers.Ones(),
+                    kernel_initializer=initializers.Ones(),
                     use_bias=False,
                     recurrent_activation=self.params['activation'],
                     dropout=0.1
                     )(self.input)
-        lstm = BatchNormalization()(lstm)
-        lstm = Dense(1)(lstm)
+        lstm = layers.BatchNormalization()(lstm)
+        lstm = layers.Dense(1)(lstm)
         self.model = Model(inputs=self.input, outputs=lstm)
-        self.model.compile(loss='mae', optimizer=Adam(lr=self.params['lr']), metrics=['mae'])
+        self.model.compile(loss='mae', optimizer=optimizers.Adam(lr=self.params['lr']), metrics=['mae'])
 
     def learning_process(self, save_model=True, history=False, show_epochs=True):
         verbose = 1 if show_epochs else 0

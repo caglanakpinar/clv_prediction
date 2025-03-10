@@ -4,11 +4,9 @@ from itertools import product
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '4'
 import shutil
 import glob
-from tensorflow.keras.layers import Dense, LSTM, Input, BatchNormalization, Conv1D, MaxPooling1D, Dropout, Flatten
-from tensorflow.keras.regularizers import l1, l2, l1_l2
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.models import Model
-from tensorflow.keras.models import model_from_json
+from keras import layers, optimizers, initializers, models, Input, Model, regularizers
+from kerastuner.tuners import RandomSearch
+from kerastuner.engine.hyperparameters import HyperParameters
 from kerastuner.tuners import RandomSearch
 from kerastuner.engine.hyperparameters import HyperParameters
 
@@ -33,12 +31,12 @@ def model_from_to_json(path=None, weights_path=None, model=None, is_writing=Fals
         json_file = open(path, 'r')
         loaded_model_json = json_file.read()
         json_file.close()
-        model = model_from_json(loaded_model_json)
+        model = models.model_from_json(loaded_model_json)
         try:
             model.load_weights(weights_path)
         except Exception as e:
             model.load_weights(weights_path)
-            model.compile(loss='mae', optimizer=Adam(lr=lr), metrics=['mae'])
+            model.compile(loss='mae', optimizer=optimizers.Adam(lr=lr), metrics=['mae'])
         return model
 
 
@@ -124,51 +122,51 @@ class TrainConv1Dimension:
     def build_parameter_tuning_model(self, hp):
         self.input = Input(shape=(self.model_data['x_train'].shape[1], 1,))
         ### conv 1D layer
-        conv = Conv1D(filters=hp.Choice('filters', self.hyper_params['filters']),
+        conv = layers.Conv1D(filters=hp.Choice('filters', self.hyper_params['filters']),
                       kernel_size=hp.Choice('kernel_size', self.hyper_params['kernel_size']),
                       padding='same',
                       activation=hp.Choice('activation', self.hyper_params['activation']),
-                      kernel_regularizer=l1_l2(l1=hp.Choice('l1', self.hyper_params['l1']),
+                      kernel_regularizer=regularizers.l1_l2(l1=hp.Choice('l1', self.hyper_params['l1']),
                                                l2=hp.Choice('l2', self.hyper_params['l2'])),
-                      bias_regularizer=l2(hp.Choice('l2', self.hyper_params['l2'])),
-                      activity_regularizer=l2(hp.Choice('l2', self.hyper_params['l2']))
+                      bias_regularizer=regularizers.l2(hp.Choice('l2', self.hyper_params['l2'])),
+                      activity_regularizer=regularizers.l2(hp.Choice('l2', self.hyper_params['l2']))
                       )(self.input)
-        conv = BatchNormalization()(conv)
+        conv = layers.BatchNormalization()(conv)
         # LSTM layer
-        conv = MaxPooling1D(hp.Choice('max_pooling_unit', self.hyper_params['max_pooling_unit']))(conv)
-        conv = Dropout(hp.Choice('drop_out_ratio', self.hyper_params['drop_out_ratio']))(conv)
-        conv = LSTM(hp.Choice('lstm_units', self.hyper_params['lstm_units']),
+        conv = layers.MaxPooling1D(hp.Choice('max_pooling_unit', self.hyper_params['max_pooling_unit']))(conv)
+        conv = layers.Dropout(hp.Choice('drop_out_ratio', self.hyper_params['drop_out_ratio']))(conv)
+        conv = layers.LSTM(hp.Choice('lstm_units', self.hyper_params['lstm_units']),
                     use_bias=False,
                     activation=hp.Choice('activation', self.hyper_params['activation']),
-                    kernel_regularizer=l1_l2(l1=hp.Choice('l1', self.hyper_params['l1']),
+                    kernel_regularizer=regularizers.l1_l2(l1=hp.Choice('l1', self.hyper_params['l1']),
                                              l2=hp.Choice('l2', self.hyper_params['l2'])),
-                    bias_regularizer=l2(hp.Choice('l2', self.hyper_params['l2'])),
-                    activity_regularizer=l2(hp.Choice('l2', self.hyper_params['l2']))
+                    bias_regularizer=regularizers.l2(hp.Choice('l2', self.hyper_params['l2'])),
+                    activity_regularizer=regularizers.l2(hp.Choice('l2', self.hyper_params['l2']))
                     )(conv)
-        conv = BatchNormalization()(conv)
-        conv = Flatten()(conv)
+        conv = layers.BatchNormalization()(conv)
+        conv = layers.Flatten()(conv)
         # layers after flattened layers
         for i in range(hp.Int('num_layers',
                               self.hyper_params['num_layers']['min'],
                               self.hyper_params['num_layers']['max'])):
-            conv = Dense(hp.Choice('units', self.hyper_params['units']),
+            conv = layers.Dense(hp.Choice('units', self.hyper_params['units']),
                          hp.Choice('activation', self.hyper_params['activation']),
-                         kernel_regularizer=l1_l2(l1=hp.Choice('l1', self.hyper_params['l1']),
+                         kernel_regularizer=regularizers.l1_l2(l1=hp.Choice('l1', self.hyper_params['l1']),
                                                   l2=hp.Choice('l2', self.hyper_params['l2'])),
-                         bias_regularizer=l2(hp.Choice('l2', self.hyper_params['l2'])),
-                         activity_regularizer=l2(hp.Choice('l2', self.hyper_params['l2']))
+                         bias_regularizer=regularizers.l2(hp.Choice('l2', self.hyper_params['l2'])),
+                         activity_regularizer=regularizers.l2(hp.Choice('l2', self.hyper_params['l2']))
                          )(conv)
-            conv = BatchNormalization()(conv)
-        output = Dense(1,
+            conv = layers.BatchNormalization()(conv)
+        output = layers.Dense(1,
                        activation=hp.Choice('activation', self.hyper_params['activation']),
-                       kernel_regularizer=l1_l2(l1=hp.Choice('l1', self.hyper_params['l1']),
+                       kernel_regularizer=regularizers.l1_l2(l1=hp.Choice('l1', self.hyper_params['l1']),
                                                 l2=hp.Choice('l2', self.hyper_params['l2'])),
-                       bias_regularizer=l2(hp.Choice('l2', self.hyper_params['l2'])),
-                       activity_regularizer=l2(hp.Choice('l2', self.hyper_params['l2']))
+                       bias_regularizer=regularizers.l2(hp.Choice('l2', self.hyper_params['l2'])),
+                       activity_regularizer=regularizers.l2(hp.Choice('l2', self.hyper_params['l2']))
                        )(conv)
         model = Model(inputs=self.input, outputs=output)
         model.compile(loss=self.params['loss'],
-                      optimizer=Adam(lr=hp.Choice('lr', self.hyper_params['lr'])),
+                      optimizer=optimizers.Adam(lr=hp.Choice('lr', self.hyper_params['lr'])),
                       metrics=[hp.Choice('loss', self.hyper_params['loss'])])
         return model
 
@@ -176,49 +174,49 @@ class TrainConv1Dimension:
         print(self.params)
         self.input = Input(shape=(self.model_data['x_train'].shape[1], 1,))
         # conv 1D layer
-        conv = Conv1D(filters=self.params['filters'],
+        conv = layers.Conv1D(filters=self.params['filters'],
                       kernel_size=self.params['kernel_size'],
                       padding='same',
                       activation=self.params['activation'],
-                      kernel_regularizer=l1_l2(l1=self.params['l1'],
+                      kernel_regularizer=regularizers.l1_l2(l1=self.params['l1'],
                                                l2=self.params['l2']),
-                      bias_regularizer=l2(self.params['l2']),
-                      activity_regularizer=l2(self.params['l2'])
+                      bias_regularizer=regularizers.l2(self.params['l2']),
+                      activity_regularizer=regularizers.l2(self.params['l2'])
                       )(self.input)
-        conv = BatchNormalization()(conv)
+        conv = layers.BatchNormalization()(conv)
         # LSTM layer
-        conv = MaxPooling1D(self.params['max_pooling_unit'])(conv)
-        conv = Dropout(self.params['drop_out_ratio'])(conv)
-        conv = LSTM(self.params['lstm_units'],
+        conv = layers.MaxPooling1D(self.params['max_pooling_unit'])(conv)
+        conv = layers.Dropout(self.params['drop_out_ratio'])(conv)
+        conv = layers.LSTM(self.params['lstm_units'],
                     use_bias=False,
                     activation=self.params['activation'],
-                    kernel_regularizer=l1_l2(l1=self.params['l1'],
+                    kernel_regularizer=regularizers.l1_l2(l1=self.params['l1'],
                                              l2=self.params['l2']),
-                    bias_regularizer=l2(self.params['l2']),
-                    activity_regularizer=l2(self.params['l2'])
+                    bias_regularizer=regularizers.l2(self.params['l2']),
+                    activity_regularizer=regularizers.l2(self.params['l2'])
                     )(conv)
-        conv = BatchNormalization()(conv)
-        conv = Flatten()(conv)
+        conv = layers.BatchNormalization()(conv)
+        conv = layers.Flatten()(conv)
         # layers after flattened layers
         for i in range(self.params['num_layers']):
-            conv = Dense(self.params['units'],
+            conv = layers.Dense(self.params['units'],
                          self.params['activation'],
-                         kernel_regularizer=l1_l2(l1=self.params['l1'],
+                         kernel_regularizer=regularizers.l1_l2(l1=self.params['l1'],
                                                   l2=self.params['l2']),
-                         bias_regularizer=l2(self.params['l2']),
-                         activity_regularizer=l2(self.params['l2'])
+                         bias_regularizer=regularizers.l2(self.params['l2']),
+                         activity_regularizer=regularizers.l2(self.params['l2'])
                          )(conv)
-            conv = BatchNormalization()(conv)
-        output = Dense(1,
+            conv = layers.BatchNormalization()(conv)
+        output = layers.Dense(1,
                        activation=self.params['activation'],
-                       kernel_regularizer=l1_l2(l1=self.params['l1'],
+                       kernel_regularizer=regularizers.l1_l2(l1=self.params['l1'],
                                                 l2=self.params['l2']),
-                       bias_regularizer=l2(self.params['l2']),
-                       activity_regularizer=l2(self.params['l2'])
+                       bias_regularizer=regularizers.l2(self.params['l2']),
+                       activity_regularizer=regularizers.l2(self.params['l2'])
                        )(conv)
         self.model = Model(inputs=self.input, outputs=output)
         self.model.compile(loss=self.params['loss'],
-                           optimizer=Adam(lr=self.params['lr']),
+                           optimizer=optimizers.Adam(lr=self.params['lr']),
                            metrics=[self.params['loss']])
 
     def learning_process(self, save_model=True, history=True):
