@@ -1,14 +1,11 @@
+import os
+from os.path import join
+
 import pandas as pd
 from dateutil.parser import parse
-from os.path import join
-import os
 
-try:
-    from configs import conf
-    from utils import read_yaml, read_write_to_json, convert_feature
-except Exception as e:
-    from .configs import conf
-    from .utils import read_yaml, read_write_to_json, convert_feature
+from clv.configs import conf
+from clv.utils import convert_feature, read_write_to_json, read_yaml
 
 
 class GetData:

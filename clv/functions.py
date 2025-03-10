@@ -1,21 +1,15 @@
-import numpy as np
-import pandas as pd
-from math import sqrt
 import random
-import glob
+from math import sqrt
 from os import listdir
 from os.path import dirname
+
+import numpy as np
+import pandas as pd
 from dateutil.parser import parse
 from statsmodels.tsa.arima.model import ARIMA
 
-try:
-    from data_access import GetData
-    from utils import *
-    from configs import accepted_ratio_of_actual_order
-except Exception as e:
-    from .data_access import GetData
-    from .utils import *
-    from .configs import accepted_ratio_of_actual_order
+from clv.data_access import GetData
+from clv.utils import *
 
 
 def data_manipulation_nc(

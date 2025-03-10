@@ -1,22 +1,14 @@
-from os.path import join
 import threading
+from os.path import join
+
 import pandas as pd
 
-try:
-    from main import main
-    from data_access import GetData
-    from utils import get_folder_path, write_yaml, read_yaml
-    from configs import conf
-    from dashboard import create_dahboard
-    from functions import check_for_previous_predicted_clv_results
-except Exception as e:
-    from .main import main
-    from .data_access import GetData
-    from .utils import get_folder_path, write_yaml, read_yaml
-    from .configs import conf
-    from .dashboard import create_dashboard
-    from .functions import check_for_previous_predicted_clv_results, check_model_exists
-    from .functions import check_for_previous_predicted_clv_results
+from clv.configs import conf
+from clv.dashboard import create_dashboard
+from clv.data_access import GetData
+from clv.functions import check_for_previous_predicted_clv_results
+from clv.main import main
+from clv.utils import get_folder_path, read_yaml, write_yaml
 
 
 class CLV:

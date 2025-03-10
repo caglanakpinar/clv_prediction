@@ -1,13 +1,8 @@
 import argparse
 
-try:
-    from next_purchase_model import TrainLSTM
-    from purchase_amount_model import TrainConv1Dimension
-    from newcomers import TrainLSTMNewComers
-except Exception as e:
-    from .next_purchase_model import TrainLSTM
-    from .purchase_amount_model import TrainConv1Dimension
-    from .newcomers import TrainLSTMNewComers
+from clv.newcomers import TrainLSTMNewComers
+from clv.next_purchase_model import TrainLSTM
+from clv.purchase_amount_model import TrainConv1Dimension
 
 
 def main(
