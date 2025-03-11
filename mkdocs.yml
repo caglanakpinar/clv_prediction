@@ -21,6 +21,7 @@ nav:
   - pre-process: data_preprocess.md
   - train: train.md
   - hyperparameters: tune.md
+  - monitoring: monitoring.md
 
 markdown_extensions:
   - pymdownx.highlight:

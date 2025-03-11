@@ -30,7 +30,7 @@ there are 2 sections;
  - execute model train
  - run dashboard
 
-# How to run clv and dashboard
+## How to run clv and dashboard
 
 ```
     from clv.executor import CLV
@@ -47,9 +47,9 @@ there are 2 sections;
     clv.show_dashboard()
 ```
 
-# How it works?
+## How it works?
 
-## Main Concept
+### Main Concept
 
 This framework we generate 2 main predictive model per customer. 
 First, Next Purchase (Frequency) Model will be trained. 
@@ -61,7 +61,7 @@ Those customers are NewComers.
 This platform allows us to predict NewComers' total lifetime values as well.
 
 
-## Prediction of Next Purchase (Frequency) per Customer Model
+### Prediction of Next Purchase (Frequency) per Customer Model
 
 Each customer of historical purchases of date differences is calculated.
     There will be accepted patterns related to customers ' behaviors.
@@ -71,13 +71,13 @@ Each customer of historical purchases of date differences is calculated.
     However, it is not an efficient way and there will be a computational cost here. In that case, Deep Learning can handle this problem with LSTM NN (check next_purchase_model.py).
     There must be a model that each customer of frequency values are able to be predicted.
 
-## Prediction Of Customer Value (Value) per Customer Model
+### Prediction Of Customer Value (Value) per Customer Model
 
 Customer future values of prediction are also crucial to reach the final CLV calculation.
     Once frequency values are calculated per customer, by historical users' of purchase values can be predicted via using Deep Learning.
     At this process, there is a built-in network (check purchase_amount.py) which is created by using 1 Dimensional Convolutional LSTM NN.
 
-## Prediction Of NewComers CLV Model
+### Prediction Of NewComers CLV Model
 
 Newcomers are not likely predictable as Engaged users. 
 They probably not have stabilized transactions pattern or they will not have a fitted train model unless they have enough transactions.
@@ -86,7 +86,7 @@ They probably not have stabilized transactions pattern or they will not have a f
     Assuming that Purchase Amount of Newcomers are Normal Distributed (Hypothesis Test).
     In that case, purchase Amount prediction per newcomer is going to be the Mean of Purchase Amounts.
 
-## Combining Of Next Purchase Model & Purchase Amount Prediction Model & NewComers Prediction Model
+### Combining Of Next Purchase Model & Purchase Amount Prediction Model & NewComers Prediction Model
 
 Without predicting the frequency of users, we can not be sure when the customer will have a purchase.
     So, by using the next purchase model, customers of future purchase dates have to be predicted.
@@ -101,6 +101,6 @@ It can be detected the users' purchases of dates and the next process will be pr
 After combining Of Next Purchase Model & Purchase Amount Prediction Model is done, NewComers of Predictions are merging the results.
 
 
-# CLV Prediction Process Pipeline
+## CLV Prediction Process Pipeline
 
 ![Untitled](https://user-images.githubusercontent.com/26736844/118328794-da34e000-b50e-11eb-8a7f-3a10373f8461.png)
