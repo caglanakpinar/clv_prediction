@@ -8,26 +8,6 @@ from clv.configs import hyper_conf
 from clv.functions import *
 
 
-def model_from_to_json(
-    path=None, weights_path=None, model=None, is_writing=False, lr=None
-):
-    if is_writing:
-        model_json = model.to_json()
-        with open(path, "w") as json_file:
-            json_file.write(model_json)
-        model.save_weights(weights_path)
-    else:
-        json_file = open(path, "r")
-        loaded_model_json = json_file.read()
-        json_file.close()
-        model = models.model_from_json(loaded_model_json)
-        try:
-            model.load_weights(weights_path)
-        except Exception as e:
-            model.load_weights(weights_path)
-        return model
-
-
 def updating_hyper_parameters_related_to_data():
     return None
 
@@ -67,8 +47,8 @@ class NextPurchaseModelPrediction:
         self.prev_model_date = check_model_exists(
             self.directory, "trained_next_purchase_model", self.time_period
         )
-        self.model = model_from_to_json(
-            path=model_path(
+        self.model = self.model = models.load_model(
+            model_path(
                 self.directory,
                 "trained_next_purchase_model",
                 (
@@ -77,18 +57,7 @@ class NextPurchaseModelPrediction:
                     else get_current_day()
                 ),
                 self.time_period,
-            ),
-            weights_path=weights_path(
-                self.directory,
-                "trained_next_purchase_model",
-                (
-                    self.prev_model_date
-                    if self.prev_model_date is not None
-                    else get_current_day()
-                ),
-                self.time_period,
-            ),
-            lr=self.params["lr"],
+            )
         )
 
     def prediction_date_add(self, data, pred_data, pred):

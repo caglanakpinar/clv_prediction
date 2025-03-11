@@ -1,5 +1,7 @@
 import shutil
 from itertools import product
+import subprocess
+import glob
 
 from keras import Input, Model, initializers, layers, models, optimizers
 from kerastuner.engine.hyperparameters import HyperParameters
@@ -14,29 +16,6 @@ from clv.configs import (
 )
 from clv.functions import *
 from clv.utils import abspath_for_sample_data
-
-
-def model_from_to_json(
-    path=None, weights_path=None, model=None, is_writing=False, lr=None
-):
-    if is_writing:
-        model_json = model.to_json()
-        with open(path, "w") as json_file:
-            json_file.write(model_json)
-        model.save_weights(weights_path)
-    else:
-        json_file = open(path, "r")
-        loaded_model_json = json_file.read()
-        json_file.close()
-        model = models.model_from_json(loaded_model_json)
-        try:
-            model.load_weights(weights_path)
-        except Exception as e:
-            model.load_weights(weights_path)
-            model.compile(
-                loss="mae", optimizer=optimizers.Adam(learning_rate=lr), metrics=["mae"]
-            )
-        return model
 
 
 def updating_hyper_parameters_related_to_data():
@@ -231,21 +210,13 @@ class TrainLSTM:
                 shuffle=True,
             )
         if save_model:
-            model_from_to_json(
-                path=model_path(
+            self.model.save(
+                model_path(
                     self.directory,
                     "trained_next_purchase_model",
                     get_current_day(),
                     self.time_period,
-                ),
-                weights_path=weights_path(
-                    self.directory,
-                    "trained_next_purchase_model",
-                    get_current_day(),
-                    self.time_period,
-                ),
-                model=self.model,
-                is_writing=True,
+                )
             )
 
         if history:
@@ -259,20 +230,13 @@ class TrainLSTM:
             self.build_model()
             self.learning_process()
         else:
-            self.model = model_from_to_json(
-                path=model_path(
+            self.model = models.load_model(
+                model_path(
                     self.directory,
                     "trained_next_purchase_model",
                     self.prev_model_date,
                     self.time_period,
-                ),
-                weights_path=weights_path(
-                    self.directory,
-                    "trained_next_purchase_model",
-                    self.prev_model_date,
-                    self.time_period,
-                ),
-                lr=self.params["lr"],
+                )
             )
             print(
                 "Previous model already exits in the given directory  '"
@@ -407,21 +371,15 @@ class TrainLSTM:
                 else get_current_day()
             )
             # import trained model from temp. directory folder
-            self.model = model_from_to_json(
-                path=model_path(
+            self.model = models.load_model(
+                model_path(
                     self.directory,
                     "trained_next_purchase_model",
                     _model_date,
                     self.time_period,
-                ),
-                weights_path=weights_path(
-                    self.directory,
-                    "trained_next_purchase_model",
-                    _model_date,
-                    self.time_period,
-                ),
-                lr=self.params["lr"],
+                )
             )
+
         self.results = self.data[
             [
                 self.time_indicator,
