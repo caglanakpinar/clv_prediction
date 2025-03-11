@@ -194,7 +194,6 @@ class TrainLSTM:
         # LSTM layer
         lstm = layers.LSTM(
             self.params["units"],
-            batch_size=self.params["batch_size"],
             bias_initializer=initializers.Ones(),
             kernel_initializer=initializers.Ones(),
             use_bias=False,
