@@ -589,13 +589,7 @@ def check_model_exists(path, model_name, time_period):
 def model_path(directory, model_name, date, time_period):
     return join(
         directory,
-        model_name + "_" + date + "_" + time_period.replace(" ", "") + ".json",
-    )
-
-
-def weights_path(directory, model_name, date, time_period):
-    return join(
-        directory, model_name + "_" + date + "_" + time_period.replace(" ", "") + ".h5"
+        model_name + "_" + date + "_" + time_period.replace(" ", "") + ".keras",
     )
 
 
