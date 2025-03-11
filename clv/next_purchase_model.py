@@ -214,7 +214,6 @@ class TrainLSTM:
             history = self.model.fit(
                 self.model_data["x_train"],
                 self.model_data["y_train"],
-                batch_size=self.params["batch_size"],
                 epochs=int(self.params["epochs"]),
                 verbose=1,
                 validation_data=(self.model_data["x_test"], self.model_data["y_test"]),
