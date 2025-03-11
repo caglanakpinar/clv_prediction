@@ -1,33 +1,19 @@
-import warnings
-from pandas import DataFrame, concat
-import os
 import shutil
 from itertools import product
-import subprocess
+
+from keras import Input, Model, initializers, layers, models, optimizers
+from kerastuner.engine.hyperparameters import HyperParameters
+from kerastuner.tuners import RandomSearch
+from pandas import DataFrame, concat
 from psutil import virtual_memory
 
-from keras import layers, optimizers, initializers, models, Input, Model
-from kerastuner.tuners import RandomSearch
-from kerastuner.engine.hyperparameters import HyperParameters
-
-try:
-    from functions import *
-    from configs import (
-        hyper_conf,
-        accept_threshold_for_loss_diff,
-        parameter_tuning_trials,
-    )
-    from data_access import *
-    from utils import abspath_for_sample_data
-except Exception as e:
-    from .functions import *
-    from .configs import (
-        hyper_conf,
-        accept_threshold_for_loss_diff,
-        parameter_tuning_trials,
-    )
-    from .data_access import *
-    from .utils import abspath_for_sample_data
+from clv.configs import (
+    accept_threshold_for_loss_diff,
+    hyper_conf,
+    parameter_tuning_trials,
+)
+from clv.functions import *
+from clv.utils import abspath_for_sample_data
 
 
 def model_from_to_json(
@@ -47,7 +33,9 @@ def model_from_to_json(
             model.load_weights(weights_path)
         except Exception as e:
             model.load_weights(weights_path)
-            model.compile(loss="mae", optimizer=optimizers.Adam(lr=lr), metrics=["mae"])
+            model.compile(
+                loss="mae", optimizer=optimizers.Adam(learning_rate=lr), metrics=["mae"]
+            )
         return model
 
 
@@ -194,7 +182,9 @@ class TrainLSTM:
         model = Model(inputs=self.input, outputs=lstm)
         model.compile(
             loss="mae",
-            optimizer=optimizers.Adam(lr=hp.Choice("lr", self.hyper_params["lr"])),
+            optimizer=optimizers.Adam(
+                learning_rate=hp.Choice("lr", self.hyper_params["lr"])
+            ),
             metrics=["mae"],
         )
         return model
@@ -215,7 +205,9 @@ class TrainLSTM:
         lstm = layers.Dense(1)(lstm)
         self.model = Model(inputs=self.input, outputs=lstm)
         self.model.compile(
-            loss="mae", optimizer=optimizers.Adam(lr=self.params["lr"]), metrics=["mae"]
+            loss="mae",
+            optimizer=optimizers.Adam(learning_rate=self.params["lr"]),
+            metrics=["mae"],
         )
 
     def learning_process(self, save_model=True, history=False):

@@ -1,27 +1,11 @@
 import argparse
 import warnings
-from pandas import DataFrame, concat
-import os
-import shutil
 
 from keras import models
+from pandas import DataFrame, concat
 
-try:
-    from functions import *
-    from configs import (
-        hyper_conf,
-        accept_threshold_for_loss_diff,
-        parameter_tuning_trials,
-    )
-    from data_access import *
-except Exception as e:
-    from .functions import *
-    from .configs import (
-        hyper_conf,
-        accept_threshold_for_loss_diff,
-        parameter_tuning_trials,
-    )
-    from .data_access import *
+from clv.configs import hyper_conf
+from clv.functions import *
 
 
 def model_from_to_json(
@@ -87,17 +71,21 @@ class NextPurchaseModelPrediction:
             path=model_path(
                 self.directory,
                 "trained_next_purchase_model",
-                self.prev_model_date
-                if self.prev_model_date is not None
-                else get_current_day(),
+                (
+                    self.prev_model_date
+                    if self.prev_model_date is not None
+                    else get_current_day()
+                ),
                 self.time_period,
             ),
             weights_path=weights_path(
                 self.directory,
                 "trained_next_purchase_model",
-                self.prev_model_date
-                if self.prev_model_date is not None
-                else get_current_day(),
+                (
+                    self.prev_model_date
+                    if self.prev_model_date is not None
+                    else get_current_day()
+                ),
                 self.time_period,
             ),
             lr=self.params["lr"],
@@ -118,14 +106,14 @@ class NextPurchaseModelPrediction:
                 data, pd.DataFrame(), (_pred_actual * 3) + 0.05
             ):
                 accept = True
-        except:
+        except Exception as e:
             accept = False
         return accept
 
     def prediction_condition_2(self, _pred_actual, _pred):
         try:
             return True if int(round(_pred_actual)) != 0 and _pred > 0 else False
-        except:
+        except Exception as e:
             return False
 
     def predicted_date_in_range_decision(
@@ -153,7 +141,7 @@ class NextPurchaseModelPrediction:
         x = data_for_customer_prediction(data, _pred_data, self.params)
         try:
             _pred = self.model.predict(x)[0][-1]
-        except:
+        except Exception as e:
             _pred = 0
         _pred_actual = self.get_actual_value(_min=user_min, _max=user_max, _value=_pred)
         return _pred_actual, _pred

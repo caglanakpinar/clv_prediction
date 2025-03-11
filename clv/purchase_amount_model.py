@@ -1,33 +1,21 @@
-from pandas import DataFrame, concat
+import glob
 import os
+import shutil
 from itertools import product
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "4"
-import shutil
-import glob
-from keras import layers, optimizers, initializers, models, Input, Model, regularizers
-from kerastuner.tuners import RandomSearch
+from keras import Input, Model, layers, models, optimizers, regularizers
 from kerastuner.engine.hyperparameters import HyperParameters
 from kerastuner.tuners import RandomSearch
-from kerastuner.engine.hyperparameters import HyperParameters
+from pandas import DataFrame, concat
 
-try:
-    from functions import *
-    from configs import (
-        hyper_conf,
-        accept_threshold_for_loss_diff,
-        parameter_tuning_trials,
-    )
-    from data_access import *
-except Exception as e:
-    from .functions import *
-    from .configs import (
-        hyper_conf,
-        accept_threshold_for_loss_diff,
-        parameter_tuning_trials,
-    )
-    from .data_access import *
-    from .utils import get_current_day
+from clv.configs import (
+    accept_threshold_for_loss_diff,
+    hyper_conf,
+    parameter_tuning_trials,
+)
+from clv.functions import *
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "4"
 
 
 def model_from_to_json(
@@ -167,7 +155,7 @@ class TrainConv1Dimension:
                 1,
             )
         )
-        ### conv 1D layer
+        # conv 1D layer
         conv = layers.Conv1D(
             filters=hp.Choice("filters", self.hyper_params["filters"]),
             kernel_size=hp.Choice("kernel_size", self.hyper_params["kernel_size"]),

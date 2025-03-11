@@ -6,9 +6,9 @@ import pandas as pd
 from clv.configs import conf
 from clv.dashboard import create_dashboard
 from clv.data_access import GetData
-from clv.functions import check_for_previous_predicted_clv_results
+from clv.functions import check_for_previous_predicted_clv_results, check_model_exists
 from clv.main import main
-from clv.utils import get_folder_path, read_yaml, write_yaml
+from clv.utils import get_folder_path, write_yaml
 
 
 class CLV:
@@ -160,7 +160,7 @@ class CLV:
             print(e)
             if self.data_source not in ["csv", "json", "parquet"]:
                 for i in config["db_connection"]:
-                    if i is not "data_source":
+                    if i != "data_source":
                         config["db_connection"][i] = None
                     else:
                         config["db_connection"]["data_source"] = self.data_source

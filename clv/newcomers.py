@@ -1,36 +1,20 @@
-import warnings
-import pandas as pd
-import os
 import shutil
 from itertools import product
-import glob
-
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "4"
 
 import tensorflow as tf
-
-sess = tf.compat.v1.Session()
-
-from keras import layers, optimizers, initializers, models, Input, Model
-from kerastuner.tuners import RandomSearch
+from keras import Input, Model, initializers, layers, models, optimizers
 from kerastuner.engine.hyperparameters import HyperParameters
+from kerastuner.tuners import RandomSearch
 
-try:
-    from functions import *
-    from configs import (
-        hyper_conf,
-        accept_threshold_for_loss_diff,
-        parameter_tuning_trials,
-    )
-    from data_access import *
-except Exception as e:
-    from .functions import *
-    from .configs import (
-        hyper_conf,
-        accept_threshold_for_loss_diff,
-        parameter_tuning_trials,
-    )
-    from .data_access import *
+from clv.configs import (
+    accept_threshold_for_loss_diff,
+    hyper_conf,
+    parameter_tuning_trials,
+)
+from clv.functions import *
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "4"
+sess = tf.compat.v1.Session()
 
 
 def model_from_to_json(path=None, weights_path=None, model=None, is_writing=False):
@@ -117,10 +101,8 @@ class TrainLSTMNewComers:
         )
         self.residuals, self.anomaly = [], []
         self.results = pd.DataFrame()
-        self.get_actual_value = (
-            lambda _min, _max, _value: ((_max - _min) * _value) + _min
-            if _value >= 0
-            else _min
+        self.get_actual_value = lambda _min, _max, _value: (
+            ((_max - _min) * _value) + _min if _value >= 0 else _min
         )
         self.max_date = max(self.data[self.time_indicator])
         self.future_date = self.max_date + datetime.timedelta(
@@ -165,10 +147,6 @@ class TrainLSTMNewComers:
         import tensorflow as tf
 
         self.sess = tf.compat.v1.Session()
-
-        from keras import layers, optimizers, initializers, models, Input, Model
-        from kerastuner.tuners import RandomSearch
-        from kerastuner.engine.hyperparameters import HyperParameters
 
     def build_model(self, prediction=False):
         if prediction:

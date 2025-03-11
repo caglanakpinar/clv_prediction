@@ -1,21 +1,8 @@
 repos:
-  - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
-        name: isort
-        exclude: ^clv/dashboard.py | ^clv/executor.py | ^clv/newcomers.py | ^clv/next_purchase_model.py | ^clv/purchase_amount_model.py
-  - repo: https://github.com/ambv/black
-    rev: 24.10.0
-    hooks:
-      - id: black
-        name: black
-        language: python
-        exclude: ^clv/dashboard.py | ^clv/executor.py | ^clv/newcomers.py | ^clv/next_purchase_model.py | ^clv/purchase_amount_model.py
   - repo: https://github.com/PyCQA/flake8
     rev: 6.0.0
     hooks:
       - id: flake8
         name: flake8
         args: [--config, ./setup.cfg]
-        exclude: ^clv/dashboard.py | ^clv/executor.py | ^clv/newcomers.py | ^clv/next_purchase_model.py | ^clv/purchase_amount_model.py
+        exclude: ^clv/dashboard.py
