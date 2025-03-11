@@ -71,7 +71,7 @@ jobs:
       - name: Publish package to PyPI
         # Only publish to real PyPI on release
         if: github.event_name == 'release'
-        uses: pypa/gh-action-pypi-publish@release/dev
+        uses: pypa/gh-action-pypi-publish@release/0.1.9
   sign-files:
     name: >-
       Sign the Python 🐍 distribution 📦 with Sigstore
