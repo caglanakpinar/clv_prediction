@@ -1,0 +1,812 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="lifetime Value for Engaged Customers and New Comers">
+      
+      
+      
+        <link rel="canonical" href="https://github.com/caglanakpinar/clv_prediction/intro/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../params/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.7">
+    
+    
+      
+        <title>how to run - Customer Lifetime Value Prediction</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.8608ea7d.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#welcome-to-clv-prediction-101" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Customer Lifetime Value Prediction" class="md-header__button md-logo" aria-label="Customer Lifetime Value Prediction" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Customer Lifetime Value Prediction
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              how to run
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/caglanakpinar/clv_prediction" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clv_prediction
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Customer Lifetime Value Prediction" class="md-nav__button md-logo" aria-label="Customer Lifetime Value Prediction" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Customer Lifetime Value Prediction
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/caglanakpinar/clv_prediction" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clv_prediction
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    getting started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    how to run
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    how to run
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-this-all-about" class="md-nav__link">
+    <span class="md-ellipsis">
+      what is this all about?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-do-need-clv-prediciton" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why do need clv-prediciton?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-by-step-instruction-to-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step by Step Instruction to Use
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-run-clv-and-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to run clv and dashboard
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How it works?
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How it works?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#main-concept" class="md-nav__link">
+    <span class="md-ellipsis">
+      Main Concept
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prediction-of-next-purchase-frequency-per-customer-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prediction of Next Purchase (Frequency) per Customer Model
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prediction-of-customer-value-value-per-customer-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prediction Of Customer Value (Value) per Customer Model
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prediction-of-newcomers-clv-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prediction Of NewComers CLV Model
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#combining-of-next-purchase-model-purchase-amount-prediction-model-newcomers-prediction-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Combining Of Next Purchase Model &amp; Purchase Amount Prediction Model &amp; NewComers Prediction Model
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#clv-prediction-process-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      CLV Prediction Process Pipeline
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../params/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    configurations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data_access/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    data access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data_preprocess/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    pre-process
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../train/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    train
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tune/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    hyperparameters
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../monitoring/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    monitoring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-this-all-about" class="md-nav__link">
+    <span class="md-ellipsis">
+      what is this all about?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-do-need-clv-prediciton" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why do need clv-prediciton?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-by-step-instruction-to-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step by Step Instruction to Use
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-run-clv-and-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to run clv and dashboard
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How it works?
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How it works?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#main-concept" class="md-nav__link">
+    <span class="md-ellipsis">
+      Main Concept
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prediction-of-next-purchase-frequency-per-customer-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prediction of Next Purchase (Frequency) per Customer Model
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prediction-of-customer-value-value-per-customer-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prediction Of Customer Value (Value) per Customer Model
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prediction-of-newcomers-clv-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prediction Of NewComers CLV Model
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#combining-of-next-purchase-model-purchase-amount-prediction-model-newcomers-prediction-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Combining Of Next Purchase Model &amp; Purchase Amount Prediction Model &amp; NewComers Prediction Model
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#clv-prediction-process-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      CLV Prediction Process Pipeline
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="welcome-to-clv-prediction-101">welcome to clv-prediction 101</h1>
+<p>Welcome to clv-prediction world. 
+This platform allows you to run customers lifetime prediction for future relationship with a customer.
+You can connect to any data source and run CLV without touching any code all you need to pass arguments like user ID etc.</p>
+<h2 id="what-is-this-all-about">what is this all about?</h2>
+<p>This is about to build a pipeline which is starting from fetching data,
+build model for users next purchases/sessions in platform,
+make prediction per customer based on built model from previous step.
+It also treats individually for new users who have no purchase or sessions background on historical data.
+Finally, when all CLV train/prediction process have been completed, a dashboard will be available to visualize.</p>
+<h2 id="why-do-need-clv-prediciton">Why do need <code>clv-prediciton</code>?</h2>
+<p>recent years, companies needed to see their feature and relation with their customers. 
+This will help them to act proactively for the upcoming trends of users engagements.
+For instance, Users might return churn in feature, so clv-prediction will give overview churn users.
+Here are the benefits to use clv-prediction:
+ - Allows you to predict your business of customers values individually.
+ - Predicts customers of next purchase dates.
+ - Predicts customers of next purchase amounts.
+ - Predicts newcomers of next purchase amounts.
+ - Dashboard for visualization predicted values.</p>
+<h2 id="step-by-step-instruction-to-use">Step by Step Instruction to Use</h2>
+<p>there are 2 sections;
+ - execute model train
+ - run dashboard</p>
+<h2 id="how-to-run-clv-and-dashboard">How to run clv and dashboard</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>    from clv.executor import CLV
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    clv = CLV(customer_indicator=customer_indicator,
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>              amount_indicator=amount_indicator,
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>              date=date,
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>              order_count=order_count,
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>              data_source=data_source,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>              data_query_path=data_query_path,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>              time_period=time_period,
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>              time_indicator=time_indicator,
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>              export_path=export_path,
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>              connector=connector)
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    clv.show_dashboard()
+</code></pre></div>
+<h2 id="how-it-works">How it works?</h2>
+<h3 id="main-concept">Main Concept</h3>
+<p>This framework we generate 2 main predictive model per customer. 
+First, Next Purchase (Frequency) Model will be trained. 
+This model will help us to predict the day of nex purchases per customer
+Second, Customer Value Model will be trained. 
+THis model will help us to predict what will be the amount of next purchases per customer.
+There will be customers can not be predicted by those models above because of lack historical informations. 
+Those customers are NewComers.
+This platform allows us to predict NewComers' total lifetime values as well.</p>
+<h3 id="prediction-of-next-purchase-frequency-per-customer-model">Prediction of Next Purchase (Frequency) per Customer Model</h3>
+<p>Each customer of historical purchases of date differences is calculated.
+    There will be accepted patterns related to customers ' behaviors.
+    Some Users might have a pattern of every Monday.
+    Some will have Mondays -Wednesdays- Fridays.
+    There must be an individual predictive model for each customer, and this must be the Time Series model per each customer of historical frequency.
+    However, it is not an efficient way and there will be a computational cost here. In that case, Deep Learning can handle this problem with LSTM NN (check next_purchase_model.py).
+    There must be a model that each customer of frequency values are able to be predicted.</p>
+<h3 id="prediction-of-customer-value-value-per-customer-model">Prediction Of Customer Value (Value) per Customer Model</h3>
+<p>Customer future values of prediction are also crucial to reach the final CLV calculation.
+    Once frequency values are calculated per customer, by historical users' of purchase values can be predicted via using Deep Learning.
+    At this process, there is a built-in network (check purchase_amount.py) which is created by using 1 Dimensional Convolutional LSTM NN.</p>
+<h3 id="prediction-of-newcomers-clv-model">Prediction Of NewComers CLV Model</h3>
+<p>Newcomers are not likely predictable as Engaged users. 
+They probably not have stabilized transactions pattern or they will not have a fitted train model unless they have enough transactions.
+    At this point, rather than predicting the value of each transaction, predicting the amount of transaction will be more convenient.
+    By using the historical total purchases per time period (daily), the next time period of total purchase count is able to be predicted.
+    Assuming that Purchase Amount of Newcomers are Normal Distributed (Hypothesis Test).
+    In that case, purchase Amount prediction per newcomer is going to be the Mean of Purchase Amounts.</p>
+<h3 id="combining-of-next-purchase-model-purchase-amount-prediction-model-newcomers-prediction-model">Combining Of Next Purchase Model &amp; Purchase Amount Prediction Model &amp; NewComers Prediction Model</h3>
+<p>Without predicting the frequency of users, we can not be sure when the customer will have a purchase.
+    So, by using the next purchase model, customers of future purchase dates have to be predicted.
+    Before predicting a date, the algorithm makes sure the predicted future order of dates is in <strong>selected time period</strong>.</p>
+<p><strong><em>last purchased date from raw data &lt; predicted purchase date &lt; last purchased date from raw data + time period</em></strong></p>
+<p>This time period must be assigned when the process is initialized. 
+The time period will have a range between the last transaction date of the dataset and the last transaction date + time period.
+It can be detected the users' purchases of dates and the next process will be predicting each purchase of values by using the Purchase Amount model.</p>
+<p>After combining Of Next Purchase Model &amp; Purchase Amount Prediction Model is done, NewComers of Predictions are merging the results.</p>
+<h2 id="clv-prediction-process-pipeline">CLV Prediction Process Pipeline</h2>
+<p><img alt="Untitled" src="https://user-images.githubusercontent.com/26736844/118328794-da34e000-b50e-11eb-8a7f-3a10373f8461.png" /></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["instant", "navigation.expand", "content.tabs.link", "content.code.copy"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+    
+  </body>
+</html>
