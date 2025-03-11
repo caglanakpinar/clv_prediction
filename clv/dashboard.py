@@ -9,14 +9,8 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
 
-try:
-    from .data_access import GetData
-    from .functions import convert_time_preiod_to_days, get_results
-    from .utils import convert_date
-except Exception as e:
-    from data_access import GetData
-    from functions import convert_time_preiod_to_days, get_results
-    from utils import convert_date
+from clv.data_access import GetData
+from clv.functions import convert_time_preiod_to_days, get_results
 
 
 def get_raw_data(time_indicator, amount_indicator, data_source, data_query_path):

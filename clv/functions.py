@@ -153,9 +153,11 @@ def data_manipulation(
         + 1
     )
     data["order_seq_num"] = data.apply(
-        lambda row: row["order_seq_num"] + abs(row["prev_orders"])
-        if row["prev_orders"] < 0
-        else row["order_seq_num"],
+        lambda row: (
+            row["order_seq_num"] + abs(row["prev_orders"])
+            if row["prev_orders"] < 0
+            else row["order_seq_num"]
+        ),
         axis=1,
     )
     data, customer_min_max = get_customer_min_max_data(

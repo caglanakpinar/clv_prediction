@@ -2,7 +2,6 @@ import datetime
 import inspect
 import json
 import os
-import subprocess
 import threading
 from multiprocessing import cpu_count
 from os.path import abspath, join

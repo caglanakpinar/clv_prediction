@@ -77,8 +77,8 @@ class GetData:
 
     def check_data_with_filtering(self):
         if self.data_source in ("json", "yaml", "csv"):
-            self.query = (
-                lambda x: x.query(self.time_indicator + " <= '" + str(self.date) + "'")
+            self.query = lambda x: (
+                x.query(self.time_indicator + " <= '" + str(self.date) + "'")
                 if self.date is not None
                 else x
             )
