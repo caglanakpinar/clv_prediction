@@ -109,7 +109,10 @@ class NextPurchaseModelPrediction:
     def calculate_prediction(self, data, _pred_data, user_min, user_max):
         x = data_for_customer_prediction(data, _pred_data, self.params)
         try:
-            _pred = self.model.predict(x)[0][-1]
+            _pred = self.model.predict(
+                x,
+                verbose=0
+            )[0][-1]
         except Exception as e:
             _pred = 0
         _pred_actual = self.get_actual_value(_min=user_min, _max=user_max, _value=_pred)
