@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "clv-prediction"
-version = "0.1.9"
+version = "0.2"
 description = ""
 authors = ["caglanakpinar <cakpinar23@gmail.com>"]
 readme = "README.md"
