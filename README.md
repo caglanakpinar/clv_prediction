@@ -7,7 +7,7 @@
 
 ----------------------------
 
-[CLV Prediction Documents](https://caglanakpinar.github.io/clv_prediciton/)
+[CLV Prediction Documents](https://caglanakpinar.github.io/clv_prediction/)
 
 This framework generates 2 main predictive models per customer.
 First, the Next Purchase (Frequency) Model is trained.
