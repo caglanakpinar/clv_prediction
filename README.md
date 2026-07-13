@@ -99,15 +99,15 @@ results = clv.get_result_data()      # actual + predicted rows per customer
 
 | Page | Covers |
 |---|---|
-| [Getting Started](https://caglanakpinar.github.io/clv_prediciton/) | Overview & installation |
-| [How to Run](https://caglanakpinar.github.io/clv_prediciton/intro/) | Concepts, architecture, pipeline |
-| [Configurations](https://caglanakpinar.github.io/clv_prediciton/params/) | Every `CLV(...)` argument explained |
-| [Data Access](https://caglanakpinar.github.io/clv_prediciton/data_access/) | Supported data sources & connection examples |
-| [Pre-process](https://caglanakpinar.github.io/clv_prediciton/data_preprocess/) | Feature engineering per model |
-| [Train](https://caglanakpinar.github.io/clv_prediciton/train/) | `train` / `prediction` / `train_prediction` jobs |
-| [Hyperparameters](https://caglanakpinar.github.io/clv_prediciton/tune/) | Tuning approach |
-| [Benchmark](https://caglanakpinar.github.io/clv_prediciton/benchmark/) | CLV model vs. naive baseline |
-| [Monitoring](https://caglanakpinar.github.io/clv_prediciton/monitoring/) | Dashboard walkthrough |
+| [Getting Started](https://caglanakpinar.github.io/clv_prediction/) | Overview & installation |
+| [How to Run](https://caglanakpinar.github.io/clv_prediction/intro/) | Concepts, architecture, pipeline |
+| [Configurations](https://caglanakpinar.github.io/clv_prediction/params/) | Every `CLV(...)` argument explained |
+| [Data Access](https://caglanakpinar.github.io/clv_prediction/data_access/) | Supported data sources & connection examples |
+| [Pre-process](https://caglanakpinar.github.io/clv_prediction/data_preprocess/) | Feature engineering per model |
+| [Train](https://caglanakpinar.github.io/clv_prediction/train/) | `train` / `prediction` / `train_prediction` jobs |
+| [Hyperparameters](https://caglanakpinar.github.io/clv_prediction/tune/) | Tuning approach |
+| [Benchmark](https://caglanakpinar.github.io/clv_prediction/benchmark/) | CLV model vs. naive baseline |
+| [Monitoring](https://caglanakpinar.github.io/clv_prediction/monitoring/) | Dashboard walkthrough |
 
 ## Project layout
 
