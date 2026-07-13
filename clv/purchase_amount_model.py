@@ -210,7 +210,7 @@ class TrainConv1Dimension:
         model = Model(inputs=self.input, outputs=output)
         model.compile(
             loss=self.params["loss"],
-            optimizer=optimizers.Adam(lr=hp.Choice("lr", self.hyper_params["lr"])),
+            optimizer=optimizers.Adam(learning_rate=hp.Choice("lr", self.hyper_params["lr"])),
             metrics=[hp.Choice("loss", self.hyper_params["loss"])],
         )
         return model
@@ -275,7 +275,7 @@ class TrainConv1Dimension:
         self.model = Model(inputs=self.input, outputs=output)
         self.model.compile(
             loss=self.params["loss"],
-            optimizer=optimizers.Adam(lr=self.params["lr"]),
+            optimizer=optimizers.Adam(learning_rate=self.params["lr"]),
             metrics=[self.params["loss"]],
         )
 
@@ -393,7 +393,7 @@ class TrainConv1Dimension:
         _numbers = list(_sample_p_data["order_seq_num"])
         _historic_data = _sample_p_data.drop(
             [self.customer_indicator, "order_seq_num"], axis=1
-        ).to_dict("results")
+        ).to_dict("records")
         _values = list(zip(sample_customers, _historic_data, _numbers, _c_min_max))
         return {
             u[0]: {

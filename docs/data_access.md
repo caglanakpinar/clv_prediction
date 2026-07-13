@@ -21,7 +21,7 @@ Here is the data source that you can connect with your SQL queries:
                            SELECT
                             customer_indicator,
                             amount_indicator,
-                            time_indicator,
+                            time_indicator
                            FROM table
                        """
 ## Connection Google BigQuery
@@ -33,8 +33,8 @@ Here is the data source that you can connect with your SQL queries:
                    SELECT
                         customer_indicator,
                         amount_indicator,
-                        time_indicator,
-                    FROM tablee
+                        time_indicator
+                    FROM table
                """
 
 ## Connection csv - .json - .pickle - .parquet

@@ -122,7 +122,7 @@ class TrainLSTMNewComers:
         model = Model(inputs=self.input, outputs=lstm)
         model.compile(
             loss="mae",
-            optimizer=optimizers.Adam(lr=hp.Choice("lr", self.hyper_params["lr"])),
+            optimizer=optimizers.Adam(learning_rate=hp.Choice("lr", self.hyper_params["lr"])),
             metrics=["mae"],
         )
         return model
@@ -140,7 +140,6 @@ class TrainLSTMNewComers:
         # LSTM layer
         lstm = layers.LSTM(
             self.params["units"],
-            batch_size=self.params["batch_size"],
             bias_initializer=initializers.Ones(),
             kernel_initializer=initializers.Ones(),
             use_bias=False,
@@ -151,7 +150,7 @@ class TrainLSTMNewComers:
         lstm = layers.Dense(1)(lstm)
         self.model = Model(inputs=self.input, outputs=lstm)
         self.model.compile(
-            loss="mae", optimizer=optimizers.Adam(lr=self.params["lr"]), metrics=["mae"]
+            loss="mae", optimizer=optimizers.Adam(learning_rate=self.params["lr"]), metrics=["mae"]
         )
 
     def learning_process(self, save_model=True, history=False, show_epochs=True):

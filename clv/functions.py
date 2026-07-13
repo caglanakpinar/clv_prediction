@@ -8,6 +8,7 @@ import pandas as pd
 from dateutil.parser import parse
 from statsmodels.tsa.arima.model import ARIMA
 
+from clv.configs import accepted_ratio_of_actual_order  # noqa: F401 (used via pandas query's @name syntax)
 from clv.data_access import GetData
 from clv.utils import *
 
@@ -644,6 +645,7 @@ def get_tuning_params(parameter_tuning, params):
                 "num_layers",
                 "units",
                 "batch_size",
+                "filters",
             ]:
                 hyper_params[p] = [float(c) for c in hyper_params[p]]
             else:

@@ -1,18 +1,18 @@
 # CLV Prediction Parameters
 
 ## job
-Train, Prediction, Train & Prediction. when `jon = 'train''`,
-steps are going to be the Next Purchase Model training and Purchase Amount Model training.
-Each model of the hyperparameter tuning process will be initialized before models have been initialized.
-Once, the hyperparameter has been progressed tuned network parameters 
-are stored in **test_parameters.yaml** where it is in `export_path`.
-When a model has been run repeatedly (or periodically), the model has been checked whether 
-it has been already built during the ***time_period.
+Train, Prediction, Train & Prediction. When `job = 'train'`,
+the steps are Next Purchase Model training and Purchase Amount Model training.
+Each model's hyperparameter tuning process is run before the model itself is trained.
+Once hyperparameter tuning is complete, the tuned network parameters 
+are stored in **test_parameters.yaml** inside `export_path`.
+When a model is run repeatedly (or periodically), it is checked whether 
+it has already been built during the current `time_period`.
 If there are stored models in `export_path`, the latest model 
-is imported and move on to the next process without a run for building the model.
-When the `job='prediction'`, first, the next purchase per customer is predicted then, 
-the purchase amount is predicted related to the next purchase prediction.
-When the `job='train_prediction'`, first, framework will do `jon = 'train''`, then, `job='prediction'`
+is imported and the process moves on without rebuilding the model.
+When `job='prediction'`, the next purchase per customer is predicted first, then 
+the purchase amount is predicted based on the next purchase prediction.
+When `job='train_prediction'`, the framework first runs `job='train'`, then `job='prediction'`.
 
 ## order_count
 
@@ -53,17 +53,17 @@ Google BigQuery, csv, json, pickle).
 
 ## connector
 
-if there is a connection parameters as user, password, host port, 
-this allows us to assign it as dictionary format (e.g {"user": ***, "pw": ****, "db"": ****}).
+If there are connection parameters such as user, password, host, port, 
+this allows us to assign them as a dictionary (e.g. {"user": ***, "pw": ****, "db": ****}).
 
 ## export_path
 
-Export path where the outputs are stored, created models (.json format),
-tuned parameters (test_parameters.yaml), schedule service arguments (**schedule_service.yaml**), 
-result data with predicted values per user per predicted order 
-(.csv format) are willing to store at given path. When prediction is initialized, Nex Purchase Model will create folder 
-`temp_next_purchase_results` and
-Purchase Amount Model will create folder 'temp_purchase_amount_results' in order to import results as .csv format
+The export path where outputs are stored: created models (`.keras` format),
+tuned parameters (`test_parameters.yaml`), schedule service arguments (**schedule_service.yaml**), 
+and result data with predicted values per user per predicted order 
+(`.csv` format) are all stored at the given path. When prediction is initialized, the Next Purchase Model creates the folder 
+`temp_next_purchase_results`, and the
+Purchase Amount Model creates the folder `temp_purchase_amount_results`, in order to store results as `.csv` files.
 
 ## time_period
 

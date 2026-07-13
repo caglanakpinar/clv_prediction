@@ -7,18 +7,18 @@
 
 ----------------------------
 
-This framework we generate 2 main predictive model per customer. 
-First, Next Purchase (Frequency) Model will be trained. 
-This model will help us to predict the day of nex purchases per customer
-Second, Customer Value Model will be trained. 
-THis model will help us to predict what will be the amount of next purchases per customer.
-There will be customers can not be predicted by those models above because of lack historical informations. 
+This framework generates 2 main predictive models per customer. 
+First, the Next Purchase (Frequency) Model is trained. 
+This model helps predict the day of the next purchase per customer.
+Second, the Customer Value Model is trained. 
+This model helps predict what the amount of the next purchase will be per customer.
+There will be customers who cannot be predicted by the models above because of a lack of historical information. 
 Those customers are NewComers.
 This platform allows us to predict NewComers' total lifetime values as well.
 
 ## Installation
 
-Tool can be used any other package by install it via pypi or git command
+This tool can be installed like any other package, via pypi or git:
 
 ```bash
 poetry add clv_prediction
@@ -35,7 +35,7 @@ poetry add git+https://github.com/caglanakpinar/clv_prediction.git
         docs/   
             - configs.yaml
             - test_parameters.yaml
-        confgis.py
+        configs.py
         dashboard.py
         data_access.py
         executor.py

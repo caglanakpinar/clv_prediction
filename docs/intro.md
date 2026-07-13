@@ -1,22 +1,22 @@
 # welcome to clv-prediction 101
 
-Welcome to clv-prediction world. 
-This platform allows you to run customers lifetime prediction for future relationship with a customer.
-You can connect to any data source and run CLV without touching any code all you need to pass arguments like user ID etc.
+Welcome to the clv-prediction world. 
+This platform allows you to predict customer lifetime value for your future relationship with a customer.
+You can connect to any data source and run CLV without touching any code &mdash; all you need to do is pass arguments like user ID, etc.
 
 ## what is this all about?
 
-This is about to build a pipeline which is starting from fetching data,
-build model for users next purchases/sessions in platform,
-make prediction per customer based on built model from previous step.
-It also treats individually for new users who have no purchase or sessions background on historical data.
-Finally, when all CLV train/prediction process have been completed, a dashboard will be available to visualize.
+This is about building a pipeline that starts by fetching data,
+builds a model for users' next purchases/sessions on the platform,
+and makes a prediction per customer based on the model built in the previous step.
+It also treats new users individually when they have no purchase or session history in the historical data.
+Finally, once the whole CLV train/prediction process has completed, a dashboard will be available to visualize the results.
 
-## Why do need `clv-prediciton`?
+## Why do we need `clv-prediction`?
 
-recent years, companies needed to see their feature and relation with their customers. 
-This will help them to act proactively for the upcoming trends of users engagements.
-For instance, Users might return churn in feature, so clv-prediction will give overview churn users.
+In recent years, companies have needed more visibility into their customers' future and their relationship with them. 
+This helps them act proactively on upcoming trends in user engagement.
+For instance, users might churn in the future, so clv-prediction will give an overview of churned users.
 Here are the benefits to use clv-prediction:
  - Allows you to predict your business of customers values individually.
  - Predicts customers of next purchase dates.
@@ -26,7 +26,7 @@ Here are the benefits to use clv-prediction:
 
 ## Step by Step Instruction to Use
 
-there are 2 sections;
+There are 2 sections:
  - execute model train
  - run dashboard
 
@@ -51,54 +51,54 @@ there are 2 sections;
 
 ### Main Concept
 
-This framework we generate 2 main predictive model per customer. 
-First, Next Purchase (Frequency) Model will be trained. 
-This model will help us to predict the day of nex purchases per customer
-Second, Customer Value Model will be trained. 
-THis model will help us to predict what will be the amount of next purchases per customer.
-There will be customers can not be predicted by those models above because of lack historical informations. 
+This framework generates 2 main predictive models per customer. 
+First, the Next Purchase (Frequency) Model is trained. 
+This model helps predict the day of the next purchase per customer.
+Second, the Customer Value Model is trained. 
+This model helps predict what the amount of the next purchase will be per customer.
+There will be customers who cannot be predicted by the models above because of a lack of historical information. 
 Those customers are NewComers.
 This platform allows us to predict NewComers' total lifetime values as well.
 
 
 ### Prediction of Next Purchase (Frequency) per Customer Model
 
-Each customer of historical purchases of date differences is calculated.
-    There will be accepted patterns related to customers ' behaviors.
-    Some Users might have a pattern of every Monday.
-    Some will have Mondays -Wednesdays- Fridays.
-    There must be an individual predictive model for each customer, and this must be the Time Series model per each customer of historical frequency.
-    However, it is not an efficient way and there will be a computational cost here. In that case, Deep Learning can handle this problem with LSTM NN (check next_purchase_model.py).
-    There must be a model that each customer of frequency values are able to be predicted.
+The date difference between each customer's historical purchases is calculated.
+    There will be accepted patterns related to customers' behaviors.
+    Some users might have a pattern of every Monday.
+    Some will have Mondays, Wednesdays, and Fridays.
+    There should be an individual predictive model for each customer &mdash; a time series model based on each customer's historical frequency.
+    However, this is not efficient and comes with a high computational cost. Deep Learning can handle this problem instead, using an LSTM NN (check next_purchase_model.py).
+    This gives us a single model that can predict frequency values for every customer.
 
 ### Prediction Of Customer Value (Value) per Customer Model
 
-Customer future values of prediction are also crucial to reach the final CLV calculation.
-    Once frequency values are calculated per customer, by historical users' of purchase values can be predicted via using Deep Learning.
-    At this process, there is a built-in network (check purchase_amount.py) which is created by using 1 Dimensional Convolutional LSTM NN.
+Predicting customers' future values is also crucial for the final CLV calculation.
+    Once frequency values are calculated per customer, historical purchase values can be used to predict future purchase values via Deep Learning.
+    This process uses a built-in network (check purchase_amount_model.py) built using a 1-Dimensional Convolutional LSTM NN.
 
 ### Prediction Of NewComers CLV Model
 
-Newcomers are not likely predictable as Engaged users. 
-They probably not have stabilized transactions pattern or they will not have a fitted train model unless they have enough transactions.
-    At this point, rather than predicting the value of each transaction, predicting the amount of transaction will be more convenient.
-    By using the historical total purchases per time period (daily), the next time period of total purchase count is able to be predicted.
-    Assuming that Purchase Amount of Newcomers are Normal Distributed (Hypothesis Test).
-    In that case, purchase Amount prediction per newcomer is going to be the Mean of Purchase Amounts.
+Newcomers are not as easily predictable as engaged customers. 
+They likely don't have a stabilized transaction pattern, and there won't be a well-fitted trained model unless they have enough transactions.
+    At this point, rather than predicting the value of each transaction, predicting the total transaction amount is more convenient.
+    By using the historical total purchases per time period (daily), the total purchase count for the next time period can be predicted.
+    Assuming that the purchase amount of newcomers is normally distributed (hypothesis test),
+    the purchase amount prediction per newcomer is the mean of purchase amounts.
 
 ### Combining Of Next Purchase Model & Purchase Amount Prediction Model & NewComers Prediction Model
 
-Without predicting the frequency of users, we can not be sure when the customer will have a purchase.
-    So, by using the next purchase model, customers of future purchase dates have to be predicted.
-    Before predicting a date, the algorithm makes sure the predicted future order of dates is in **selected time period**.
+Without predicting the frequency of users, we can't be sure when a customer will make a purchase.
+    So the next purchase model is used to predict each customer's future purchase dates.
+    Before predicting a date, the algorithm makes sure the predicted future order date falls within the **selected time period**.
 
 ***last purchased date from raw data < predicted purchase date < last purchased date from raw data + time period***
 
 This time period must be assigned when the process is initialized. 
 The time period will have a range between the last transaction date of the dataset and the last transaction date + time period.
-It can be detected the users' purchases of dates and the next process will be predicting each purchase of values by using the Purchase Amount model.
+Once the users' purchase dates are detected, the next step predicts each purchase's value using the Purchase Amount model.
 
-After combining Of Next Purchase Model & Purchase Amount Prediction Model is done, NewComers of Predictions are merging the results.
+After combining the Next Purchase Model and Purchase Amount Prediction Model, the NewComers predictions are merged into the results.
 
 
 ## CLV Prediction Process Pipeline
