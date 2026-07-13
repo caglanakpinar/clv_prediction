@@ -18,27 +18,6 @@ from clv.functions import *
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "4"
 
 
-def model_from_to_json(
-    path=None, weights_path=None, model=None, is_writing=False, lr=None
-):
-    if is_writing:
-        model_json = model.to_json()
-        with open(path, "w") as json_file:
-            json_file.write(model_json)
-        model.save_weights(weights_path)
-    else:
-        json_file = open(path, "r")
-        loaded_model_json = json_file.read()
-        json_file.close()
-        model = models.model_from_json(loaded_model_json)
-        try:
-            model.load_weights(weights_path)
-        except Exception as e:
-            model.load_weights(weights_path)
-            model.compile(loss="mae", optimizer=optimizers.Adam(lr=lr), metrics=["mae"])
-        return model
-
-
 def get_params(params, comb):
     count = 0
     for p in params:
@@ -231,7 +210,7 @@ class TrainConv1Dimension:
         model = Model(inputs=self.input, outputs=output)
         model.compile(
             loss=self.params["loss"],
-            optimizer=optimizers.Adam(lr=hp.Choice("lr", self.hyper_params["lr"])),
+            optimizer=optimizers.Adam(learning_rate=hp.Choice("lr", self.hyper_params["lr"])),
             metrics=[hp.Choice("loss", self.hyper_params["loss"])],
         )
         return model
@@ -296,7 +275,7 @@ class TrainConv1Dimension:
         self.model = Model(inputs=self.input, outputs=output)
         self.model.compile(
             loss=self.params["loss"],
-            optimizer=optimizers.Adam(lr=self.params["lr"]),
+            optimizer=optimizers.Adam(learning_rate=self.params["lr"]),
             metrics=[self.params["loss"]],
         )
 
@@ -324,21 +303,13 @@ class TrainConv1Dimension:
             )
 
         if save_model:
-            model_from_to_json(
-                path=model_path(
+            self.model.save(
+                model_path(
                     self.directory,
                     "trained_purchase_amount_model",
                     get_current_day(),
                     self.time_period,
-                ),
-                weights_path=weights_path(
-                    self.directory,
-                    "trained_purchase_amount_model",
-                    get_current_day(),
-                    self.time_period,
-                ),
-                model=self.model,
-                is_writing=True,
+                )
             )
 
         if history:
@@ -355,20 +326,13 @@ class TrainConv1Dimension:
             self.build_model()
             self.learning_process()
         else:
-            self.model = model_from_to_json(
-                path=model_path(
+            self.model = models.load_model(
+                model_path(
                     self.directory,
                     "trained_purchase_amount_model",
                     self.prev_model_date,
                     self.time_period,
-                ),
-                weights_path=weights_path(
-                    self.directory,
-                    "trained_purchase_amount_model",
-                    self.prev_model_date,
-                    self.time_period,
-                ),
-                lr=self.params["lr"],
+                )
             )
             print(
                 "Previous model already exits in the given directory  '"
@@ -429,7 +393,7 @@ class TrainConv1Dimension:
         _numbers = list(_sample_p_data["order_seq_num"])
         _historic_data = _sample_p_data.drop(
             [self.customer_indicator, "order_seq_num"], axis=1
-        ).to_dict("results")
+        ).to_dict("records")
         _values = list(zip(sample_customers, _historic_data, _numbers, _c_min_max))
         return {
             u[0]: {
@@ -508,20 +472,13 @@ class TrainConv1Dimension:
                 if self.prev_model_date is not None
                 else get_current_day()
             )
-            self.model = model_from_to_json(
-                path=model_path(
+            self.model = models.load_model(
+                model_path(
                     self.directory,
                     "trained_purchase_amount_model",
-                    _model_date,
+                    self.prev_model_date,
                     self.time_period,
-                ),
-                weights_path=weights_path(
-                    self.directory,
-                    "trained_purchase_amount_model",
-                    _model_date,
-                    self.time_period,
-                ),
-                lr=self.params["lr"],
+                )
             )
 
         if self.num_of_future_orders is not None:

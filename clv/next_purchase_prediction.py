@@ -1,4 +1,3 @@
-import argparse
 import warnings
 
 from keras import models
@@ -6,26 +5,6 @@ from pandas import DataFrame, concat
 
 from clv.configs import hyper_conf
 from clv.functions import *
-
-
-def model_from_to_json(
-    path=None, weights_path=None, model=None, is_writing=False, lr=None
-):
-    if is_writing:
-        model_json = model.to_json()
-        with open(path, "w") as json_file:
-            json_file.write(model_json)
-        model.save_weights(weights_path)
-    else:
-        json_file = open(path, "r")
-        loaded_model_json = json_file.read()
-        json_file.close()
-        model = models.model_from_json(loaded_model_json)
-        try:
-            model.load_weights(weights_path)
-        except Exception as e:
-            model.load_weights(weights_path)
-        return model
 
 
 def updating_hyper_parameters_related_to_data():
@@ -67,8 +46,8 @@ class NextPurchaseModelPrediction:
         self.prev_model_date = check_model_exists(
             self.directory, "trained_next_purchase_model", self.time_period
         )
-        self.model = model_from_to_json(
-            path=model_path(
+        self.model = self.model = models.load_model(
+            model_path(
                 self.directory,
                 "trained_next_purchase_model",
                 (
@@ -77,19 +56,9 @@ class NextPurchaseModelPrediction:
                     else get_current_day()
                 ),
                 self.time_period,
-            ),
-            weights_path=weights_path(
-                self.directory,
-                "trained_next_purchase_model",
-                (
-                    self.prev_model_date
-                    if self.prev_model_date is not None
-                    else get_current_day()
-                ),
-                self.time_period,
-            ),
-            lr=self.params["lr"],
+            )
         )
+        self.prediction_data: list[pd.DataFrame] = []
 
     def prediction_date_add(self, data, pred_data, pred):
         max_date = (
@@ -140,7 +109,10 @@ class NextPurchaseModelPrediction:
     def calculate_prediction(self, data, _pred_data, user_min, user_max):
         x = data_for_customer_prediction(data, _pred_data, self.params)
         try:
-            _pred = self.model.predict(x)[0][-1]
+            _pred = self.model.predict(
+                x,
+                verbose=0
+            )[0][-1]
         except Exception as e:
             _pred = 0
         _pred_actual = self.get_actual_value(_min=user_min, _max=user_max, _value=_pred)
@@ -152,7 +124,7 @@ class NextPurchaseModelPrediction:
         user_min, user_max = [
             list(data[metric])[0] for metric in ["user_min", "user_max"]
         ]
-        _pred_data, prediction_data[customer] = DataFrame(), DataFrame()
+        _pred_data = DataFrame()
         _predicted_date = self.future_date - datetime.timedelta(days=1)
         _pred_actual, _pred = self.calculate_prediction(
             data, _pred_data, user_min, user_max
@@ -199,116 +171,24 @@ class NextPurchaseModelPrediction:
                     ]
                 except Exception as e:
                     print(e)
-            prediction_data[customer] = _pred_data
-        del data, user_max, user_min
+            self.prediction_data.append(_pred_data)
 
     def prediction_execute(self):
         print("*" * 5, "PREDICTION", 5 * "*")
         print("number of users :", len(self.customers))
         self.temp_data[self.time_indicator] = self.temp_data[self.time_indicator].apply(
-            lambda x: convert_str_to_day(x)
+            convert_str_to_day
         )
         self.temp_data = self.temp_data.sort_values(
             by=[self.customer_indicator, self.time_indicator], ascending=True
         )
-        global prediction_data
-        prediction_data = {}
-        execute_parallel_run(
-            self.customers, self.prediction_per_customer, arguments=None, parallel=4
-        )
-        _result = []
-        for c in self.customers:
-            try:
-                _result.append(prediction_data[c])
-            except Exception as e:
-                print(c)
-        pd.concat(_result).to_csv(
+        for customer in self.customers:
+            self.prediction_per_customer(customer)
+        pd.concat(self.prediction_data).to_csv(
             join(
                 self.directory,
                 "temp_next_purchase_results",
-                str(self.customers[0] + "_data.csv"),
+                "temp_next_purchase_results_data.csv",
             ),
             index=False,
         )
-
-
-if __name__ == "__main__":
-    """
-    -P    temp_data_path
-    -MD   max_date
-    -FD   future_date
-    -TP   time_period
-    -D    directory
-    -IND  customer_indicator, amount_indicator, time_indicator
-    """
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-P",
-        "--temp_data_path",
-        type=str,
-        help="""
-                                train, prediction
-                        """,
-    )
-    parser.add_argument(
-        "-C",
-        "--customers",
-        type=str,
-        help="""
-                                user_1*user_2*user_4*user_5* ...
-                        """,
-    )
-    parser.add_argument(
-        "-MD",
-        "--max_date",
-        type=str,
-        help="""
-                                2021-05-05 (string)
-                        """,
-    )
-    parser.add_argument(
-        "-FD",
-        "--future_date",
-        type=str,
-        help="""
-                                2021-11-05 (string)
-                        """,
-    )
-    parser.add_argument(
-        "-D",
-        "--directory",
-        type=str,
-        help="""
-                                    /../../..
-                            """,
-    )
-    parser.add_argument(
-        "-TP",
-        "--time_period",
-        type=str,
-        help="""
-                                    week, day, 6*months, quarter, ..
-                            """,
-    )
-
-    parser.add_argument(
-        "-IND",
-        "--indicators",
-        type=str,
-        help="""
-                                    customer_indicator*amount_indicator*time_indicator
-                            """,
-    )
-
-    arguments = parser.parse_args()
-    args = {
-        "temp_data_path": arguments.temp_data_path,
-        "max_date": arguments.max_date,
-        "future_date": arguments.future_date,
-        "directory": arguments.directory,
-        "time_period": arguments.time_period,
-        "indicators": arguments.indicators,
-    }
-    prediction = NextPurchaseModelPrediction(**args)
-    prediction.prediction_execute()
-    del prediction

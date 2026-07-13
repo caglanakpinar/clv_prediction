@@ -2,24 +2,24 @@
 
 ## Train  - `job = 'train'`
 
-**Next Purchase Model**, **Purchase Amount Model** and **NewComer Model** of the train process are progressed via tensorflow - Keras.
-It is a LSTM NN.
-Trained model stored at `export_path` with **.json** format.
-**.json** trained file has a file name with `time_period`, name of the model, trained date (current date).
-e.g; trained_purchase_amount_model_20210101_month.json
+The **Next Purchase Model**, **Purchase Amount Model**, and **NewComer Model** train processes are all run via TensorFlow/Keras.
+Each is an LSTM NN.
+Trained models are stored at `export_path` in **.keras** format.
+Each **.keras** file name includes the `time_period`, the model's name, and the trained date (current date).
+e.g. `trained_purchase_amount_model_20210101_month.keras`
 
 
-Before initialize the training process previously-stored model are checked which have been stored at `export_path`
-    The most recent trained must be picked. Model name and `time_period`  also must be matched.
-    e.g; recent model: trained_purchase_amount_model_20210101_month.json, model name: purchase_amount, time_period: month,
-      current date 2020-01-30. This model trained 29 days before which is accepted range (accepted range 0 - 30 (one month)).
+Before initializing the training process, previously-stored models at `export_path` are checked.
+    The most recently trained model is picked; its name and `time_period` must match.
+    e.g. recent model: `trained_purchase_amount_model_20210101_month.keras`, model name: `purchase_amount`, time_period: `month`,
+      current date 2020-01-30. This model was trained 29 days ago, which falls within the accepted range (0-30 days for one month).
 
 
-## Train-Prediction Proces `job = 'train_prediction'`
+## Train-Prediction Process `job = 'train_prediction'`
 
-Each model process is trained, then they are predicted sequentially. 
-At the end 3 models have been generalized, 
-3 models of parameters tuning have been applied and 3 models of predictions are calculated.
+Each model is trained, then all three are predicted sequentially. 
+By the end, all 3 models have been trained, 
+hyperparameter tuning has been applied to all 3, and all 3 models' predictions have been calculated.
 
 
 ## Running CLV Prediction
@@ -60,9 +60,9 @@ At the end 3 models have been generalized,
 
 ## Collecting Prediction Result Data
 
-Once, prediction process has been initialized (`job: 'prediction'` or `'train_prediction'`), 
-It can be collected via `get_result_data`.
-This data will be represented with raw data per customer of next purchase orders.
+Once the prediction process has been initialized (`job: 'prediction'` or `'train_prediction'`), 
+results can be collected via `get_result_data`.
+This returns the raw data plus each customer's predicted next purchase orders.
 
         from clv.executor import CLV
         clv = CLV(customer_indicator=customer_indicator,

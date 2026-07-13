@@ -1,11 +1,11 @@
 import shutil
 from itertools import product
+import glob
 
 from keras import Input, Model, initializers, layers, models, optimizers
 from kerastuner.engine.hyperparameters import HyperParameters
 from kerastuner.tuners import RandomSearch
 from pandas import DataFrame, concat
-from psutil import virtual_memory
 
 from clv.configs import (
     accept_threshold_for_loss_diff,
@@ -13,30 +13,7 @@ from clv.configs import (
     parameter_tuning_trials,
 )
 from clv.functions import *
-from clv.utils import abspath_for_sample_data
-
-
-def model_from_to_json(
-    path=None, weights_path=None, model=None, is_writing=False, lr=None
-):
-    if is_writing:
-        model_json = model.to_json()
-        with open(path, "w") as json_file:
-            json_file.write(model_json)
-        model.save_weights(weights_path)
-    else:
-        json_file = open(path, "r")
-        loaded_model_json = json_file.read()
-        json_file.close()
-        model = models.model_from_json(loaded_model_json)
-        try:
-            model.load_weights(weights_path)
-        except Exception as e:
-            model.load_weights(weights_path)
-            model.compile(
-                loss="mae", optimizer=optimizers.Adam(learning_rate=lr), metrics=["mae"]
-            )
-        return model
+from clv.next_purchase_prediction import NextPurchaseModelPrediction
 
 
 def updating_hyper_parameters_related_to_data():
@@ -231,21 +208,13 @@ class TrainLSTM:
                 shuffle=True,
             )
         if save_model:
-            model_from_to_json(
-                path=model_path(
+            self.model.save(
+                model_path(
                     self.directory,
                     "trained_next_purchase_model",
                     get_current_day(),
                     self.time_period,
-                ),
-                weights_path=weights_path(
-                    self.directory,
-                    "trained_next_purchase_model",
-                    get_current_day(),
-                    self.time_period,
-                ),
-                model=self.model,
-                is_writing=True,
+                )
             )
 
         if history:
@@ -259,20 +228,13 @@ class TrainLSTM:
             self.build_model()
             self.learning_process()
         else:
-            self.model = model_from_to_json(
-                path=model_path(
+            self.model = models.load_model(
+                model_path(
                     self.directory,
                     "trained_next_purchase_model",
                     self.prev_model_date,
                     self.time_period,
-                ),
-                weights_path=weights_path(
-                    self.directory,
-                    "trained_next_purchase_model",
-                    self.prev_model_date,
-                    self.time_period,
-                ),
-                lr=self.params["lr"],
+                )
             )
             print(
                 "Previous model already exits in the given directory  '"
@@ -304,8 +266,7 @@ class TrainLSTM:
         *** Parallel Prediction Process ***
             1. Create input folder: 'temp_next_purchase_inputs'
             2. Create result folder for the prediction: 'temp_next_purchase_results'
-            3. split users (split number of user count related customer_indicator parameter) and run each batch sequentially.
-            3. Parallel process is running on 'next_purchase_prediction.py'. Check related .py file for details.
+            3. run NextPurchaseModelPrediction for predictions
         """
         try:  # create input folder
             os.mkdir(join(self.directory, "temp_next_purchase_results"))
@@ -322,43 +283,30 @@ class TrainLSTM:
             print("recreating 'temp_next_purchase_inputs' folder ...")
             shutil.rmtree(join(self.directory, "temp_next_purchase_inputs", ""))
             os.mkdir(join(self.directory, "temp_next_purchase_inputs"))
-        # check cpu count and available memory in order to optimize batch sizes
-        cpus = cpu_count() * int((virtual_memory().total / 1000000000) * 4)
-        communicates = [i for i in range(cpus) if i % cpu_count() == 0] + [cpus - 1]
-        _sample_size = int(len(self.customers) / cpus) + 1
-        _sub_processes = []
-        for i in range(cpus):
-            print("main iteration :", str(i), " / ", str(cpus))
-            _sample_customers = get_iter_sample(self.customers, i, cpus, _sample_size)
-            if len(_sample_customers) != 0:
-                _directory = join(
-                    self.directory,
-                    "temp_next_purchase_inputs",
-                    "prediction_inputs_" + _sample_customers[0] + ".csv",
-                )
-                self.create_prediction_data(_sample_customers, _directory)
-                cmd = """python {0}/next_purchase_prediction.py -P {1} -MD {2} -FD {3} -TP {4} -D {5} -IND {6}
-                """.format(
-                    abspath_for_sample_data(),
-                    _directory,
-                    str(self.max_date)[0:10],
-                    str(self.future_date)[0:10],
-                    self.time_period,
-                    self.directory,
-                    "*".join(
-                        [
-                            self.customer_indicator,
-                            self.amount_indicator,
-                            self.time_indicator,
-                        ]
-                    ),
-                )
-                _p = subprocess.Popen(cmd, shell=True)
-                _sub_processes.append(_p)
-                if i != 0 and i in communicates:
-                    [p.communicate() for p in _sub_processes]
-                    print("done!")
-                    _sub_processes = []
+
+        _directory = join(
+            self.directory,
+            "temp_next_purchase_inputs",
+            "prediction_inputs.csv",
+        )
+        self.create_prediction_data(self.customers, _directory)
+        args = {
+            "temp_data_path": _directory,
+            "max_date": str(self.max_date)[0:10],
+            "future_date": str(self.future_date)[0:10],
+            "directory": self.directory,
+            "time_period": self.time_period,
+            "indicators": "*".join(
+                [
+                    self.customer_indicator,
+                    self.amount_indicator,
+                    self.time_indicator,
+                ]
+            ),
+        }
+
+        prediction = NextPurchaseModelPrediction(**args)
+        prediction.prediction_execute()
 
     def create_prediction_result_data(self):
         """
@@ -407,21 +355,15 @@ class TrainLSTM:
                 else get_current_day()
             )
             # import trained model from temp. directory folder
-            self.model = model_from_to_json(
-                path=model_path(
+            self.model = models.load_model(
+                model_path(
                     self.directory,
                     "trained_next_purchase_model",
                     _model_date,
                     self.time_period,
-                ),
-                weights_path=weights_path(
-                    self.directory,
-                    "trained_next_purchase_model",
-                    _model_date,
-                    self.time_period,
-                ),
-                lr=self.params["lr"],
+                )
             )
+
         self.results = self.data[
             [
                 self.time_indicator,

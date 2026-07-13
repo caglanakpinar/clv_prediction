@@ -8,6 +8,7 @@ import pandas as pd
 from dateutil.parser import parse
 from statsmodels.tsa.arima.model import ARIMA
 
+from clv.configs import accepted_ratio_of_actual_order  # noqa: F401 (used via pandas query's @name syntax)
 from clv.data_access import GetData
 from clv.utils import *
 
@@ -589,13 +590,7 @@ def check_model_exists(path, model_name, time_period):
 def model_path(directory, model_name, date, time_period):
     return join(
         directory,
-        model_name + "_" + date + "_" + time_period.replace(" ", "") + ".json",
-    )
-
-
-def weights_path(directory, model_name, date, time_period):
-    return join(
-        directory, model_name + "_" + date + "_" + time_period.replace(" ", "") + ".h5"
+        model_name + "_" + date + "_" + time_period.replace(" ", "") + ".keras",
     )
 
 
@@ -650,6 +645,7 @@ def get_tuning_params(parameter_tuning, params):
                 "num_layers",
                 "units",
                 "batch_size",
+                "filters",
             ]:
                 hyper_params[p] = [float(c) for c in hyper_params[p]]
             else:

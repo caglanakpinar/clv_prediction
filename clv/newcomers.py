@@ -17,21 +17,6 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "4"
 sess = tf.compat.v1.Session()
 
 
-def model_from_to_json(path=None, weights_path=None, model=None, is_writing=False):
-    if is_writing:
-        model_json = model.to_json()
-        with open(path, "w") as json_file:
-            json_file.write(model_json)
-        model.save_weights(weights_path)
-    else:
-        json_file = open(path, "r")
-        loaded_model_json = json_file.read()
-        json_file.close()
-        model = models.model_from_json(loaded_model_json)
-        model.load_weights(weights_path)
-        return model
-
-
 def updating_hyper_parameters_related_to_data():
     return None
 
@@ -137,7 +122,7 @@ class TrainLSTMNewComers:
         model = Model(inputs=self.input, outputs=lstm)
         model.compile(
             loss="mae",
-            optimizer=optimizers.Adam(lr=hp.Choice("lr", self.hyper_params["lr"])),
+            optimizer=optimizers.Adam(learning_rate=hp.Choice("lr", self.hyper_params["lr"])),
             metrics=["mae"],
         )
         return model
@@ -155,7 +140,6 @@ class TrainLSTMNewComers:
         # LSTM layer
         lstm = layers.LSTM(
             self.params["units"],
-            batch_size=self.params["batch_size"],
             bias_initializer=initializers.Ones(),
             kernel_initializer=initializers.Ones(),
             use_bias=False,
@@ -166,7 +150,7 @@ class TrainLSTMNewComers:
         lstm = layers.Dense(1)(lstm)
         self.model = Model(inputs=self.input, outputs=lstm)
         self.model.compile(
-            loss="mae", optimizer=optimizers.Adam(lr=self.params["lr"]), metrics=["mae"]
+            loss="mae", optimizer=optimizers.Adam(learning_rate=self.params["lr"]), metrics=["mae"]
         )
 
     def learning_process(self, save_model=True, history=False, show_epochs=True):
@@ -194,21 +178,13 @@ class TrainLSTMNewComers:
                 shuffle=True,
             )
         if save_model:
-            model_from_to_json(
-                path=model_path(
+            self.model.save(
+                model_path(
                     self.directory,
                     "trained_newcomers_model",
                     get_current_day(),
                     self.time_period,
-                ),
-                weights_path=weights_path(
-                    self.directory,
-                    "trained_newcomers_model",
-                    get_current_day(),
-                    self.time_period,
-                ),
-                model=self.model,
-                is_writing=True,
+                )
             )
 
         if history:
@@ -222,19 +198,13 @@ class TrainLSTMNewComers:
             self.build_model()
             self.learning_process()
         else:
-            self.model = model_from_to_json(
-                path=model_path(
+            self.model = models.load_model(
+                model_path(
                     self.directory,
                     "trained_newcomers_model",
                     self.prev_model_date,
                     self.time_period,
-                ),
-                weights_path=weights_path(
-                    self.directory,
-                    "trained_newcomers_model",
-                    self.prev_model_date,
-                    self.time_period,
-                ),
+                )
             )
             print(
                 "Previous model already exits in arrange__data_for_model the given directory  '"
@@ -250,20 +220,15 @@ class TrainLSTMNewComers:
                 if self.prev_model_date is not None
                 else get_current_day()
             )
-            self.model = model_from_to_json(
-                path=model_path(
+            self.model = models.load_model(
+                model_path(
                     self.directory,
                     "trained_newcomers_model",
                     _model_date,
                     self.time_period,
-                ),
-                weights_path=weights_path(
-                    self.directory,
-                    "trained_newcomers_model",
-                    _model_date,
-                    self.time_period,
-                ),
+                )
             )
+
         # daily calculations, day by day
         while self.max_date < self.future_date:
             print("date :", self.max_date)

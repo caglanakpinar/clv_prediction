@@ -21,6 +21,7 @@ nav:
   - pre-process: data_preprocess.md
   - train: train.md
   - hyperparameters: tune.md
+  - benchmark: benchmark.md
   - monitoring: monitoring.md
 
 markdown_extensions:
